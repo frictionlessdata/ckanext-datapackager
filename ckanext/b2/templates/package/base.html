@@ -1,5 +1,7 @@
 {% ckan_extends %}
 
+{% block subtitle %}{{ _('Packages') }}{% endblock %}
+
 {% block breadcrumb_content %}
   {% if pkg %}
     {% set dataset = pkg.title or pkg.name %}

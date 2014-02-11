@@ -1,0 +1,13 @@
+{% ckan_extends %}
+
+
+{% block primary_content_inner %}
+  <div style="float:right;">
+    {% if h.check_access('package_update', {'id':pkg.id }) %}
+      {% link_for _('Edit'), controller='package', action='edit', id=pkg.name, class_='btn', icon='edit' %}
+    {% endif %}
+  </div>
+  {{ super() }}
+{% endblock %}
+
+{% block package_additional_info %}{% endblock %}

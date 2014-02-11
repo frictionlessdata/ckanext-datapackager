@@ -1,0 +1,8 @@
+{# Remove the href attributes from tags, so they don't link to search pages. #}
+<ul class="{{ _class }}">
+  {% for tag in tags %}
+    <li>
+      <a class="tag">{{ h.truncate(tag.display_name, 22) }}</a>
+    </li>
+  {% endfor %}
+</ul>
