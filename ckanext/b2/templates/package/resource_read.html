@@ -1,0 +1,86 @@
+{% ckan_extends %}
+
+{% block resource_actions_inner %}
+  {% if h.check_access('package_update', {'id':pkg.id }) %}
+    <li>{% link_for _('Edit'), controller='package', action='resource_edit', id=pkg.name, resource_id=res.id, class_='btn', icon='edit' %}</li>
+  {% endif %}
+  {% if res.url %}
+    <li>
+      <a class="btn btn-primary resource-url-analytics resource-type-{{ res.resource_type }}" href="{{ res.url }}">
+        {% if res.resource_type in ('listing', 'service') %}
+          <i class="icon-eye-open"></i> {{ _('View') }}
+        {% elif  res.resource_type == 'api' %}
+          <i class="icon-key"></i> {{ _('API Endpoint') }}
+        {% elif not res.can_be_previewed %}
+          <i class="icon-download"></i> {{ _('Download') }}
+        {% else %}
+          <i class="icon-download"></i> {{ _('Download') }}
+        {% endif %}
+      </a>
+    </li>
+  {% endif %}
+  {% if 'datastore' in g.plugins %}
+    <li>{% snippet 'package/snippets/data_api_button.html', resource=res, datastore_root_url=c.datastore_api %}</li>
+  {% endif %}
+{% endblock %}
+
+{% block resource_content %}
+  {% block resource_read_title %}<h1 class="page-heading">{{ h.resource_display_name(res) | truncate(50) }}</h1>{% endblock %}
+
+  {# Hide the resource URL, it's not necessary we already have a download
+     button. #}
+  {% block resource_read_url %}{% endblock %}
+
+  {# Note this div is not closed within this block! Looks like a bug in the
+     CKAN core template. #}
+  <div class="prose notes" property="rdfs:label">
+    {% if res.description %}
+      {{ h.render_markdown(res.description) }}
+    {% endif %}
+    {# We also removed the "From the dataset abstract" section here
+       (if the resource itself doesn't have a description, CKAN shows the notes
+       from the dataset). #}
+{% endblock %}
+
+{% block resource_additional_information %}
+  {% if res %}
+    <section class="module">
+      <div class="module-content">
+
+        {# Change the title from 'Additional Information'. #}
+        {# FIXME: Format, modified and licenses are 'recommended' data package
+           fields.  Should we promoted these in the UI, rather than putting
+           them under additional fields? #}
+        <h2>{{ _('Additional fields') }}</h2>
+        <table class="table table-striped table-bordered table-condensed" data-module="table-toggle-more">
+          <thead>
+            <tr>
+              <th scope="col">{{ _('Field') }}</th>
+              <th scope="col">{{ _('Value') }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">{{ _('Last updated') }}</th>
+              <td>{{ h.render_datetime(res.last_modified) or h.render_datetime(res.revision_timestamp) or h.render_datetime(res.created) or _('unknown') }}</td>
+            </tr>
+            <tr>
+              <th scope="row">{{ _('Created') }}</th>
+              <td>{{ h.render_datetime(res.created) or _('unknown') }}</td>
+            </tr>
+            <tr>
+              <th scope="row">{{ _('Format') }}</th>
+              <td>{{ res.mimetype_inner or res.mimetype or res.format or _('unknown') }}</td>
+            </tr>
+            <tr>
+              <th scope="row">{{ _('License') }}</th>
+              <td>{% snippet "snippets/license.html", pkg_dict=pkg, text_only=True %}</td>
+            </tr>
+            {# We removed the 'Show more' section here that shows various
+              internal id and state fields. #}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  {% endif %}
+{% endblock %}
