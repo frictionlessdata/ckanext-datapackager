@@ -1,0 +1,11 @@
+{# Hide the number of followers and follow button from the sidebar. #}
+
+{% if pkg %}
+  <section class="module module-narrow">
+    <div class="module context-info">
+      <div class="module-content">
+        <h1 class="heading">{{ pkg.title or pkg.name }}</h1>
+      </div>
+    </div>
+  </section>
+{% endif %}
