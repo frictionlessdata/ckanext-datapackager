@@ -1,10 +1,10 @@
-{# We override this whole template just to change the title from "Resources"
-   to "Files", could probably be better done in an extension. #}
+{# We override this whole template just to change the title from "Resources" to
+   "Files in this package", could probably be better done in an extension. #}
 
 {% set resources = pkg.resources or [] %}
 {% if resources %}
   <section class="module module-narrow resources">
-    <h2 class="module-heading"><i class="icon-copy"></i> {{ _("Files") }}</h2>
+    <h2 class="module-heading"><i class="icon-copy"></i> {{ _("Files in this package") }}</h2>
     <ul class="unstyled nav nav-simple">
       {% for resource in resources %}
         <li class="nav-item{{ ' active' if active == resource.id }}">
