@@ -2,6 +2,12 @@ import ckan.plugins as plugins
 import ckan.plugins.toolkit as toolkit
 import ckan.lib.helpers as helpers
 
+def resource_display_name(*args, **kwargs):
+    display_name = helpers.resource_display_name(*args, **kwargs)
+    if display_name == 'Unnamed resource':
+        display_name = 'Unnamed file'
+    return display_name
+
 
 class B2UserController(toolkit.BaseController):
     '''A simple user controller class.
@@ -30,6 +36,7 @@ class B2Plugin(plugins.SingletonPlugin):
     '''
     plugins.implements(plugins.IConfigurer)
     plugins.implements(plugins.IRoutes)
+    plugins.implements(plugins.ITemplateHelpers)
 
     def update_config(self, config):
         '''Update CKAN's configuration.
@@ -77,3 +84,6 @@ class B2Plugin(plugins.SingletonPlugin):
 
         '''
         return map_
+
+    def get_helpers(self):
+        return {'resource_display_name': resource_display_name}
