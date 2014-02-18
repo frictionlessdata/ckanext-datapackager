@@ -16,3 +16,11 @@ which requires a lot of compiling, there may be some packages that need to be
 
 Then add `b2` to the `ckan.plugins` setting in your CKAN config file, and
 restart your web server.
+
+
+Tests
+-----
+
+To run the tests:
+
+    nosetests ckanext/b2/tests
