@@ -1,4 +1,5 @@
-#!/bin/sh -e
+#!/bin/bash
+set -e
 
 # Drop Travis' postgres cluster if we're building using a different pg version.
 TRAVIS_PGVERSION='9.1'
