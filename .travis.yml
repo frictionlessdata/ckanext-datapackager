@@ -11,7 +11,7 @@ matrix:
       env: PGVERSION=8.4
     - python: "2.6"
       env: PGVERSION=9.1
-install: "pip install -r dev-requirements.txt"
-script: "nosetests"
+install: ./bin/travis-build.sh
+script: "nosetests --ckan --with-pylons=test.ini ckanext/b2/tests"
 after_success:
   - coveralls
