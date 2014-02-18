@@ -12,6 +12,6 @@ matrix:
     - python: "2.6"
       env: PGVERSION=9.1
 install: "pip install -r dev-requirements.txt"
-script: "nosetests ckanext/b2/tests"
+script: "nosetests"
 after_success:
   - coveralls
