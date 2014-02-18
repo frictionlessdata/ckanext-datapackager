@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/ckan/ckanext-b2.png?branch=travis)](https://travis-ci.org/ckan/ckanext-b2)
+
 This is a CKAN extension that contains the CKAN theme and plugins for the B2
 Metadata Generator.
 
