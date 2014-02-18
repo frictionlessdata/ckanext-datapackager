@@ -23,4 +23,10 @@ Tests
 
 To run the tests:
 
-    nosetests ckanext/b2/tests
+    nosetests --ckan --with-pylons=test.ini
+
+Note that ckanext-b2's `test.ini` file assumes that the relative path from it
+to CKAN's `test-core.ini` file is `../ckan/test-core.ini`, i.e. that you have
+CKAN and ckanext-b2 installed next to each other in the same directory. This
+would normally be the case if you've done development installs of CKAN and
+ckanext-b2.

@@ -5,18 +5,7 @@ import ckan.plugins.toolkit as toolkit
 import ckan.lib.helpers as helpers
 
 import ckanext.b2.lib.csv as lib_csv
-
-def resource_display_name(*args, **kwargs):
-    '''Return a display name for the given resource.
-
-    This overrides CKAN's default resource_display_name template helper
-    function and replaces 'Unnamed resource' with 'Unnamed file'.
-
-    '''
-    display_name = helpers.resource_display_name(*args, **kwargs)
-    if display_name == 'Unnamed resource':
-        display_name = 'Unnamed file'
-    return display_name
+import ckanext.b2.lib.helpers as custom_helpers
 
 
 def _resource_create(context, data_dict):
@@ -230,7 +219,7 @@ class B2Plugin(plugins.SingletonPlugin):
         See ITemplateHelpers.
 
         '''
-        return {'resource_display_name': resource_display_name}
+        return {'resource_display_name': custom_helpers.resource_display_name}
 
     def get_actions(self):
         '''Return the action functions that this plugin provides.
