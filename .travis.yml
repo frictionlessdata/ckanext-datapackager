@@ -1,10 +1,6 @@
 language: python
-python:
-  - "2.7"
-  - "2.6"
-env:
-  - PGVERSION=9.1
-  - PGVERSION=8.4
+python: 2.7
+env: PGVERSION=9.1
 matrix:
   exclude:
     - python: "2.7"
@@ -12,6 +8,6 @@ matrix:
     - python: "2.6"
       env: PGVERSION=9.1
 install: ./bin/travis-build.bash
-script: "nosetests --ckan --with-pylons=test.ini ckanext/b2/tests"
+script: "nosetests --ckan --with-pylons=subdir/test.ini ckanext/b2/tests"
 after_success:
   - coveralls
