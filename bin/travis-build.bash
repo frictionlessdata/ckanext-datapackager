@@ -23,12 +23,13 @@ sudo apt-get update -qq
 sudo apt-get install postgresql-$PGVERSION solr-jetty libcommons-fileupload-java:amd64=1.2.2-1
 
 # Install CKAN and its Python dependencies.
+cd /home/travis/build/ckan
 git clone https://github.com/ckan/ckan
 cd ckan
 git checkout b2
 python setup.py develop
 pip install -r requirements.txt --use-mirrors
-cd -
+cd /home/travis/build/ckan/ckanext-b2
 
 # Create the PostgreSQL database and users.
 sudo -u postgres psql -c "CREATE USER ckan_default WITH PASSWORD 'pass';"
