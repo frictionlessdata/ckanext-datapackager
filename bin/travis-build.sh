@@ -28,6 +28,7 @@ cd ckan
 git checkout b2
 python setup.py develop
 pip install -r requirements.txt --use-mirrors
+cd -
 
 # Create the PostgreSQL database and users.
 sudo -u postgres psql -c "CREATE USER ckan_default WITH PASSWORD 'pass';"
