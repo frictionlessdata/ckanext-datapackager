@@ -32,3 +32,18 @@ to CKAN's `test-core.ini` file is `../ckan/test-core.ini`, i.e. that you have
 CKAN and ckanext-b2 installed next to each other in the same directory. This
 would normally be the case if you've done development installs of CKAN and
 ckanext-b2.
+
+
+### Coverage
+
+To run the tests with test coverage reporting, first install `coverage` in your
+virtualenv:
+
+    pip install coverage
+
+Then run nosetests like this:
+
+    nosetests --ckan --with-pylons=test.ini --with-coverage --cover-package=ckanext.b2 --cover-erase ckanext/b2/tests/
+
+To get a nice, HTML-formatted coverage report in `cover/index.html` add the
+`--cover-html` option.
