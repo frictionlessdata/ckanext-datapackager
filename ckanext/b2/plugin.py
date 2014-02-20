@@ -6,27 +6,6 @@ import ckanext.b2.lib.helpers as custom_helpers
 import ckanext.b2.actions as custom_actions
 
 
-class B2UserController(toolkit.BaseController):
-    '''A simple user controller class.
-
-    Takes over some of the default user routes from the default user
-    controller.
-
-    '''
-    def read(self, locale=None):
-        '''Render the logged-in user's profile page.
-
-        If no user is logged in, redirects to the login page.
-
-        '''
-        if not toolkit.c.user:
-            helpers.redirect_to(locale=locale, controller='user',
-                                action='login', id=None)
-        user_ref = toolkit.c.userobj.get_reference_preferred_for_uri()
-        helpers.redirect_to(locale=locale, controller='user', action='read',
-                            id=user_ref)
-
-
 class B2PackageController(toolkit.BaseController):
 
     def new_metadata(self, id, data=None, errors=None, error_summary=None):
@@ -82,8 +61,8 @@ class B2Plugin(plugins.SingletonPlugin):
         # method, that's why we seem to need our own controller and action
         # method to handle the redirect.)
         map_.connect('/dashboard',
-                      controller='ckanext.b2.plugin:B2UserController',
-                      action='read')
+            controller='ckanext.b2.controllers.user:B2UserController',
+            action='read')
 
         # After they logout just redirect people to the front page, not the
         # stupid 'You have been logged out' page that CKAN has by default.

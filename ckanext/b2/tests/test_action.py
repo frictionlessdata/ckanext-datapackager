@@ -3,78 +3,18 @@
 '''
 import os.path
 
-import pylons.config as config
-import webtest
 import ckanapi
-import ckan.new_tests.helpers as test_helpers
 import ckan.new_tests.factories as factories
-import ckan.config.middleware
+import ckanext.b2.tests.helpers as custom_helpers
 
 
-def _load_plugin(plugin):
-    '''Add the given plugin to the ckan.plugins config setting.
-
-    If the given plugin is already in the ckan.plugins setting, it won't be
-    added a second time.
-
-    :param plugin: the plugin to add, e.g. ``datastore``
-    :type plugin: string
-
-    '''
-    plugins = set(config['ckan.plugins'].strip().split())
-    plugins.add(plugin.strip())
-    config['ckan.plugins'] = ' '.join(plugins)
-
-
-def _unload_plugin(plugin):
-    '''Remove the given plugin from the ckan.plugins config setting.
-
-    If the given plugin is not in the ckan.plugins setting, nothing will be
-    changed.
-
-    :param plugin: the plugin to remove, e.g. ``datastore``
-    :type plugin: string
-
-    '''
-    plugins = set(config['ckan.plugins'].strip().split())
-    try:
-        plugins.remove(plugin.strip())
-    except KeyError:
-        # Looks like the plugin was not in ckan.plugins.
-        pass
-    config['ckan.plugins'] = ' '.join(plugins)
-
-
-def _get_test_app():
-    '''Return a webtest.TestApp for CKAN, with legacy templates disabled.
-
-    '''
-    config['ckan.legacy_templates'] = False
-    app = ckan.config.middleware.make_app(config['global_conf'], **config)
-    app = webtest.TestApp(app)
-    return app
-
-
-class TestAction(object):
+class TestAction(custom_helpers.FunctionalTestBaseClass):
 
     @classmethod
     def setup_class(cls):
-        cls.original_config = config.copy()
-        test_helpers.reset_db()
-        _load_plugin('b2')
-        cls.app = _get_test_app()
-
-    def setup(self):
-        import ckan.model as model
-        model.repo.rebuild_db()
-
-    @classmethod
-    def teardown_class(cls):
-        # Restore the Pylons config to its original values, in case any tests
-        # changed any config settings.
-        config.clear()
-        config.update(cls.original_config)
-
+        super(TestAction, cls).setup_class()
+        custom_helpers.load_plugin('b2')
+        cls.app = custom_helpers.get_test_app()
 
     def test_resource_create(self):
         '''Test that a schema is added to a resource when it's created.
