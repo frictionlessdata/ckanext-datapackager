@@ -1,8 +1,6 @@
 '''Functional tests for controllers/package.py.'''
 import os.path
 
-import webtest
-
 import ckan.new_tests.factories as factories
 import ckanext.b2.tests.helpers as custom_helpers
 import ckanapi
@@ -10,12 +8,6 @@ import ckanapi
 
 class TestB2PackageController(custom_helpers.FunctionalTestBaseClass):
     '''Functional tests for the B2PackageController class.'''
-
-    @classmethod
-    def setup_class(cls):
-        super(TestB2PackageController, cls).setup_class()
-        custom_helpers.load_plugin('b2')
-        cls.app = custom_helpers.get_test_app()
 
     def test_add_package(self):
         '''Test the custom two-step add package process.
@@ -26,7 +18,7 @@ class TestB2PackageController(custom_helpers.FunctionalTestBaseClass):
 
         '''
         user = factories.User()
-        extra_environ={'REMOTE_USER': str(user['name'])}
+        extra_environ = {'REMOTE_USER': str(user['name'])}
         package_title = 'my test package'
         package_name = 'my-test-package'
 

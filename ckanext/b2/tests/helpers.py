@@ -5,7 +5,7 @@ import pylons.config as config
 import webtest
 
 
-def get_test_app():
+def _get_test_app():
     '''Return a webtest.TestApp for CKAN, with legacy templates disabled.
 
     For functional tests that need to request CKAN pages or post to the API.
@@ -18,7 +18,7 @@ def get_test_app():
     return app
 
 
-def load_plugin(plugin):
+def _load_plugin(plugin):
     '''Add the given plugin to the ckan.plugins config setting.
 
     This is for functional tests that need the plugin to be loaded.
@@ -36,30 +36,12 @@ def load_plugin(plugin):
     config['ckan.plugins'] = ' '.join(plugins)
 
 
-def unload_plugin(plugin):
-    '''Remove the given plugin from the ckan.plugins config setting.
-
-    If the given plugin is not in the ckan.plugins setting, nothing will be
-    changed.
-
-    This is for functional tests that need the plugin to be loaded.
-    Unit tests shouldn't need this.
-
-    :param plugin: the plugin to remove, e.g. ``datastore``
-    :type plugin: string
-
-    '''
-    plugins = set(config['ckan.plugins'].strip().split())
-    try:
-        plugins.remove(plugin.strip())
-    except KeyError:
-        # Looks like the plugin was not in ckan.plugins.
-        pass
-    config['ckan.plugins'] = ' '.join(plugins)
-
-
 class FunctionalTestBaseClass(object):
     '''A base class for functional test classes to inherit from.
+
+    This handles loading the b2 plugin and resetting the CKAN config after your
+    test class has run. It creates a webtest.TestApp at self.app for your class
+    to use to make HTTP requests to the CKAN web UI or API.
 
     If you're overriding methods that this class provides, like setup_class()
     and teardown_class(), make sure to use super() to call this class's methods
@@ -70,6 +52,8 @@ class FunctionalTestBaseClass(object):
     def setup_class(cls):
         # Make a copy of the Pylons config, so we can restore it in teardown.
         cls.original_config = config.copy()
+        _load_plugin('b2')
+        cls.app = _get_test_app()
 
     @classmethod
     def teardown_class(cls):

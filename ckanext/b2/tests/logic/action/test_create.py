@@ -10,12 +10,6 @@ import ckanext.b2.tests.helpers as custom_helpers
 
 class TestCreate(custom_helpers.FunctionalTestBaseClass):
 
-    @classmethod
-    def setup_class(cls):
-        super(TestCreate, cls).setup_class()
-        custom_helpers.load_plugin('b2')
-        cls.app = custom_helpers.get_test_app()
-
     def test_resource_create(self):
         '''Test that a schema is added to a resource when it's created.
 

@@ -7,12 +7,6 @@ import ckanext.b2.tests.helpers as custom_helpers
 class TestB2UserController(custom_helpers.FunctionalTestBaseClass):
     '''Functional tests for the B2UserController class.'''
 
-    @classmethod
-    def setup_class(cls):
-        super(TestB2UserController, cls).setup_class()
-        custom_helpers.load_plugin('b2')
-        cls.app = custom_helpers.get_test_app()
-
     def test_dashboard_not_logged_in(self):
         '''Test the redirect for not-logged-in users visiting /dashboard.
 
