@@ -41,9 +41,9 @@ virtualenv:
 
     pip install coverage
 
-Then run nosetests like this:
+Then run nosetests like this from the top-level `ckanext-b2` directory:
 
-    nosetests --ckan --with-pylons=test.ini --with-coverage --cover-package=ckanext.b2 --cover-erase ckanext/b2/tests/
+    nosetests --ckan --with-pylons=test.ini --with-coverage --cover-package=ckanext.b2 --cover-inclusive --cover-erase .
 
 To get a nice, HTML-formatted coverage report in `cover/index.html` add the
 `--cover-html` option.
