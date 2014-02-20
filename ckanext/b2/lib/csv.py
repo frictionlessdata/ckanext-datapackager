@@ -14,21 +14,14 @@ def _dtype_to_json_table_schema_type(dtype):
     '''Convert a pandas dtype object into a JSON Table Schema type string.
 
     '''
-    if dtype == numpy.datetime64:
-        return 'datetime'
-    elif dtype == numpy.timedelta64:
-        # JSON Table Schema doesn't support deltas.
-        return 'any'
-    elif dtype == numpy.int64:
+    if dtype == numpy.int64:
         return 'integer'
     elif dtype == numpy.float64:
         return 'number'
     elif dtype == numpy.bool:
         return 'boolean'
-    elif dtype == numpy.object:
-        return 'string'
     else:
-        return 'any'
+        return 'string'
 
 
 def infer_schema_from_csv_file(path):
