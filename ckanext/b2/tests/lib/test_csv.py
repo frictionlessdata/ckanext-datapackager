@@ -33,3 +33,23 @@ def test_infer_schema_from_csv_file():
             {'name': 'startingPos', 'type': 'number'},
         ]
     }
+
+
+def test_infer_schema_from_another_csv_file():
+    '''Another sample CSV file test.'''
+    path = '../test-data/test.csv'
+    path = os.path.join(os.path.split(__file__)[0], path)
+    abspath = os.path.abspath(path)
+
+    schema = lib_csv.infer_schema_from_csv_file(abspath)
+
+    assert schema == {
+        'fields': [
+            {'name': 'datetime', 'type': 'string'},
+            {'name': 'timedelta', 'type': 'string'},
+            {'name': 'integer', 'type': 'integer'},
+            {'name': 'number', 'type': 'number'},
+            {'name': 'boolean', 'type': 'boolean'},
+            {'name': 'object', 'type': 'string'},
+        ]
+    }
