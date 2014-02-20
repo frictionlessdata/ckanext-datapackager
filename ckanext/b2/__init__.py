@@ -1,5 +1,5 @@
 # this is a namespace package
-try:
+try:  # pragma: no cover
     import pkg_resources
     pkg_resources.declare_namespace(__name__)
 except ImportError:
