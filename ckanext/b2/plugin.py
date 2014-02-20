@@ -1,28 +1,8 @@
 import ckan.plugins as plugins
 import ckan.plugins.toolkit as toolkit
-import ckan.lib.helpers as helpers
 
 import ckanext.b2.lib.helpers as custom_helpers
 import ckanext.b2.actions as custom_actions
-
-
-class B2PackageController(toolkit.BaseController):
-
-    def new_metadata(self, id, data=None, errors=None, error_summary=None):
-        import ckan.model as model
-        import ckan.lib.base as base
-
-        # Change the package state from draft to active and save it.
-        context = {'model': model, 'session': model.Session,
-                   'user': toolkit.c.user or toolkit.c.author,
-                   'auth_user_obj': toolkit.c.userobj}
-        data_dict = toolkit.get_action('package_show')(context, {'id': id})
-        data_dict['id'] = id
-        data_dict['state'] = 'active'
-        toolkit.get_action('package_update')(context, data_dict)
-
-        base.redirect(helpers.url_for(controller='package', action='read',
-                                      id=id))
 
 
 class B2Plugin(plugins.SingletonPlugin):
@@ -69,7 +49,7 @@ class B2Plugin(plugins.SingletonPlugin):
         map_.redirect('/user/logged_out_redirect', '/')
 
         map_.connect('/dataset/new_metadata/{id}',
-            controller='ckanext.b2.plugin:B2PackageController',
+            controller='ckanext.b2.controllers.package:B2PackageController',
             action='new_metadata')
 
         return map_
