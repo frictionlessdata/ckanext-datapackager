@@ -2,7 +2,7 @@ import ckan.plugins as plugins
 import ckan.plugins.toolkit as toolkit
 
 import ckanext.b2.lib.helpers as custom_helpers
-import ckanext.b2.actions as custom_actions
+import ckanext.b2.logic.action.create
 
 
 class B2Plugin(plugins.SingletonPlugin):
@@ -68,4 +68,6 @@ class B2Plugin(plugins.SingletonPlugin):
         See IActions.
 
         '''
-        return {'resource_create': custom_actions.resource_create}
+        return {
+            'resource_create': ckanext.b2.logic.action.create.resource_create,
+        }

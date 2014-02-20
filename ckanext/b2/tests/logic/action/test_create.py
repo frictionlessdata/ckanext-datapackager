@@ -1,4 +1,4 @@
-'''Functional tests for action.py.
+'''Functional tests for action/create.py.
 
 '''
 import os.path
@@ -8,11 +8,11 @@ import ckan.new_tests.factories as factories
 import ckanext.b2.tests.helpers as custom_helpers
 
 
-class TestAction(custom_helpers.FunctionalTestBaseClass):
+class TestCreate(custom_helpers.FunctionalTestBaseClass):
 
     @classmethod
     def setup_class(cls):
-        super(TestAction, cls).setup_class()
+        super(TestCreate, cls).setup_class()
         custom_helpers.load_plugin('b2')
         cls.app = custom_helpers.get_test_app()
 
@@ -30,7 +30,7 @@ class TestAction(custom_helpers.FunctionalTestBaseClass):
         test_site = ckanapi.TestAppCKAN(self.app, apikey=user['apikey'])
 
         # Get the CSV file to upload.
-        path = 'test-data/lahmans-baseball-database/AllstarFull.csv'
+        path = '../../test-data/lahmans-baseball-database/AllstarFull.csv'
         path = os.path.join(os.path.split(__file__)[0], path)
         abspath = os.path.abspath(path)
         csv_file = open(abspath)

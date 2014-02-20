@@ -1,4 +1,4 @@
-'''Custom action functions provided by this extension.
+'''Custom action create functions provided by this extension.
 
 '''
 import os.path
@@ -91,9 +91,6 @@ def _get_path_to_resource_file(resource_dict):
     :returns: the absolute path to the resource file on the local filesystem
 
     '''
-    if 'id' not in resource_dict:
-        return None
-
     # We need to do a direct import here, there's no nicer way yet.
     import ckan.lib.uploader as uploader
     upload = uploader.ResourceUpload(resource_dict)
@@ -110,11 +107,8 @@ def _infer_schema_for_resource(resource):
 
     '''
     path = _get_path_to_resource_file(resource)
-    if path is None:
-        return None
-    else:
-        schema = lib_csv.infer_schema_from_csv_file(path)
-        return schema
+    schema = lib_csv.infer_schema_from_csv_file(path)
+    return schema
 
 def _after_resource_create(context, resource):
     '''Add a schema to the given resource and save it.'''
