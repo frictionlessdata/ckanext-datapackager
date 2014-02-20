@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/ckan/ckanext-b2.png?branch=travis)](https://travis-ci.org/ckan/ckanext-b2) [![Coverage Status](https://coveralls.io/repos/ckan/ckanext-b2/badge.png?branch=coveralls)](https://coveralls.io/r/ckan/ckanext-b2?branch=coveralls)
+[![Build Status](https://travis-ci.org/ckan/ckanext-b2.png?branch=travis)](https://travis-ci.org/ckan/ckanext-b2) [![Coverage Status](https://coveralls.io/repos/ckan/ckanext-b2/badge.png?branch=master)](https://coveralls.io/r/ckan/ckanext-b2?branch=master)
 
 This is a CKAN extension that contains the CKAN theme and plugins for the B2
 Metadata Generator.
