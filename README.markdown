@@ -3,7 +3,7 @@
 This is a CKAN extension that contains the CKAN theme and plugins for the B2
 Metadata Generator.
 
-To install the latest development version, first
+To install the latest development version on Ubuntu 12.04, first
 [install CKAN 2.2 from source](http://docs.ckan.org/en/latest/maintaining/installing/install-from-source.html)
 and then (assuming you installed CKAN in the default location):
 
