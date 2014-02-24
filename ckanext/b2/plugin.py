@@ -1,8 +1,43 @@
+import os.path
+
 import ckan.plugins as plugins
 import ckan.plugins.toolkit as toolkit
 
 import ckanext.b2.lib.helpers as custom_helpers
-import ckanext.b2.logic.action.create
+import ckanext.b2.lib.csv as lib_csv
+
+
+def _get_path_to_resource_file(resource_dict):
+    '''Return the local filesystem path to an uploaded resource file.
+
+    The given ``resource_dict`` should be for a resource whose file has been
+    uploaded to the FileStore.
+
+    :param resource_dict: dict of the resource whose file you want
+    :type resource_dict: a resource dict, e.g. from action ``resource_show``
+
+    :rtype: string
+    :returns: the absolute path to the resource file on the local filesystem
+
+    '''
+    # We need to do a direct import here, there's no nicer way yet.
+    import ckan.lib.uploader as uploader
+    upload = uploader.ResourceUpload(resource_dict)
+    path = upload.get_path(resource_dict['id'])
+    return os.path.abspath(path)
+
+
+def _infer_schema_for_resource(resource):
+    '''Return a JSON Table Schema for the given resource.
+
+    This will guess column headers and types from the resource's CSV file.
+
+    Assumes a resource with a CSV file uploaded to the FileStore.
+
+    '''
+    path = _get_path_to_resource_file(resource)
+    schema = lib_csv.infer_schema_from_csv_file(path)
+    return schema
 
 
 class B2Plugin(plugins.SingletonPlugin):
@@ -12,7 +47,7 @@ class B2Plugin(plugins.SingletonPlugin):
     plugins.implements(plugins.IConfigurer)
     plugins.implements(plugins.IRoutes, inherit=True)
     plugins.implements(plugins.ITemplateHelpers)
-    plugins.implements(plugins.IActions)
+    plugins.implements(plugins.IResourceUpload)
 
     def update_config(self, config):
         '''Update CKAN's configuration.
@@ -62,12 +97,6 @@ class B2Plugin(plugins.SingletonPlugin):
         '''
         return {'resource_display_name': custom_helpers.resource_display_name}
 
-    def get_actions(self):
-        '''Return the action functions that this plugin provides.
-
-        See IActions.
-
-        '''
-        return {
-            'resource_create': ckanext.b2.logic.action.create.resource_create,
-        }
+    def after_upload(self, context, resource):
+        resource['schema'] = _infer_schema_for_resource(resource)
+        toolkit.get_action('resource_update')(context, resource)

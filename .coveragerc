@@ -3,4 +3,3 @@ omit =
     */site-packages/*
     */python?.?/*
     ckan/*
-    ckanext/b2/logic/action/duplicates.py
