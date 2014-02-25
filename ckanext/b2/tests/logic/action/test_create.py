@@ -23,7 +23,7 @@ class TestCreate(custom_helpers.FunctionalTestBaseClass):
         resource = factories.Resource(dataset=factories.Dataset())
 
         helpers.call_action('resource_schema_field_create',
-            resource_id=resource['id'], name='foo')
+            resource_id=resource['id'], index=0, name='foo')
 
         schema = helpers.call_action('resource_schema_show',
             resource_id=resource['id'])
@@ -31,7 +31,7 @@ class TestCreate(custom_helpers.FunctionalTestBaseClass):
         fields = schema['fields']
         assert len(fields) == 1
         field = fields[0]
-        assert field == {'name': 'foo'}
+        assert field == {'index': 0, 'name': 'foo'}
 
     def test_resource_schema_field_create_complex(self):
         '''More complex test of creating a schema field.
@@ -49,7 +49,7 @@ class TestCreate(custom_helpers.FunctionalTestBaseClass):
         format_ = 'foobar'
 
         helpers.call_action('resource_schema_field_create',
-            resource_id=resource['id'], name=name, title=title,
+            resource_id=resource['id'], index=0, name=name, title=title,
             description=description, type=type_, format=format_)
 
         schema = helpers.call_action('resource_schema_show',
@@ -77,7 +77,7 @@ class TestCreate(custom_helpers.FunctionalTestBaseClass):
         custom_attribute_2 = 'bar'
 
         helpers.call_action('resource_schema_field_create',
-            resource_id=resource['id'], name=name, title=title,
+            resource_id=resource['id'], index=0, name=name, title=title,
             custom_attribute_1=custom_attribute_1,
             custom_attribute_2=custom_attribute_2)
 
@@ -101,14 +101,14 @@ class TestCreate(custom_helpers.FunctionalTestBaseClass):
         '''
         resource = factories.Resource(dataset=factories.Dataset())
         helpers.call_action('resource_schema_field_create',
-            resource_id=resource['id'], name='foo')
+            resource_id=resource['id'], index=0, name='foo')
 
         # The field attributes we will pass.
         name = 'test-field'
         title = 'Test Field'
 
         helpers.call_action('resource_schema_field_create',
-            resource_id=resource['id'], name=name, title=title)
+            resource_id=resource['id'], index=1, name=name, title=title)
 
         schema = helpers.call_action('resource_schema_show',
             resource_id=resource['id'])
@@ -119,18 +119,27 @@ class TestCreate(custom_helpers.FunctionalTestBaseClass):
         assert fields[1]['name'] == name
         assert fields[1]['title'] == title
 
-    def test_resource_schema_field_create_when_field_already_exists(self):
+    def test_resource_schema_field_create_when_name_already_exists(self):
         '''Creating a field with the same name as an existing field should give
         a ValidationError.
 
         '''
         resource = factories.Resource(dataset=factories.Dataset())
         helpers.call_action('resource_schema_field_create',
-            resource_id=resource['id'], name='foo')
+            resource_id=resource['id'], index=0, name='foo')
 
         nose.tools.assert_raises(toolkit.ValidationError, helpers.call_action,
             'resource_schema_field_create', resource_id=resource['id'],
-            name='foo')
+            index=1, name='foo')
+
+    def test_resource_schema_field_create_with_no_index(self):
+        '''Creating a field with no index should raise ValidationError.'''
+
+        resource = factories.Resource(dataset=factories.Dataset())
+
+        nose.tools.assert_raises(toolkit.ValidationError, helpers.call_action,
+            'resource_schema_field_create', name='name',
+            resource_id=resource['id'])
 
     def test_resource_schema_field_create_with_no_name(self):
         '''Creating a field with no name should raise ValidationError.'''
@@ -138,7 +147,8 @@ class TestCreate(custom_helpers.FunctionalTestBaseClass):
         resource = factories.Resource(dataset=factories.Dataset())
 
         nose.tools.assert_raises(toolkit.ValidationError, helpers.call_action,
-            'resource_schema_field_create', resource_id=resource['id'])
+            'resource_schema_field_create', index=0,
+            resource_id=resource['id'])
 
     def test_resource_schema_field_create_with_no_resource_id(self):
         '''Creating a field with no resource_id should raise ValidationError.'''
@@ -146,18 +156,7 @@ class TestCreate(custom_helpers.FunctionalTestBaseClass):
         factories.Resource(dataset=factories.Dataset())
 
         nose.tools.assert_raises(toolkit.ValidationError, helpers.call_action,
-            'resource_schema_field_create', name='foo')
-
-    def test_resource_schema_field_create_with_no_name_or_resource_id(self):
-        '''Creating a field with no name or resource_id should raise
-        ValidationError.
-
-        '''
-
-        factories.Resource(dataset=factories.Dataset())
-
-        nose.tools.assert_raises(toolkit.ValidationError, helpers.call_action,
-            'resource_schema_field_create')
+            'resource_schema_field_create', index=0, name='foo')
 
     def test_resource_schema_field_create_with_empty_name(self):
         '''Creating a field with an empty name should raise ValidationError.
@@ -167,7 +166,18 @@ class TestCreate(custom_helpers.FunctionalTestBaseClass):
 
         nose.tools.assert_raises(toolkit.ValidationError,
             helpers.call_action, 'resource_schema_field_create',
-            resource_id=resource['id'], name='')
+            resource_id=resource['id'], index=0, name='')
+
+    def test_resource_schema_field_create_with_invalid_index(self):
+        '''Creating a field with an invalid index should raise ValidationError.
+
+        '''
+        resource = factories.Resource(dataset=factories.Dataset())
+
+        for index in (-1, 'foo', [], {}, ''):
+            nose.tools.assert_raises(toolkit.ValidationError,
+                helpers.call_action, 'resource_schema_field_create',
+                index=index, name='name', resource_id=resource['id'])
 
     def test_resource_schema_field_create_with_invalid_type(self):
         '''Creating a field with an invalid type should raise ValidationError.
@@ -178,7 +188,7 @@ class TestCreate(custom_helpers.FunctionalTestBaseClass):
         for type_ in (False, 1, 2.0, [], {}, '', 'foo'):
             nose.tools.assert_raises(toolkit.ValidationError,
                 helpers.call_action, 'resource_schema_field_create',
-                resource_id=resource['id'], name='foo', type=type_)
+                resource_id=resource['id'], index=0, name='foo', type=type_)
 
     def test_resource_schema_field_create_non_string_custom_attribute(self):
         '''Non-string custom attribute values should be converted to strings.
@@ -193,7 +203,7 @@ class TestCreate(custom_helpers.FunctionalTestBaseClass):
         custom_attribute_2 = True
 
         helpers.call_action('resource_schema_field_create',
-            resource_id=resource['id'], name=name, title=title,
+            resource_id=resource['id'], index=0, name=name, title=title,
             custom_attribute_1=custom_attribute_1,
             custom_attribute_2=custom_attribute_2)
 
@@ -224,7 +234,7 @@ class TestCreate(custom_helpers.FunctionalTestBaseClass):
                                       **resource_fields)
 
         helpers.call_action('resource_schema_field_create',
-            resource_id=resource['id'], name='name', title='title',
+            resource_id=resource['id'], index=0, name='name', title='title',
             description='description', type='string', format='format')
 
         resource = helpers.call_action('resource_show', id=resource['id'])

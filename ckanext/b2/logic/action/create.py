@@ -12,8 +12,10 @@ def resource_schema_field_create(context, data_dict):
 
     If the resource doesn't have a schema yet one will be created.
 
-    If the schema already contains a field with the given name, an error will
-    be returned.
+    If the schema already contains a field with the given index or name,
+    a ValidationError will be raised. (If you want to update the attributes
+    of an existing field, use
+    :py:func:`~ckanext.b2.logic.action.update.resource_schema_field_update`.)
 
     Any other custom parameters beyond those described below can be given, and
     they will be stored in the field's entry in the schema. The values of these
@@ -23,8 +25,13 @@ def resource_schema_field_create(context, data_dict):
                         added to
     :type resource: string
 
-    :param name: the name of the field, this should match the field/column in
-                 the data file if there is one
+    :param index: the index number of the column in the CSV file that this
+        field corresponds to: 0 means the first column, 1 means the second
+        column, and so on
+    :type index: int
+
+    :param name: the name of the field, this should match the title of the
+                 field/column in the data file if there is one
     :type name: string
 
     :param title: a nicer human readable label or title for the field

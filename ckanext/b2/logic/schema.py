@@ -11,6 +11,8 @@ def resource_schema_field_create_schema():  # Yes, it says schema twice.
 
     return {
         'resource_id': [navl_validators.not_empty, unicode],
+        'index': [navl_validators.not_missing,
+                  custom_validators.field_index_validator],
         'name': [navl_validators.not_empty, unicode,
                  custom_validators.field_name_validator],
         'title': [navl_validators.ignore_missing, unicode],
