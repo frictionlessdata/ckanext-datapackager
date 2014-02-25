@@ -5,6 +5,7 @@ import os.path
 
 import ckanapi
 import ckan.new_tests.factories as factories
+import ckan.common as common
 import ckanext.b2.tests.helpers as custom_helpers
 
 
@@ -90,3 +91,23 @@ class TestPlugin(custom_helpers.FunctionalTestBaseClass):
         schema = resource['schema']
         assert 'fields' in schema
         assert schema != original_schema
+
+
+    def test_schema_output_is_json_string(self):
+        '''Test that a resource's schema output is a valid json string'''
+        user = factories.Sysadmin()
+        package = factories.Dataset(user=user)
+        api = ckanapi.TestAppCKAN(self.app, apikey=user['apikey'])
+
+        csv_file = _get_csv_file(
+            'test-data/lahmans-baseball-database/AllstarFull.csv')
+        resource = api.action.resource_create(package_id=package['id'],
+                                              upload=csv_file)
+        resource_show = api.action.resource_show(id=resource['id'])
+
+        #try and load the schema as json string
+        try:
+            common.json.loads(resource_show['schema'])
+        except ValueError:
+            print resource_show['schema']
+            raise

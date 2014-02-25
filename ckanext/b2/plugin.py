@@ -2,6 +2,7 @@ import os.path
 
 import ckan.plugins as plugins
 import ckan.plugins.toolkit as toolkit
+import ckan.common as common
 
 import ckanext.b2.lib.helpers as custom_helpers
 import ckanext.b2.lib.csv as lib_csv
@@ -101,7 +102,8 @@ class B2Plugin(plugins.SingletonPlugin):
         return {'resource_display_name': custom_helpers.resource_display_name}
 
     def after_upload(self, context, resource):
-        resource['schema'] = _infer_schema_for_resource(resource)
+        resource['schema'] = common.json.dumps(
+            _infer_schema_for_resource(resource))
         toolkit.get_action('resource_update')(context, resource)
 
     def get_actions(self):
