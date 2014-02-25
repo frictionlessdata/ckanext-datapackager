@@ -206,4 +206,27 @@ class TestCreate(custom_helpers.FunctionalTestBaseClass):
         assert field['custom_attribute_1'] == '145'
         assert field['custom_attribute_2'] == 'True'
 
-    # TODO: Test other resource fields are not affected.
+    def test_resource_schema_field_create_does_not_affect_other_fields(self):
+        '''Creating a resource schema field should not affect any of the
+        resource's other fields.
+
+        '''
+        resource_fields = {
+            'url': 'http://www.example_resource.com',
+            'description': 'Just a test resource',
+            'format': 'CSV',
+            'hash': 'xxx',
+            'name': 'test-resource',
+            'mimetype': 'text/csv',
+            'size': '10',
+            }
+        resource = factories.Resource(dataset=factories.Dataset(),
+                                      **resource_fields)
+
+        helpers.call_action('resource_schema_field_create',
+            resource_id=resource['id'], name='name', title='title',
+            description='description', type='string', format='format')
+
+        resource = helpers.call_action('resource_show', id=resource['id'])
+        for key, value in resource_fields.items():
+            assert resource[key] == value, (key, value)
