@@ -179,6 +179,19 @@ class TestCreate(custom_helpers.FunctionalTestBaseClass):
                 helpers.call_action, 'resource_schema_field_create',
                 index=index, name='name', resource_id=resource['id'])
 
+    def test_resource_schema_field_create_with_duplicate_index(self):
+        '''Creating a field with the same index as an existing field should
+        raise ValidationError.
+
+        '''
+        resource = factories.Resource(dataset=factories.Dataset())
+        helpers.call_action('resource_schema_field_create',
+            resource_id=resource['id'], index=0, name='foo')
+
+        nose.tools.assert_raises(toolkit.ValidationError,
+            helpers.call_action, 'resource_schema_field_create',
+            index=0, name='bar', resource_id=resource['id'])
+
     def test_resource_schema_field_create_with_invalid_type(self):
         '''Creating a field with an invalid type should raise ValidationError.
 
