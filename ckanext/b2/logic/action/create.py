@@ -1,7 +1,8 @@
 import json
 
 import ckan.plugins.toolkit as toolkit
-import ckanext.b2.lib.util as util
+import ckan.lib.navl.dictization_functions as dictization_functions
+import ckanext.b2.logic.schema
 
 
 def resource_schema_field_create(context, data_dict):
@@ -15,7 +16,8 @@ def resource_schema_field_create(context, data_dict):
     be returned.
 
     Any other custom parameters beyond those described below can be given, and
-    they will be stored in the field's entry in the schema.
+    they will be stored in the field's entry in the schema. The values of these
+    custom parameters will be converted to strings.
 
     :param resource_id: the ID of the resource whose schema the field should be
                         added to
@@ -48,7 +50,10 @@ def resource_schema_field_create(context, data_dict):
     :rtype: dict
 
     '''
-    # TODO: Validation.
+    data_dict, errors = dictization_functions.validate(data_dict,
+        ckanext.b2.logic.schema.resource_schema_field_create_schema(), context)
+    if errors:
+        raise toolkit.ValidationError(errors)
 
     resource_id = data_dict.pop('resource_id')
 
