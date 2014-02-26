@@ -2,7 +2,9 @@ import json
 
 import ckan.plugins.toolkit as toolkit
 import ckan.lib.navl.dictization_functions as dictization_functions
+
 import ckanext.b2.logic.schema
+import ckanext.b2.exceptions as custom_exceptions
 
 
 def resource_schema_field_create(context, data_dict):
@@ -53,12 +55,16 @@ def resource_schema_field_create(context, data_dict):
                    (optional)
     :type format: string
 
-    :returns: the schema
+    :returns: the field that was created
     :rtype: dict
 
     '''
-    data_dict, errors = dictization_functions.validate(data_dict,
-        ckanext.b2.logic.schema.resource_schema_field_create_schema(), context)
+    try:
+        data_dict, errors = dictization_functions.validate(data_dict,
+            ckanext.b2.logic.schema.resource_schema_field_create_schema(),
+            context)
+    except custom_exceptions.InvalidResourceIDException, e:
+        raise toolkit.ValidationError(e)
     if errors:
         raise toolkit.ValidationError(errors)
 
@@ -81,5 +87,5 @@ def resource_schema_field_create(context, data_dict):
     # This is probably unnecessary as we already have the schema above.
     schema = toolkit.get_action('resource_schema_show')(context,
         {'resource_id': resource_id})
-
-    return schema
+    field = schema['fields'][data_dict['index']]
+    return field

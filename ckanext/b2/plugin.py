@@ -7,7 +7,9 @@ import ckan.common as common
 import ckanext.b2.lib.helpers as custom_helpers
 import ckanext.b2.lib.csv as lib_csv
 import ckanext.b2.logic.action.create
+import ckanext.b2.logic.action.update
 import ckanext.b2.logic.action.get
+import ckanext.b2.logic.action.delete
 
 
 def _get_path_to_resource_file(resource_dict):
@@ -110,6 +112,12 @@ class B2Plugin(plugins.SingletonPlugin):
         return {
             'resource_schema_field_create':
                 ckanext.b2.logic.action.create.resource_schema_field_create,
+            'resource_schema_field_update':
+                ckanext.b2.logic.action.update.resource_schema_field_update,
+            'resource_schema_field_delete':
+                ckanext.b2.logic.action.delete.resource_schema_field_delete,
             'resource_schema_show':
                 ckanext.b2.logic.action.get.resource_schema_show,
+            'resource_schema_field_show':
+                ckanext.b2.logic.action.get.resource_schema_field_show,
         }

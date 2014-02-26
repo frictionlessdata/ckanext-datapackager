@@ -10,11 +10,12 @@ import ckanext.b2.logic.validators as custom_validators
 def resource_schema_field_create_schema():  # Yes, it says schema twice.
 
     return {
-        'resource_id': [navl_validators.not_empty, unicode],
+        '__before': [custom_validators.resource_id_validator],
+        'resource_id': [],
         'index': [navl_validators.not_missing,
-                  custom_validators.field_index_validator],
+                  custom_validators.create_field_index_validator],
         'name': [navl_validators.not_empty, unicode,
-                 custom_validators.field_name_validator],
+                 custom_validators.create_field_name_validator],
         'title': [navl_validators.ignore_missing, unicode],
         'description': [navl_validators.ignore_missing, unicode],
         'type': [navl_validators.ignore_missing,
@@ -24,3 +25,37 @@ def resource_schema_field_create_schema():  # Yes, it says schema twice.
                      core_validators.extras_unicode_convert,
                      navl_validators.keep_extras],
     }
+
+
+def resource_schema_field_update_schema():
+
+    return {
+        '__before': [custom_validators.resource_id_validator],
+        'resource_id': [],
+        'index': [navl_validators.not_missing,
+                  custom_validators.update_field_index_validator],
+        'name': [navl_validators.not_empty, unicode,
+                 custom_validators.update_field_name_validator],
+        'title': [navl_validators.ignore_missing, unicode],
+        'description': [navl_validators.ignore_missing, unicode],
+        'type': [navl_validators.ignore_missing,
+                 custom_validators.field_type_validator],
+        'format': [navl_validators.ignore_missing, unicode],
+        '__extras': [navl_validators.ignore_missing,
+                     core_validators.extras_unicode_convert,
+                     navl_validators.keep_extras],
+    }
+
+
+def resource_schema_field_delete_schema():
+
+    return {
+        '__before': [custom_validators.resource_id_validator],
+        'resource_id': [],
+        'index': [custom_validators.resource_id_validator, navl_validators.not_missing,
+                  custom_validators.update_field_index_validator],
+    }
+
+def resource_schema_field_show_schema():
+
+    return resource_schema_field_delete_schema()

@@ -1,6 +1,8 @@
 import json
 
 import ckan.plugins.toolkit as toolkit
+import ckan.lib.navl.dictization_functions as dictization_functions
+import ckanext.b2.logic.schema
 
 
 def _empty_json_table_schema():
@@ -31,3 +33,15 @@ def resource_schema_show(context, data_dict):
     schema = resource_dict.get('schema', _empty_json_table_schema())
     schema = json.loads(schema)
     return schema
+
+def resource_schema_field_show(context, data_dict):
+
+    data_dict, errors = dictization_functions.validate(data_dict,
+        ckanext.b2.logic.schema.resource_schema_field_show_schema(), context)
+    if errors:
+        raise toolkit.ValidationError(errors)
+
+    schema = toolkit.get_action('resource_schema_show')(context,
+        {'resource_id': data_dict['resource_id']})
+    field = schema['fields'][data_dict['index']]
+    return field

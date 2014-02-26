@@ -1,8 +1,6 @@
 '''Functional tests for logic/action/create.py.
 
 '''
-import json
-
 import nose.tools
 
 import ckan.new_tests.factories as factories
@@ -16,8 +14,8 @@ class TestCreate(custom_helpers.FunctionalTestBaseClass):
     def test_resource_schema_field_create_simple(self):
         '''Simple test that creating a schema field works.
 
-        Simple test of resource_schema_field_create passing only resource_id
-        and name.
+        Simple test of resource_schema_field_create passing only resource_id,
+        index and name.
 
         '''
         resource = factories.Resource(dataset=factories.Dataset())
@@ -65,8 +63,7 @@ class TestCreate(custom_helpers.FunctionalTestBaseClass):
         assert field['format'] == format_
 
     def test_resource_schema_field_create_with_custom_attributes(self):
-        '''Test that string type custom schema field attributes are saved
-        correctly.'''
+        '''Test that custom schema field attributes are saved correctly.'''
 
         resource = factories.Resource(dataset=factories.Dataset())
 
