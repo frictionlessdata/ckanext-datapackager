@@ -171,7 +171,7 @@ class TestCreate(custom_helpers.FunctionalTestBaseClass):
         '''
         resource = factories.Resource(dataset=factories.Dataset())
 
-        for index in (-1, 'foo', [], {}, ''):
+        for index in (-1, 'foo', [], {}, '', [1,2,3], {'foo': 'bar'}):
             nose.tools.assert_raises(toolkit.ValidationError,
                 helpers.call_action, 'resource_schema_field_create',
                 index=index, name='name', resource_id=resource['id'])
@@ -195,7 +195,8 @@ class TestCreate(custom_helpers.FunctionalTestBaseClass):
         '''
         resource = factories.Resource(dataset=factories.Dataset())
 
-        for type_ in (False, 1, 2.0, [], {}, '', 'foo'):
+        for type_ in (False, 1, 2.0, [], {}, '', 'foo', [1,2,3],
+                      {'foo': 'bar'}):
             nose.tools.assert_raises(toolkit.ValidationError,
                 helpers.call_action, 'resource_schema_field_create',
                 resource_id=resource['id'], index=0, name='foo', type=type_)

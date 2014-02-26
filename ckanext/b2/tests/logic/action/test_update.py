@@ -205,7 +205,7 @@ class TestUpdate(custom_helpers.FunctionalTestBaseClass):
         field = helpers.call_action('resource_schema_field_create',
             resource_id=resource['id'], index=0, name='foo')
 
-        for index in (-1, 'foo', [], {}, ''):
+        for index in (-1, 'foo', [], {}, '', [1,2,3], {'foo': 'bar'}):
             field['index'] = index
             nose.tools.assert_raises(toolkit.ValidationError,
                 helpers.call_action, 'resource_schema_field_update',
@@ -219,7 +219,8 @@ class TestUpdate(custom_helpers.FunctionalTestBaseClass):
         field = helpers.call_action('resource_schema_field_create',
             resource_id=resource['id'], index=0, name='foo', type='string')
 
-        for type_ in (False, 1, 2.0, [], {}, '', 'foo'):
+        for type_ in (False, 1, 2.0, [], {}, '', 'foo', [1,2,3],
+                      {'foo': 'bar'}):
             field['type'] = type_
             nose.tools.assert_raises(toolkit.ValidationError,
                 helpers.call_action, 'resource_schema_field_update',

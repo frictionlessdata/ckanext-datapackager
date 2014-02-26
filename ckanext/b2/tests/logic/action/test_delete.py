@@ -66,7 +66,7 @@ class TestDelete(custom_helpers.FunctionalTestBaseClass):
             resource_id=resource['id'], index=0, name='zero')
 
 
-        for index in (-1, 'foo', [], {}, ''):
+        for index in (-1, 'foo', [], {}, '', [1,2,3], {'foo': 'bar'}):
             nose.tools.assert_raises(toolkit.ValidationError,
                 helpers.call_action, 'resource_schema_field_delete',
                 resource_id=resource['id'], index=index)
