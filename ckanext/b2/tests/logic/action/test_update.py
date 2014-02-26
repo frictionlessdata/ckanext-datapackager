@@ -270,3 +270,7 @@ class TestUpdate(custom_helpers.FunctionalTestBaseClass):
         resource = helpers.call_action('resource_show', id=resource['id'])
         for key, value in resource_fields.items():
             assert resource[key] == value, (key, value)
+
+    # TODO: Test resource_schema_field_update with invalid resource_id.
+
+    # TODO: Test the return value of resource_schema_field_update.
