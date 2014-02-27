@@ -35,10 +35,11 @@ def infer_schema_from_csv_file(path):
     dataframe = pandas.read_csv(StringIO.StringIO(open(path).read(1024)))
 
     fields = []
-    for column in dataframe.columns:
+    for (index, column) in enumerate(dataframe.columns):
         fields.append({
+            "index": index,
             "name": column,
-            "type": _dtype_to_json_table_schema_type(dataframe[column].dtype)
+            "type": _dtype_to_json_table_schema_type(dataframe[column].dtype),
         })
 
     schema = {

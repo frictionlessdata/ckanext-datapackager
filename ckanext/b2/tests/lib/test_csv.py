@@ -23,14 +23,14 @@ def test_infer_schema_from_csv_file():
 
     assert schema == {
         'fields': [
-            {'name': 'playerID', 'type': 'string'},
-            {'name': 'yearID', 'type': 'integer'},
-            {'name': 'gameNum', 'type': 'number'},
-            {'name': 'gameID', 'type': 'string'},
-            {'name': 'teamID', 'type': 'string'},
-            {'name': 'lgID', 'type': 'string'},
-            {'name': 'GP', 'type': 'number'},
-            {'name': 'startingPos', 'type': 'number'},
+            {'name': 'playerID', 'type': 'string', 'index': 0},
+            {'name': 'yearID', 'type': 'integer', 'index': 1},
+            {'name': 'gameNum', 'type': 'number', 'index': 2},
+            {'name': 'gameID', 'type': 'string', 'index': 3},
+            {'name': 'teamID', 'type': 'string', 'index': 4},
+            {'name': 'lgID', 'type': 'string', 'index': 5},
+            {'name': 'GP', 'type': 'number', 'index': 6},
+            {'name': 'startingPos', 'type': 'number', 'index': 7},
         ]
     }
 
@@ -45,11 +45,11 @@ def test_infer_schema_from_another_csv_file():
 
     assert schema == {
         'fields': [
-            {'name': 'datetime', 'type': 'string'},
-            {'name': 'timedelta', 'type': 'string'},
-            {'name': 'integer', 'type': 'integer'},
-            {'name': 'number', 'type': 'number'},
-            {'name': 'boolean', 'type': 'boolean'},
-            {'name': 'object', 'type': 'string'},
+            {'name': 'datetime', 'type': 'string', 'index': 0},
+            {'name': 'timedelta', 'type': 'string', 'index': 1},
+            {'name': 'integer', 'type': 'integer', 'index': 2},
+            {'name': 'number', 'type': 'number', 'index': 3},
+            {'name': 'boolean', 'type': 'boolean', 'index': 4},
+            {'name': 'object', 'type': 'string', 'index': 5},
         ]
     }
