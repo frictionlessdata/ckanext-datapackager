@@ -6,6 +6,10 @@ import ckan.common as common
 
 import ckanext.b2.lib.helpers as custom_helpers
 import ckanext.b2.lib.csv as lib_csv
+import ckanext.b2.logic.action.create
+import ckanext.b2.logic.action.update
+import ckanext.b2.logic.action.get
+import ckanext.b2.logic.action.delete
 
 
 def _get_path_to_resource_file(resource_dict):
@@ -49,6 +53,7 @@ class B2Plugin(plugins.SingletonPlugin):
     plugins.implements(plugins.IRoutes, inherit=True)
     plugins.implements(plugins.ITemplateHelpers)
     plugins.implements(plugins.IResourceUpload)
+    plugins.implements(plugins.IActions)
 
     def update_config(self, config):
         '''Update CKAN's configuration.
@@ -102,3 +107,17 @@ class B2Plugin(plugins.SingletonPlugin):
         resource['schema'] = common.json.dumps(
             _infer_schema_for_resource(resource))
         toolkit.get_action('resource_update')(context, resource)
+
+    def get_actions(self):
+        return {
+            'resource_schema_field_create':
+                ckanext.b2.logic.action.create.resource_schema_field_create,
+            'resource_schema_field_update':
+                ckanext.b2.logic.action.update.resource_schema_field_update,
+            'resource_schema_field_delete':
+                ckanext.b2.logic.action.delete.resource_schema_field_delete,
+            'resource_schema_show':
+                ckanext.b2.logic.action.get.resource_schema_show,
+            'resource_schema_field_show':
+                ckanext.b2.logic.action.get.resource_schema_field_show,
+        }
