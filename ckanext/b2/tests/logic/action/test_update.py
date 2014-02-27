@@ -58,6 +58,22 @@ class TestUpdate(custom_helpers.FunctionalTestBaseClass):
         for key, value in new_attributes.items():
             assert field[key] == value, "Attribute wasn't updated: " + key
 
+    def test_resource_schema_field_update_return_value(self):
+        '''resource_schema_field_update should return the updated field.'''
+
+        resource = factories.Resource(dataset=factories.Dataset())
+        helpers.call_action('resource_schema_field_create',
+            resource_id=resource['id'], index=0, name='name', title='title',
+            description='description', type='string', format='format')
+
+        field = helpers.call_action('resource_schema_field_update',
+            resource_id=resource['id'], index=0, name='new-name',
+            title='new-title', description='new-description', type='string',
+            format='format')
+
+        assert field == helpers.call_action('resource_schema_field_show',
+            resource_id=resource['id'], index=0)
+
     def test_resource_schema_field_update_with_custom_attributes(self):
         '''Test updating custom attributes.'''
 
@@ -211,6 +227,35 @@ class TestUpdate(custom_helpers.FunctionalTestBaseClass):
                 helpers.call_action, 'resource_schema_field_update',
                 resource_id=resource['id'], **field)
 
+    def test_resource_schema_field_update_with_invalid_resource_id(self):
+        '''Updating a field with an invalid resource ID should raise
+        ValidationError.
+
+        '''
+        resource = factories.Resource(dataset=factories.Dataset())
+        field = helpers.call_action('resource_schema_field_create',
+            resource_id=resource['id'], index=0, name='foo')
+
+        field['name'] = 'new-name'
+        for resource_id in ([], {}, '', [1, 2, 3], {'foo': 'bar'}):
+            nose.tools.assert_raises(toolkit.ValidationError,
+                helpers.call_action, 'resource_schema_field_update',
+                resource_id=resource_id, index=field['index'])
+
+    def test_resource_schema_field_update_with_nonexistent_resource_id(self):
+        '''Updating a field with a resource ID that doesn't exist should raise
+        ValidationError.
+
+        '''
+        resource = factories.Resource(dataset=factories.Dataset())
+        field = helpers.call_action('resource_schema_field_create',
+            resource_id=resource['id'], index=0, name='foo')
+
+        field['name'] = 'new-name'
+        nose.tools.assert_raises(toolkit.ValidationError,
+            helpers.call_action, 'resource_schema_field_update',
+            resource_id='abcdefghijklmnopq', index=field['index'])
+
     def test_resource_schema_field_update_with_invalid_type(self):
         '''Updating a field with an invalid type should raise ValidationError.
 
@@ -271,7 +316,3 @@ class TestUpdate(custom_helpers.FunctionalTestBaseClass):
         resource = helpers.call_action('resource_show', id=resource['id'])
         for key, value in resource_fields.items():
             assert resource[key] == value, (key, value)
-
-    # TODO: Test resource_schema_field_update with invalid resource_id.
-
-    # TODO: Test the return value of resource_schema_field_update.

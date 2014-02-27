@@ -62,6 +62,20 @@ class TestCreate(custom_helpers.FunctionalTestBaseClass):
         assert field['type'] == type_
         assert field['format'] == format_
 
+    def test_resource_schema_field_create_return_value(self):
+        '''resource_schema_field_create should return the field that was
+        created.
+
+        '''
+        resource = factories.Resource(dataset=factories.Dataset())
+
+        field = helpers.call_action('resource_schema_field_create',
+            resource_id=resource['id'], index=0, name='name', title='title',
+            description='description', type='string', format='format')
+
+        assert field == helpers.call_action('resource_schema_field_show',
+            resource_id=resource['id'], index=0)
+
     def test_resource_schema_field_create_with_custom_attributes(self):
         '''Test that custom schema field attributes are saved correctly.'''
 
@@ -176,6 +190,29 @@ class TestCreate(custom_helpers.FunctionalTestBaseClass):
                 helpers.call_action, 'resource_schema_field_create',
                 index=index, name='name', resource_id=resource['id'])
 
+    def test_resource_schema_field_create_with_invalid_resource_id(self):
+        '''Creating a field with an invalid resource ID should raise
+        ValidationError.
+
+        '''
+        factories.Resource(dataset=factories.Dataset())
+
+        for resource_id in ([], {}, '', [1,2,3], {'foo': 'bar'}):
+            nose.tools.assert_raises(toolkit.ValidationError,
+                helpers.call_action, 'resource_schema_field_create',
+                resource_id=resource_id, index=0)
+
+    def test_resource_schema_field_create_with_nonexistent_resource_id(self):
+        '''Creating a field with a resource ID that doesn't exist should raise
+        ValidationError.
+
+        '''
+        factories.Resource(dataset=factories.Dataset())
+
+        nose.tools.assert_raises(toolkit.ValidationError,
+            helpers.call_action, 'resource_schema_field_create',
+            resource_id='abcdefghijklmnopqrst', index=0)
+
     def test_resource_schema_field_create_with_duplicate_index(self):
         '''Creating a field with the same index as an existing field should
         raise ValidationError.
@@ -251,7 +288,3 @@ class TestCreate(custom_helpers.FunctionalTestBaseClass):
         resource = helpers.call_action('resource_show', id=resource['id'])
         for key, value in resource_fields.items():
             assert resource[key] == value, (key, value)
-
-    # TODO: Test resource_schema_field_create with invalid resource_id.
-
-    # TODO: Test the return value of resource_schema_field_create.
