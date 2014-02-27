@@ -63,11 +63,10 @@ def update_field_index_validator(key, data, errors, context):
 
     # Make sure the resource has a field with this index.
     resource_id = data[('resource_id',)]
-    try:
-        schema = toolkit.get_action('resource_schema_show')(
-            context, {'resource_id': resource_id})
-    except toolkit.ObjectNotFound:
-        raise toolkit.Invalid(toolkit._("Invalid resource_id"))
+    # We're assuming that resource_id has already been validated and is valid,
+    # so resource_schema_show() won't raise an exception here.
+    schema = toolkit.get_action('resource_schema_show')(
+        context, {'resource_id': resource_id})
     matching_fields = []
     for field in schema.get('fields', []):
         if field['index'] == index:

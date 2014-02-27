@@ -58,6 +58,25 @@ class TestUpdate(custom_helpers.FunctionalTestBaseClass):
         for key, value in new_attributes.items():
             assert field[key] == value, "Attribute wasn't updated: " + key
 
+    def test_resource_schema_field_update_with_multiple_fields(self):
+        '''Test updating a field when the schema has multiple fields.'''
+
+        resource = factories.Resource(dataset=factories.Dataset())
+        helpers.call_action('resource_schema_field_create',
+            resource_id=resource['id'], index=0, name='zero')
+        field = helpers.call_action('resource_schema_field_create',
+            resource_id=resource['id'], index=1, name='one')
+        helpers.call_action('resource_schema_field_create',
+            resource_id=resource['id'], index=2, name='two')
+
+        field['name'] = 'new-name'
+        helpers.call_action('resource_schema_field_update',
+            resource_id=resource['id'], **field)
+
+        field = helpers.call_action('resource_schema_field_show',
+            resource_id=resource['id'], index=field['index'])
+        assert field == {'index': 1, 'name': 'new-name'}
+
     def test_resource_schema_field_update_return_value(self):
         '''resource_schema_field_update should return the updated field.'''
 
@@ -169,13 +188,28 @@ class TestUpdate(custom_helpers.FunctionalTestBaseClass):
         '''Updating a field with no index should raise ValidationError.'''
 
         resource = factories.Resource(dataset=factories.Dataset())
-        field = helpers.call_action('resource_schema_field_update',
+        field = helpers.call_action('resource_schema_field_create',
             resource_id=resource['id'], index=0, name='foo')
 
         del field['index']
         nose.tools.assert_raises(toolkit.ValidationError, helpers.call_action,
             'resource_schema_field_update', resource_id=resource['id'],
             **field)
+
+    def test_resource_schema_field_update_with_nonexistent_index(self):
+        '''Updating a field with an index that doesn't exist in the resource's
+        schema should raise ValidationError.
+
+        '''
+        resource = factories.Resource(dataset=factories.Dataset())
+        helpers.call_action('resource_schema_field_create',
+            resource_id=resource['id'], index=0, name='foo')
+        helpers.call_action('resource_schema_field_create',
+            resource_id=resource['id'], index=1, name='bar')
+
+        nose.tools.assert_raises(toolkit.ValidationError, helpers.call_action,
+            'resource_schema_field_update', resource_id=resource['id'],
+            index=6, name='foobar')
 
     def test_resource_schema_field_update_with_no_name(self):
         '''Updating a field with no index should raise ValidationError.'''

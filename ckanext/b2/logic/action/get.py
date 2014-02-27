@@ -32,8 +32,8 @@ def resource_schema_show(context, data_dict):
             context)
     except custom_exceptions.InvalidResourceIDException, e:
         raise toolkit.ValidationError(e)
-    if errors:
-        raise toolkit.ValidationError(errors)
+    assert not errors  # Nothing in resource_schema_show_schema ever adds
+                       # errors to the errors dict.
 
     resource_id = data_dict.pop('resource_id')
 
