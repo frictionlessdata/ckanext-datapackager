@@ -48,6 +48,8 @@ def create_field_index_validator(key, data, errors, context):
     # corresponding to columns that don't actually exist in the resource's CSV
     # file.
 
+    data[key] = index
+
 
 def update_field_index_validator(key, data, errors, context):
 
@@ -78,6 +80,8 @@ def update_field_index_validator(key, data, errors, context):
         raise toolkit.Invalid(toolkit._("There's more than one field with the "
                                         "given index (this shouldn't happen, "
                                         "something has gone wrong)"))
+
+    data[key] = index
 
 
 def create_field_name_validator(key, data, errors, context):

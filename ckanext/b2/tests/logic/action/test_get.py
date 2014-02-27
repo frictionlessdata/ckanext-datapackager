@@ -130,10 +130,23 @@ class TestGet(custom_helpers.FunctionalTestBaseClass):
         '''
         resource, _ = _create_resource_and_field()
 
-        for index in (-1, 'foo', [], {}, '', [1,2,3], {'foo': 'bar'}):
+        for index in (-1, 'foo', [], {}, '', [1, 2, 3], {'foo': 'bar'}):
             nose.tools.assert_raises(toolkit.ValidationError,
                 helpers.call_action, 'resource_schema_field_show',
                 resource_id=resource['id'], index=index)
+
+    def test_resource_schema_field_show_with_string_int(self):
+        '''If an integer is passed to resource_schema_field_show in a string
+        (like "1") it should be converted to an int and the field returned
+        correctly.
+
+        '''
+        resource, field = _create_resource_and_field()
+
+        field = helpers.call_action('resource_schema_field_show',
+            resource_id=resource['id'], index='0')
+
+        assert field == field
 
     def test_resource_schema_field_show_with_nonexistent_index(self):
         '''resource_schema_field_show should raise ValidationError if called
@@ -170,3 +183,47 @@ class TestGet(custom_helpers.FunctionalTestBaseClass):
             foo='foo', bar='bar')
 
         assert field == field
+
+    def test_resource_schema_field_show_with_nonconsecutive_indices(self):
+        '''Test showing a field with index 3, when no fields with indexes
+        0, 1 or 2 exist yet.
+
+        '''
+        resource = factories.Resource(dataset=factories.Dataset())
+        field = {
+            'index': 3,
+            'name': 'name',
+            'title': 'title',
+            'foo': 'bar'
+        }
+        field = helpers.call_action('resource_schema_field_create',
+            resource_id=resource['id'], **field)
+
+        field = helpers.call_action('resource_schema_field_show',
+            resource_id=resource['id'], index=3)
+
+        assert field == field
+
+    def test_resource_schema_field_show_with_out_of_order_creation(self):
+        '''Test that resource_schema_field_show works even if the fields were
+        not created in index order.
+
+        '''
+        resource = factories.Resource(dataset=factories.Dataset())
+        field_3 = helpers.call_action('resource_schema_field_create',
+            resource_id=resource['id'], index=3, name='three')
+        field_1 = helpers.call_action('resource_schema_field_create',
+            resource_id=resource['id'], index=1, name='one')
+        field_0 = helpers.call_action('resource_schema_field_create',
+            resource_id=resource['id'], index=0, name='zero')
+        field_2 = helpers.call_action('resource_schema_field_create',
+            resource_id=resource['id'], index=2, name='two')
+
+        assert helpers.call_action('resource_schema_field_show',
+            resource_id=resource['id'], index=0) == field_0
+        assert helpers.call_action('resource_schema_field_show',
+            resource_id=resource['id'], index=1) == field_1
+        assert helpers.call_action('resource_schema_field_show',
+            resource_id=resource['id'], index=2) == field_2
+        assert helpers.call_action('resource_schema_field_show',
+            resource_id=resource['id'], index=3) == field_3

@@ -70,5 +70,17 @@ def resource_schema_field_show(context, data_dict):
 
     schema = toolkit.get_action('resource_schema_show')(context,
         {'resource_id': data_dict['resource_id']})
-    field = schema['fields'][data_dict['index']]
+
+    # Find the field with the given index.
+    # Note - the field with index 3 is not necessarily the field at index 3
+    # in the list of fields! There may not be fields with indices 0, 1 or 2,
+    # and the fields may have been added out of order.
+    field = None
+    for field_ in schema['fields']:
+        if field_['index'] == data_dict['index']:
+            field = field_
+            break
+    assert field is not None, ("At this point we assume that a field with the "
+                               "given index does exist, because it should "
+                               "have already been validated.")
     return field

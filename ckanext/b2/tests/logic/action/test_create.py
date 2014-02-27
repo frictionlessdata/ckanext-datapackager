@@ -288,3 +288,40 @@ class TestCreate(custom_helpers.FunctionalTestBaseClass):
         resource = helpers.call_action('resource_show', id=resource['id'])
         for key, value in resource_fields.items():
             assert resource[key] == value, (key, value)
+
+    def test_resource_schema_field_create_with_string_int_as_index(self):
+        '''If an integer in a string (like "1") is passed as the index
+        parameter to resource_schema_field_create it should be converted to
+        an int and used.
+
+        '''
+        resource = factories.Resource(dataset=factories.Dataset())
+
+        helpers.call_action('resource_schema_field_create',
+            resource_id=resource['id'], index='0', name='foo')
+
+        schema = helpers.call_action('resource_schema_show',
+            resource_id=resource['id'])
+        assert 'fields' in schema
+        fields = schema['fields']
+        assert len(fields) == 1
+        field = fields[0]
+        assert field == {'index': 0, 'name': 'foo'}
+
+    def test_resource_schema_field_create_with_nonconsecutive_indices(self):
+        '''Test creating a field with index 3, when no fields with indexes
+        0, 1 or 2 exist yet.
+
+        '''
+        resource = factories.Resource(dataset=factories.Dataset())
+
+        helpers.call_action('resource_schema_field_create',
+            resource_id=resource['id'], index=3, name='foo')
+
+        schema = helpers.call_action('resource_schema_show',
+            resource_id=resource['id'])
+        assert 'fields' in schema
+        fields = schema['fields']
+        assert len(fields) == 1
+        field = fields[0]
+        assert field == {'index': 3, 'name': 'foo'}

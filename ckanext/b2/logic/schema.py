@@ -52,7 +52,8 @@ def resource_schema_field_delete_schema():
     return {
         '__before': [custom_validators.resource_id_validator],
         'resource_id': [],
-        'index': [custom_validators.resource_id_validator, navl_validators.not_missing,
+        'index': [custom_validators.resource_id_validator,
+                  navl_validators.not_missing,
                   custom_validators.update_field_index_validator],
     }
 

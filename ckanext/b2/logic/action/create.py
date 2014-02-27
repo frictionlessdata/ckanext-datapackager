@@ -85,7 +85,6 @@ def resource_schema_field_create(context, data_dict):
         {'id': resource_id, 'url': url, 'schema': schema})
 
     # This is probably unnecessary as we already have the schema above.
-    schema = toolkit.get_action('resource_schema_show')(context,
-        {'resource_id': resource_id})
-    field = schema['fields'][data_dict['index']]
+    field = toolkit.get_action('resource_schema_field_show')(context,
+        {'resource_id': resource_id, 'index': data_dict['index']})
     return field

@@ -350,3 +350,38 @@ class TestUpdate(custom_helpers.FunctionalTestBaseClass):
         resource = helpers.call_action('resource_show', id=resource['id'])
         for key, value in resource_fields.items():
             assert resource[key] == value, (key, value)
+
+    def test_resource_schema_field_update_with_string_int_as_index(self):
+        '''If an integer in a string (like "1") is passed as the index
+        parameter to resource_schema_field_update it should be converted to
+        an int and used.
+
+        '''
+        resource = factories.Resource(dataset=factories.Dataset())
+        helpers.call_action('resource_schema_field_create',
+            resource_id=resource['id'], index=0, name='original-name')
+
+        helpers.call_action('resource_schema_field_update',
+            resource_id=resource['id'], index='0', name='new-name')
+
+        field = helpers.call_action('resource_schema_field_show',
+            resource_id=resource['id'], index=0)
+        assert field['index'] == 0
+        assert field['name'] == 'new-name'
+
+    def test_resource_schema_field_update_with_nonconsecutive_indices(self):
+        '''Test updating a field with index 3, when no fields with indexes
+        0, 1 or 2 exist yet.
+
+        '''
+        resource = factories.Resource(dataset=factories.Dataset())
+        helpers.call_action('resource_schema_field_create',
+            resource_id=resource['id'], index=3, name='original-name')
+
+        helpers.call_action('resource_schema_field_update',
+            resource_id=resource['id'], index=3, name='new-name')
+
+        field = helpers.call_action('resource_schema_field_show',
+            resource_id=resource['id'], index=3)
+        assert field['index'] == 3
+        assert field['name'] == 'new-name'
