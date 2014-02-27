@@ -45,7 +45,18 @@ def resource_schema_show(context, data_dict):
 
 
 def resource_schema_field_show(context, data_dict):
+    '''Return the given resource schema field.
 
+    :param resource_id: the ID of the resource
+    :type resource_id: string
+
+    :param index: the index of the field to return
+    :type index: int
+
+    :returns: the field
+    :rtype: dict
+
+    '''
     try:
         data_dict, errors = dictization_functions.validate(data_dict,
             ckanext.b2.logic.schema.resource_schema_field_show_schema(),
