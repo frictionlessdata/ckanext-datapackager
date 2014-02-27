@@ -56,6 +56,12 @@ def resource_schema_field_delete_schema():
                   custom_validators.update_field_index_validator],
     }
 
-def resource_schema_field_show_schema():
 
+def resource_schema_field_show_schema():
     return resource_schema_field_delete_schema()
+
+
+def resource_schema_show_schema():
+    return {
+        'resource_id': [custom_validators.resource_id_validator],
+    }

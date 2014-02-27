@@ -23,7 +23,7 @@ class TestCreate(custom_helpers.FunctionalTestBaseClass):
         helpers.call_action('resource_schema_field_create',
             resource_id=resource['id'], index=0, name='foo')
 
-        schema = helpers.call_action('resource_schema_show',
+        field = helpers.call_action('resource_schema_show',
             resource_id=resource['id'])
         assert 'fields' in schema
         fields = schema['fields']

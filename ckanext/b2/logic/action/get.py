@@ -2,7 +2,9 @@ import json
 
 import ckan.plugins.toolkit as toolkit
 import ckan.lib.navl.dictization_functions as dictization_functions
+
 import ckanext.b2.logic.schema
+import ckanext.b2.exceptions as custom_exceptions
 
 
 def _empty_json_table_schema():
@@ -24,7 +26,14 @@ def resource_schema_show(context, data_dict):
     :rtype: dict
 
     '''
-    # TODO: Validation.
+    try:
+        data_dict, errors = dictization_functions.validate(data_dict,
+            ckanext.b2.logic.schema.resource_schema_show_schema(),
+            context)
+    except custom_exceptions.InvalidResourceIDException, e:
+        raise toolkit.ValidationError(e)
+    if errors:
+        raise toolkit.ValidationError(errors)
 
     resource_id = data_dict.pop('resource_id')
 
@@ -34,10 +43,15 @@ def resource_schema_show(context, data_dict):
     schema = json.loads(schema)
     return schema
 
+
 def resource_schema_field_show(context, data_dict):
 
-    data_dict, errors = dictization_functions.validate(data_dict,
-        ckanext.b2.logic.schema.resource_schema_field_show_schema(), context)
+    try:
+        data_dict, errors = dictization_functions.validate(data_dict,
+            ckanext.b2.logic.schema.resource_schema_field_show_schema(),
+            context)
+    except custom_exceptions.InvalidResourceIDException, e:
+        raise toolkit.ValidationError(e)
     if errors:
         raise toolkit.ValidationError(errors)
 

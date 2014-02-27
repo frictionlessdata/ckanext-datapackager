@@ -9,7 +9,6 @@ import ckanext.b2.exceptions as custom_exceptions
 
 
 def resource_id_validator(key, converted_data, errors, context):
-
     resource_id = converted_data.get(('resource_id',))
     if (not resource_id) or (resource_id is df.missing):
         raise custom_exceptions.InvalidResourceIDException(
