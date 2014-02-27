@@ -165,11 +165,11 @@ class TestUpdate(custom_helpers.FunctionalTestBaseClass):
             'resource_schema_field_update', resource_id=resource['id'],
             **field)
 
-    def test_resource_schema_field_create_with_no_index(self):
+    def test_resource_schema_field_update_with_no_index(self):
         '''Updating a field with no index should raise ValidationError.'''
 
         resource = factories.Resource(dataset=factories.Dataset())
-        field = helpers.call_action('resource_schema_field_create',
+        field = helpers.call_action('resource_schema_field_update',
             resource_id=resource['id'], index=0, name='foo')
 
         del field['index']
@@ -189,7 +189,7 @@ class TestUpdate(custom_helpers.FunctionalTestBaseClass):
             'resource_schema_field_update', resource_id=resource['id'],
             **field)
 
-    def test_resource_schema_field_create_with_no_resource_id(self):
+    def test_resource_schema_field_update_with_no_resource_id(self):
         '''Updating a field with no resource_id should raise ValidationError.
 
         '''
