@@ -16,6 +16,7 @@ def _empty_json_table_schema():
     return json.dumps({'fields': []})
 
 
+@toolkit.side_effect_free
 def resource_schema_show(context, data_dict):
     '''Return the given resource's schema.
 
@@ -44,6 +45,7 @@ def resource_schema_show(context, data_dict):
     return schema
 
 
+@toolkit.side_effect_free
 def resource_schema_field_show(context, data_dict):
     '''Return the given resource schema field.
 
