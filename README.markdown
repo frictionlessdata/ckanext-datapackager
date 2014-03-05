@@ -24,9 +24,13 @@ restart your web server.
 Tests
 -----
 
+You'll need to install the dev requirements to run the tests:
+
+    pip install -r dev-requirements.txt
+
 To run the tests:
 
-    nosetests --ckan --with-pylons=test.ini
+    nosetests --nologcapture --ckan --with-pylons=test.ini
 
 Note that ckanext-b2's `test.ini` file assumes that the relative path from it
 to CKAN's `test-core.ini` file is `../ckan/test-core.ini`, i.e. that you have
@@ -44,7 +48,7 @@ virtualenv:
 
 Then run nosetests like this from the top-level `ckanext-b2` directory:
 
-    nosetests --ckan --with-pylons=test.ini --with-coverage --cover-package=ckanext.b2 --cover-inclusive --cover-erase .
+    nosetests --nologcapture --ckan --with-pylons=test.ini --with-coverage --cover-package=ckanext.b2 --cover-inclusive --cover-erase .
 
 To get a nice, HTML-formatted coverage report in `cover/index.html` add the
 `--cover-html` option.
