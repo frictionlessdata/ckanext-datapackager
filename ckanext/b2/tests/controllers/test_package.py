@@ -84,8 +84,10 @@ class TestB2PackageController(custom_helpers.FunctionalTestBaseClass):
         schema = resource['schema']
         assert 'fields' in schema
 
-    def test_download_sdf(self):
-        '''Test downloading a Simple Data Format ZIP file of a package.
+    def test_download_sdf_with_linked_resources(self):
+        '''Test downloading a Simple Data Format ZIP file of a package when the
+        package contains only resources that have been linked to (not uploaded
+        to the FileStore).
 
         '''
         dataset = factories.Dataset()
@@ -108,7 +110,7 @@ class TestB2PackageController(custom_helpers.FunctionalTestBaseClass):
         nose.tools.assert_equals(dataset['name'], datapackage['name'])
 
         resources = datapackage['resources']
-        nose.tools.assert_equals(resource_1['name'], resources[0]['path'])
+        nose.tools.assert_equals(resource_1['url'], resources[0]['url'])
 
         schema = resources[0]['schema']
         nose.tools.assert_equals(

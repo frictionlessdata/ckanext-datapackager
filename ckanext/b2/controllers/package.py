@@ -41,33 +41,12 @@ class B2PackageController(toolkit.BaseController):
             package_id)
         r.content_type = 'application/octet-stream'
 
-        context['relative_paths'] = True
-        datapackage_dict = toolkit.get_action('package_to_sdf')(context,
-            {'id': package_id})
+        # Make a zipstream and put it in the context. This means the
+        # package_to_sdf action will add files into the zipstream for us.
+        pkg_zipstream = zipstream.ZipFile(mode='w',
+                                          compression=zipstream.ZIP_DEFLATED)
+        context['pkg_zipstream'] = pkg_zipstream
 
-        z = zipstream.ZipFile(mode='w', compression=zipstream.ZIP_DEFLATED)
+        toolkit.get_action('package_to_sdf')(context, {'id': package_id})
 
-        pkg_dict = toolkit.get_action('package_show')(context,
-                                                    {'name_or_id': package_id})
-        for resource in pkg_dict['resources']:
-
-            path = util.get_path_to_resource_file(resource)
-
-            name = resource.get('name')
-            if not name:
-                name = toolkit._('Unnamed file')
-
-            if os.path.isfile(path):
-                z.write(path, arcname=name)
-
-        tmp_dir = os.path.join(tempfile.gettempdir(), 'ckan-sdf')
-        if not os.path.exists(tmp_dir):
-            os.makedirs(os.path.join(tmp_dir))
-
-        datapackage_path = os.path.join(tmp_dir, '{0}.json'.format(package_id))
-        datapackage_file = open(datapackage_path, 'w+')
-        datapackage_file.write(helpers.json.dumps(datapackage_dict, indent=2))
-        datapackage_file.close()
-        z.write(datapackage_file.name, 'datapackage.json')
-
-        return z
+        return pkg_zipstream

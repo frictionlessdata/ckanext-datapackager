@@ -96,6 +96,11 @@ def package_to_sdf(context, data_dict):
     multi-file package including datapackage.json file and additional data
     files.
 
+    If a zipstream.ZipFile object is provided with key "pkg_zipstream" in the
+    context dict, then a datapackage.json file and data files for each of the
+    package's resources (if the resource has a file uploaded to the FileStore)
+    will be added into the zipstream.
+
     :param package_id: the ID of the package
     :type package_id: string
 
@@ -111,4 +116,4 @@ def package_to_sdf(context, data_dict):
     pkg_dict = toolkit.get_action('package_show')(context,
                                                   {'name_or_id': package_id})
     return sdf.convert_to_sdf(pkg_dict,
-        relative_paths=context.get('relative_paths', False))
+        pkg_zipstream=context.get('pkg_zipstream'))

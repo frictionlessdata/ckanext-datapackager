@@ -3,25 +3,40 @@
 (Including converting CKAN's package and resource formats into SDF.)
 
 '''
+import os.path
+import tempfile
+
 import ckan.lib.helpers as h
 import ckan.plugins.toolkit as toolkit
 
+import ckanext.b2.lib.util as util
 
-def _convert_to_sdf_resource(resource_dict, relative_path=False):
+
+def _convert_to_sdf_resource(resource_dict, pkg_zipstream=None):
     '''Convert a CKAN resource dict into a Simple Data Format resource dict.
 
+    :param pkg_zipstream: If given and if the resource has a file uploaded to
+        the FileStore, then the file will be written to the zipstream and the
+        returned dict will contain "path" instead of "url".
+    :type pkg_zipstream: zipstream.ZipFile
+
     '''
-    if relative_path:
+    if pkg_zipstream and resource_dict.get('url_type') == 'upload':
+
         name = resource_dict.get('name')
         if not name:
+            # FIXME: Need to generate unique names (unique within the
+            # package) for unnamed files.
             name = toolkit._('Unnamed file')
-        resource = {
-            'path': name,
-        }
+        resource = {'path': name}
+
+        # Add the resource file itself into the ZIP file.
+        pkg_zipstream.write(util.get_path_to_resource_file(resource_dict),
+                            arcname=resource['path'])
+
     else:
-        resource = {
-            'url': resource_dict['url'],
-        }
+        resource = {'url': resource_dict['url']}
+
     try:
         schema_string = resource_dict.get('schema', '')
         resource['schema'] = h.json.loads(schema_string)
@@ -30,18 +45,17 @@ def _convert_to_sdf_resource(resource_dict, relative_path=False):
     return resource
 
 
-def convert_to_sdf(pkg_dict, relative_paths=False):
+def convert_to_sdf(pkg_dict, pkg_zipstream=None):
     '''Convert the given CKAN package dict into a Simple Data Format dict.
 
     Convert the given package dict into a dict that, if dumped to a JSON
     string, can form the valid contents of the package descriptor file in a
     Simple Data Format data package.
 
-    :param relative_paths: If True, each resource dict will contain the
-        relative path to the resource in the data package ZIP file. If False,
-        each resource dict will contain the URL to the online copy of the
-        resource.
-    :type relative_paths: boolean
+    :param pkg_zipstream: If given, a datapackage.json file and data files for
+        each of the package's resources (if the resource has a file uploaded to
+        the FileStore) will be written to the zipstream.
+    :type pkg_zipstream: zipstream.ZipFile
 
     :returns: the data package dict
     :rtype: dict
@@ -49,7 +63,22 @@ def convert_to_sdf(pkg_dict, relative_paths=False):
     '''
     data_package = {
         'name': pkg_dict['name'],
-        'resources': [_convert_to_sdf_resource(r, relative_paths)
+        'resources': [_convert_to_sdf_resource(r, pkg_zipstream)
                       for r in pkg_dict.get('resources', None)]
     }
+
+    if pkg_zipstream:
+        # We are building a ZIP file for this package.
+
+        tmp_dir = os.path.join(tempfile.gettempdir(), 'ckan-sdf')
+        if not os.path.exists(tmp_dir):
+            os.makedirs(os.path.join(tmp_dir))
+
+        datapackage_path = os.path.join(tmp_dir, '{0}.json'.format(
+            pkg_dict['id']))
+        datapackage_file = open(datapackage_path, 'w+')
+        datapackage_file.write(h.json.dumps(data_package, indent=2))
+        datapackage_file.close()
+        pkg_zipstream.write(datapackage_file.name, 'datapackage.json')
+
     return data_package
