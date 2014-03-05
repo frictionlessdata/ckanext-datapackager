@@ -1,5 +1,6 @@
 import tempfile
 import os
+import os.path
 
 import zipstream
 
@@ -56,7 +57,8 @@ class B2PackageController(toolkit.BaseController):
             if not name:
                 name = toolkit._('Unnamed file')
 
-            z.write(path, arcname=name)
+            if os.path.isfile(path):
+                z.write(path, arcname=name)
 
         tmp_dir = os.path.join(tempfile.gettempdir(), 'ckan-sdf')
         if not os.path.exists(tmp_dir):
