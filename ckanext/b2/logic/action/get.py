@@ -89,7 +89,7 @@ def resource_schema_field_show(context, data_dict):
 
 @toolkit.side_effect_free
 def package_to_sdf(context, data_dict):
-    '''Return the given CKAN package in dataprotocols.org Data Package format.
+    '''Return the given CKAN package in Simple Data Format.
 
     This returns just the data package metadata in JSON format (what would be
     the contents of the datapackage.json file), it does not return the whole
