@@ -6,6 +6,7 @@ import json
 
 import nose.tools
 
+import ckan.plugins.toolkit as toolkit
 import ckan.new_tests.factories as factories
 import ckanext.b2.tests.helpers as custom_helpers
 import ckanapi
@@ -111,7 +112,10 @@ class TestB2PackageController(custom_helpers.FunctionalTestBaseClass):
             name='AllstarFull.csv', upload=csv_file)
 
         # Download the package's SDF ZIP file.
-        url = '/dataset/downloadsdf/{0}'.format(dataset['name'])
+        url = toolkit.url_for(
+            controller='ckanext.b2.controllers.package:B2PackageController',
+            action='download_sdf',
+            package_id=dataset['name'])
         response = self.app.get(url)
 
         # Open the response as a ZIP file.
@@ -158,7 +162,10 @@ class TestB2PackageController(custom_helpers.FunctionalTestBaseClass):
                 name=filename(path), upload=csv_file)
 
         # Download the package's SDF ZIP file.
-        url = '/dataset/downloadsdf/{0}'.format(dataset['name'])
+        url = toolkit.url_for(
+            controller='ckanext.b2.controllers.package:B2PackageController',
+            action='download_sdf',
+            package_id=dataset['name'])
         response = self.app.get(url)
 
         # Open the response as a ZIP file.
@@ -182,3 +189,17 @@ class TestB2PackageController(custom_helpers.FunctionalTestBaseClass):
         for csv_path in csv_paths:
             assert (zip_.open(filename(csv_path)).read() ==
                     _get_csv_file(csv_path).read())
+
+    def test_that_download_button_is_on_page(self):
+        '''Tests that the download button is shown on the package pages.'''
+
+        dataset = factories.Dataset()
+
+        response = self.app.get('/dataset/{0}'.format(dataset['name']))
+        soup = response.html
+        download_button = soup.find(id='download_sdf_button')
+        download_url = download_button['href']
+        assert download_url == toolkit.url_for(
+            controller='ckanext.b2.controllers.package:B2PackageController',
+            action='download_sdf',
+            package_id=dataset['name'])
