@@ -1,35 +1,14 @@
-import os.path
-
 import ckan.plugins as plugins
 import ckan.plugins.toolkit as toolkit
 import ckan.common as common
 
 import ckanext.b2.lib.helpers as custom_helpers
 import ckanext.b2.lib.csv as lib_csv
+import ckanext.b2.lib.util as util
 import ckanext.b2.logic.action.create
 import ckanext.b2.logic.action.update
 import ckanext.b2.logic.action.get
 import ckanext.b2.logic.action.delete
-
-
-def _get_path_to_resource_file(resource_dict):
-    '''Return the local filesystem path to an uploaded resource file.
-
-    The given ``resource_dict`` should be for a resource whose file has been
-    uploaded to the FileStore.
-
-    :param resource_dict: dict of the resource whose file you want
-    :type resource_dict: a resource dict, e.g. from action ``resource_show``
-
-    :rtype: string
-    :returns: the absolute path to the resource file on the local filesystem
-
-    '''
-    # We need to do a direct import here, there's no nicer way yet.
-    import ckan.lib.uploader as uploader
-    upload = uploader.ResourceUpload(resource_dict)
-    path = upload.get_path(resource_dict['id'])
-    return os.path.abspath(path)
 
 
 def _infer_schema_for_resource(resource):
@@ -40,7 +19,7 @@ def _infer_schema_for_resource(resource):
     Assumes a resource with a CSV file uploaded to the FileStore.
 
     '''
-    path = _get_path_to_resource_file(resource)
+    path = util.get_path_to_resource_file(resource)
     schema = lib_csv.infer_schema_from_csv_file(path)
     return schema
 
@@ -61,7 +40,8 @@ class B2Plugin(plugins.SingletonPlugin):
         See IConfigurer.
 
         '''
-        toolkit.add_template_directory(config, 'templates')
+        toolkit.add_template_directory(config,
+                                       'templates/datapackager_ckan_theme')
         toolkit.add_resource('fanstatic', 'b2')
 
     def before_map(self, map_):
@@ -120,4 +100,32 @@ class B2Plugin(plugins.SingletonPlugin):
                 ckanext.b2.logic.action.get.resource_schema_show,
             'resource_schema_field_show':
                 ckanext.b2.logic.action.get.resource_schema_field_show,
+        }
+
+
+class DownloadSDFPlugin(plugins.SingletonPlugin):
+    '''Plugin that adds downloading packages in Simple Data Format.
+
+    Adds a Download button to package pages that downloads a Simple Data Format
+    ZIP file of the package. Also adds an API for getting a package descriptor
+    Simple Data Format JSON.
+
+    '''
+    plugins.implements(plugins.IActions)
+    plugins.implements(plugins.IConfigurer)
+    plugins.implements(plugins.IRoutes, inherit=True)
+
+    def update_config(self, config):
+        toolkit.add_template_directory(config, 'templates/download_sdf')
+
+    def before_map(self, map_):
+        map_.connect('/dataset/downloadsdf/{package_id}',
+            controller='ckanext.b2.controllers.package:B2PackageController',
+            action='download_sdf')
+        return map_
+
+    def get_actions(self):
+        return {
+            'package_to_sdf':
+                ckanext.b2.logic.action.get.package_to_sdf,
         }

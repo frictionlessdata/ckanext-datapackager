@@ -26,5 +26,6 @@ setup(
         [ckan.plugins]
         # Add plugins here, e.g.
         b2=ckanext.b2.plugin:B2Plugin
+        downloadsdf=ckanext.b2.plugin:DownloadSDFPlugin
     ''',
 )

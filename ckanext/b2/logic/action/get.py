@@ -5,6 +5,7 @@ import ckan.lib.navl.dictization_functions as dictization_functions
 
 import ckanext.b2.logic.schema
 import ckanext.b2.exceptions as custom_exceptions
+import ckanext.b2.lib.sdf as sdf
 
 
 def _empty_json_table_schema():
@@ -84,3 +85,30 @@ def resource_schema_field_show(context, data_dict):
                                "given index does exist, because it should "
                                "have already been validated.")
     return field
+
+
+@toolkit.side_effect_free
+def package_to_sdf(context, data_dict):
+    '''Return the given CKAN package in dataprotocols.org Data Package format.
+
+    This returns just the data package metadata in JSON format (what would be
+    the contents of the datapackage.json file), it does not return the whole
+    multi-file package including datapackage.json file and additional data
+    files.
+
+    :param package_id: the ID of the package
+    :type package_id: string
+
+    :returns: the data package metadata
+    :rtype: JSON
+
+    '''
+    try:
+        package_id = data_dict['id']
+    except KeyError:
+        raise toolkit.ValidationError({'id': 'missing id'})
+
+    pkg_dict = toolkit.get_action('package_show')(context,
+                                                  {'name_or_id': package_id})
+    return sdf.convert_to_sdf(pkg_dict,
+        relative_paths=context.get('relative_paths', False))
