@@ -53,6 +53,7 @@ class FunctionalTestBaseClass(object):
         # Make a copy of the Pylons config, so we can restore it in teardown.
         cls.original_config = config.copy()
         _load_plugin('b2')
+        _load_plugin('downloadsdf')
         cls.app = _get_test_app()
 
     @classmethod

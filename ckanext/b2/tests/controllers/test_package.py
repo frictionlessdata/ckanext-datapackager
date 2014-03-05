@@ -1,5 +1,10 @@
 '''Functional tests for controllers/package.py.'''
 import os.path
+import zipfile
+import StringIO
+import json
+
+import nose.tools
 
 import ckan.new_tests.factories as factories
 import ckanext.b2.tests.helpers as custom_helpers
@@ -78,3 +83,35 @@ class TestB2PackageController(custom_helpers.FunctionalTestBaseClass):
         assert 'schema' in resource
         schema = resource['schema']
         assert 'fields' in schema
+
+    def test_download_sdf(self):
+        '''Test downloading a Simple Data Format ZIP file of a package.
+
+        '''
+        dataset = factories.Dataset()
+        resource_1 = factories.Resource(dataset=dataset,
+            url='http://test.com/test-url-1',
+            schema='{"fields":[{"type":"string", "name":"col1"}]}')
+        factories.Resource(dataset=dataset, url='http://test.com/test-url-2',
+            schema='{"fields":[{"type":"string", "name":"col1"}]}')
+
+        url = '/dataset/downloadsdf/{0}'.format(dataset['name'])
+        response = self.app.get(url)
+
+        # Open our response as a zip file.
+        zip_ = zipfile.ZipFile(StringIO.StringIO(response.body))
+
+        # Extract datapackage.json from the zip file and load it as json.
+        datapackage = json.load(zip_.open('datapackage.json'))
+
+        # Do some checking to see that the name, url and schema is in the json
+        nose.tools.assert_equals(dataset['name'], datapackage['name'])
+
+        resources = datapackage['resources']
+        nose.tools.assert_equals(resource_1['name'], resources[0]['path'])
+
+        schema = resources[0]['schema']
+        nose.tools.assert_equals(
+            {'fields': [{'type': 'string', 'name': 'col1'}]},
+            schema
+        )

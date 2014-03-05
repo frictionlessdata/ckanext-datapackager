@@ -227,3 +227,39 @@ class TestGet(custom_helpers.FunctionalTestBaseClass):
             resource_id=resource['id'], index=2) == field_2
         assert helpers.call_action('resource_schema_field_show',
             resource_id=resource['id'], index=3) == field_3
+
+    def test_package_to_sdf(self):
+
+        dataset = factories.Dataset()
+        factories.Resource(dataset=dataset, url='http://test.com/test-url-1',
+            schema='{"fields":[{"type":"string", "name":"col1"}]}')
+        factories.Resource(dataset=dataset, url='http://test.com/test-url-2',
+            schema='{"fields":[{"type":"string", "name":"col1"}]}')
+
+        sdf = helpers.call_action('package_to_sdf', id=dataset['name'])
+
+        expected_output = {
+            'name': dataset['name'],
+            'resources': [
+                {
+                    'schema': {
+                        u'fields': [{u'name': u'col1', u'type': u'string'}]
+                    },
+                    'url': u'http://test.com/test-url-1'
+                },
+                {
+                    'schema': {
+                        u'fields': [{u'name': u'col1', u'type': u'string'}]
+                    },
+                    'url': u'http://test.com/test-url-2'
+                }
+            ]
+        }
+        nose.tools.assert_equals(expected_output, sdf)
+
+    def test_package_to_sdf_with_missing_id(self):
+        nose.tools.assert_raises(
+            toolkit.ValidationError,
+            helpers.call_action,
+            'package_to_sdf',
+        )
