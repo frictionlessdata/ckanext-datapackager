@@ -11,6 +11,13 @@ import ckanext.b2.tests.helpers as custom_helpers
 import ckanapi
 
 
+def _get_csv_file(relative_path):
+        path = os.path.join(os.path.split(__file__)[0], relative_path)
+        abspath = os.path.abspath(path)
+        csv_file = open(abspath)
+        return csv_file
+
+
 class TestB2PackageController(custom_helpers.FunctionalTestBaseClass):
     '''Functional tests for the B2PackageController class.'''
 
@@ -84,36 +91,94 @@ class TestB2PackageController(custom_helpers.FunctionalTestBaseClass):
         schema = resource['schema']
         assert 'fields' in schema
 
-    def test_download_sdf_with_linked_resources(self):
-        '''Test downloading a Simple Data Format ZIP file of a package when the
-        package contains only resources that have been linked to (not uploaded
-        to the FileStore).
+    def test_download_sdf(self):
+        '''Test downloading a Simple Data Format ZIP file of a package.
 
         '''
+        user = factories.Sysadmin()
+        api = ckanapi.TestAppCKAN(self.app, apikey=user['apikey'])
         dataset = factories.Dataset()
-        resource_1 = factories.Resource(dataset=dataset,
+
+        # Add a resource with a linked-to, not uploaded, data file.
+        linked_resource = factories.Resource(dataset=dataset,
             url='http://test.com/test-url-1',
             schema='{"fields":[{"type":"string", "name":"col1"}]}')
-        factories.Resource(dataset=dataset, url='http://test.com/test-url-2',
-            schema='{"fields":[{"type":"string", "name":"col1"}]}')
 
+        # Add a resource with an uploaded data file.
+        csv_path = '../test-data/lahmans-baseball-database/AllstarFull.csv'
+        csv_file = _get_csv_file(csv_path)
+        api.action.resource_create(package_id=dataset['id'],
+            name='AllstarFull.csv', upload=csv_file)
+
+        # Download the package's SDF ZIP file.
         url = '/dataset/downloadsdf/{0}'.format(dataset['name'])
         response = self.app.get(url)
 
-        # Open our response as a zip file.
+        # Open the response as a ZIP file.
         zip_ = zipfile.ZipFile(StringIO.StringIO(response.body))
+
+        # Check that the ZIP file contains the files we expect.
+        nose.tools.assert_equals(zip_.namelist(),
+                                 ['AllstarFull.csv', 'datapackage.json'])
 
         # Extract datapackage.json from the zip file and load it as json.
         datapackage = json.load(zip_.open('datapackage.json'))
 
-        # Do some checking to see that the name, url and schema is in the json
+        # Check the contents of the datapackage.json file.
         nose.tools.assert_equals(dataset['name'], datapackage['name'])
 
         resources = datapackage['resources']
-        nose.tools.assert_equals(resource_1['url'], resources[0]['url'])
-
+        nose.tools.assert_equals(linked_resource['url'], resources[0]['url'])
         schema = resources[0]['schema']
         nose.tools.assert_equals(
-            {'fields': [{'type': 'string', 'name': 'col1'}]},
-            schema
-        )
+            {'fields': [{'type': 'string', 'name': 'col1'}]}, schema)
+
+        nose.tools.assert_equals(resources[1]['path'], 'AllstarFull.csv')
+
+        # Check the contenst of the AllstarFull.csv file.
+        assert (zip_.open('AllstarFull.csv').read() ==
+                _get_csv_file(csv_path).read())
+
+    def test_download_sdf_with_three_files(self):
+        '''Upload three CSV files to a package and test downloading the ZIP.'''
+
+        user = factories.Sysadmin()
+        api = ckanapi.TestAppCKAN(self.app, apikey=user['apikey'])
+        dataset = factories.Dataset()
+
+        def filename(path):
+            return os.path.split(path)[1]
+
+        csv_paths = ('../test-data/lahmans-baseball-database/AllstarFull.csv',
+            '../test-data/lahmans-baseball-database/PitchingPost.csv',
+            '../test-data/lahmans-baseball-database/TeamsHalf.csv')
+        for path in csv_paths:
+            csv_file = _get_csv_file(path)
+            api.action.resource_create(package_id=dataset['id'],
+                name=filename(path), upload=csv_file)
+
+        # Download the package's SDF ZIP file.
+        url = '/dataset/downloadsdf/{0}'.format(dataset['name'])
+        response = self.app.get(url)
+
+        # Open the response as a ZIP file.
+        zip_ = zipfile.ZipFile(StringIO.StringIO(response.body))
+
+        # Check that the ZIP file contains the files we expect.
+        nose.tools.assert_equals(zip_.namelist(),
+            [filename(path) for path in csv_paths] + ['datapackage.json'])
+
+        # Extract datapackage.json from the zip file and load it as json.
+        datapackage = json.load(zip_.open('datapackage.json'))
+
+        # Check the contents of the datapackage.json file.
+        nose.tools.assert_equals(dataset['name'], datapackage['name'])
+        resources = datapackage['resources']
+        for csv_path, resource in zip(csv_paths, resources):
+            nose.tools.assert_equals(resource['path'], filename(csv_path))
+            assert 'schema' in resource
+
+        # Check the contents of the CSV files.
+        for csv_path in csv_paths:
+            assert (zip_.open(filename(csv_path)).read() ==
+                    _get_csv_file(csv_path).read())

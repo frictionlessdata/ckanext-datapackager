@@ -20,10 +20,6 @@ class TestPlugin(custom_helpers.FunctionalTestBaseClass):
     '''Functional tests for B2Plugin.
 
     '''
-    def setup(self):
-        import ckan.model as model
-        model.repo.rebuild_db()
-
     def test_resource_create(self):
         '''Test that a schema is added to a resource when it's created.
 
