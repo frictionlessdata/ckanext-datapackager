@@ -83,12 +83,12 @@ def resource_schema_field_update(context, data_dict):
     schema['fields'] = updated_fields
 
     schema = json.dumps(schema)
-    # We need to pass the resource URL to resource_update or we get a
-    # validation error, so we need to call resource_show() here to get it.
-    url = toolkit.get_action('resource_show')(context,
-                                              {'id': resource_id})['url']
+
+    resource_dict = toolkit.get_action('resource_show')(context,
+                                                        {'id': resource_id})
     toolkit.get_action('resource_update')(context,
-        {'id': resource_id, 'url': url, 'schema': schema})
+        {'id': resource_id, 'url': resource_dict['url'],
+         'name': resource_dict['name'], 'schema': schema})
 
     # This is probably unnecessary as we already have the field above.
     field = toolkit.get_action('resource_schema_field_show')(context,

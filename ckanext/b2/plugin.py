@@ -3,6 +3,7 @@ import os.path
 import ckan.plugins as plugins
 import ckan.plugins.toolkit as toolkit
 import ckan.common as common
+import ckan.lib.navl.validators as navl_validators
 
 import ckanext.b2.lib.helpers as custom_helpers
 import ckanext.b2.lib.csv as lib_csv
@@ -10,6 +11,7 @@ import ckanext.b2.logic.action.create
 import ckanext.b2.logic.action.update
 import ckanext.b2.logic.action.get
 import ckanext.b2.logic.action.delete
+import ckanext.b2.logic.validators as custom_validators
 
 
 def _get_path_to_resource_file(resource_dict):
@@ -45,7 +47,7 @@ def _infer_schema_for_resource(resource):
     return schema
 
 
-class B2Plugin(plugins.SingletonPlugin):
+class B2Plugin(plugins.SingletonPlugin, toolkit.DefaultDatasetForm):
     '''The main plugin class for ckanext-b2.
 
     '''
@@ -54,6 +56,7 @@ class B2Plugin(plugins.SingletonPlugin):
     plugins.implements(plugins.ITemplateHelpers)
     plugins.implements(plugins.IResourceUpload)
     plugins.implements(plugins.IActions)
+    plugins.implements(plugins.IDatasetForm)
 
     def update_config(self, config):
         '''Update CKAN's configuration.
@@ -121,3 +124,30 @@ class B2Plugin(plugins.SingletonPlugin):
             'resource_schema_field_show':
                 ckanext.b2.logic.action.get.resource_schema_field_show,
         }
+
+    def package_types(self):
+        '''Return the list of package types that this plugin handles as an
+        IDatasetForm plugin.
+
+        '''
+        # Even though we're not using this feature, we have to return something
+        # iterable here or CKAN crashes.
+        return []
+
+    def is_fallback(self):
+        # Make this plugin the default IDatasetForm plugin.
+        return True
+
+    def create_package_schema(self):
+
+        schema = super(B2Plugin, self).create_package_schema()
+        schema['resources']['name'] = [
+            custom_validators.resource_name_validator]
+        return schema
+
+    def update_package_schema(self):
+
+        schema = super(B2Plugin, self).update_package_schema()
+        schema['resources']['name'] = [
+            custom_validators.resource_name_validator]
+        return schema

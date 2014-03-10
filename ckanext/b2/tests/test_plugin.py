@@ -9,13 +9,6 @@ import ckan.common as common
 import ckanext.b2.tests.helpers as custom_helpers
 
 
-def _get_csv_file(relative_path):
-        path = os.path.join(os.path.split(__file__)[0], relative_path)
-        abspath = os.path.abspath(path)
-        csv_file = open(abspath)
-        return csv_file
-
-
 class TestPlugin(custom_helpers.FunctionalTestBaseClass):
     '''Functional tests for B2Plugin.
 
@@ -35,11 +28,11 @@ class TestPlugin(custom_helpers.FunctionalTestBaseClass):
         user = factories.Sysadmin()
         package = factories.Dataset(user=user)
         api = ckanapi.TestAppCKAN(self.app, apikey=user['apikey'])
-        csv_file = _get_csv_file(
+        csv_file = custom_helpers.get_csv_file(
             'test-data/lahmans-baseball-database/AllstarFull.csv')
 
         api.action.resource_create(package_id=package['id'],
-                                         upload=csv_file)
+                                   name='test-resource', upload=csv_file)
 
         # Apparently resource_create doesn't return the resource dict when
         # called via ckanapi, so we need another call to get it.
@@ -67,9 +60,10 @@ class TestPlugin(custom_helpers.FunctionalTestBaseClass):
         api = ckanapi.TestAppCKAN(self.app, apikey=user['apikey'])
 
         # Upload a first CSV file to the package.
-        csv_file = _get_csv_file(
+        csv_file = custom_helpers.get_csv_file(
             'test-data/lahmans-baseball-database/AllstarFull.csv')
-        api.action.resource_create(package_id=package['id'], upload=csv_file)
+        api.action.resource_create(package_id=package['id'],
+                                   name='test-package', upload=csv_file)
 
         # Get the generated schema from the resource.
         package = api.action.package_show(id=package['id'])
@@ -79,9 +73,10 @@ class TestPlugin(custom_helpers.FunctionalTestBaseClass):
         original_schema = resource['schema']
 
         # Now update the resource with a new file.
-        csv_file = _get_csv_file(
+        csv_file = custom_helpers.get_csv_file(
             'test-data/lahmans-baseball-database/Appearances.csv')
-        api.action.resource_update(id=resource['id'], upload=csv_file)
+        api.action.resource_update(id=resource['id'], name=resource['name'],
+                                   upload=csv_file)
 
         # Check that the schema has been changed.
         package = api.action.package_show(id=package['id'])
@@ -99,9 +94,10 @@ class TestPlugin(custom_helpers.FunctionalTestBaseClass):
         package = factories.Dataset(user=user)
         api = ckanapi.TestAppCKAN(self.app, apikey=user['apikey'])
 
-        csv_file = _get_csv_file(
+        csv_file = custom_helpers.get_csv_file(
             'test-data/lahmans-baseball-database/AllstarFull.csv')
         resource = api.action.resource_create(package_id=package['id'],
+                                              name='test-resource',
                                               upload=csv_file)
         resource_show = api.action.resource_show(id=resource['id'])
 

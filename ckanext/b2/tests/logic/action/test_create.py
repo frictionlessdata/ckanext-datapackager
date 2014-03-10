@@ -1,15 +1,21 @@
 '''Functional tests for logic/action/create.py.
 
 '''
+import os
+
 import nose.tools
+
+import ckanapi
 
 import ckan.new_tests.factories as factories
 import ckan.new_tests.helpers as helpers
-import ckanext.b2.tests.helpers as custom_helpers
 import ckan.plugins.toolkit as toolkit
 
+import ckanext.b2.tests.helpers as custom_helpers
 
-class TestCreate(custom_helpers.FunctionalTestBaseClass):
+
+class TestResourceSchemaFieldCreate(custom_helpers.FunctionalTestBaseClass):
+    '''Functional tests for resource_schema_field_create.'''
 
     def test_resource_schema_field_create_simple(self):
         '''Simple test that creating a schema field works.
@@ -325,3 +331,127 @@ class TestCreate(custom_helpers.FunctionalTestBaseClass):
         assert len(fields) == 1
         field = fields[0]
         assert field == {'index': 3, 'name': 'foo'}
+
+
+class TestResourceCreate(custom_helpers.FunctionalTestBaseClass):
+    '''Functional tests for resource_create.
+
+    Tests for this plugin's custom resource_create schema.
+
+    '''
+    def test_resource_create_with_no_name(self):
+        '''If you create a new resource and upload a data file but don't give
+        a name for the resource, the resource name should be set to the name
+        of the data file.
+
+        '''
+        user = factories.User()
+        package = factories.Dataset()
+        api = ckanapi.TestAppCKAN(self.app, apikey=user['apikey'])
+
+        csv_file = custom_helpers.get_csv_file(
+            'test-data/lahmans-baseball-database/AllstarFull.csv')
+        resource = api.action.resource_create(package_id=package['id'],
+                                              upload=csv_file)
+
+        resource = api.action.resource_show(id=resource['id'])
+        assert resource['name'] == 'AllstarFull.csv', resource['name']
+
+
+    def test_resource_create_upload_same_file_with_no_name(self):
+        '''If you create multiple resources, uploading files with the same name
+        and not giving names for the resources, the resource names should be
+        set to the file name but with _2, _3, etc. appended.
+
+        '''
+        user = factories.User()
+        package = factories.Dataset()
+        api = ckanapi.TestAppCKAN(self.app, apikey=user['apikey'])
+
+        resource_1 = api.action.resource_create(package_id=package['id'],
+            upload=custom_helpers.get_csv_file(
+                'test-data/lahmans-baseball-database/AllstarFull.csv'))
+        resource_2 = api.action.resource_create(package_id=package['id'],
+            upload=custom_helpers.get_csv_file(
+                'test-data/lahmans-baseball-database/AllstarFull.csv'))
+        resource_3 = api.action.resource_create(package_id=package['id'],
+            upload=custom_helpers.get_csv_file(
+                'test-data/lahmans-baseball-database/AllstarFull.csv'))
+        assert resource_1['name'] == 'AllstarFull.csv', resource_1['name']
+        assert resource_2['name'] == 'AllstarFull_2.csv', resource_2['name']
+        assert resource_3['name'] == 'AllstarFull_3.csv', resource_3['name']
+
+    def test_resource_create_with_duplicate_resource_name(self):
+        '''resource_create() should raise ValidationError if you call it and
+        manually specify a duplicate resource name.
+
+        '''
+        user = factories.User()
+        dataset = factories.Dataset()
+        api = ckanapi.TestAppCKAN(self.app, apikey=user['apikey'])
+        resource_1 = factories.Resource(dataset=dataset, name='foo')
+
+        # Using `with assert_raises(...) as context` like this does not work
+        # in Python 2.6.
+        with nose.tools.assert_raises(toolkit.ValidationError) as context:
+            api.action.resource_create(package_id=dataset['id'], url='foo',
+                name=resource_1['name'])
+        assert context.exception.error_dict == {'__type': 'Validation Error',
+            'name': [
+                "A data package can't contain two files with the same name"]}
+
+    def test_resource_create_with_custom_name(self):
+        '''If you create a resource and given a unique custom name, that name
+        should be taken as the resource's name.
+
+        '''
+        user = factories.User()
+        dataset = factories.Dataset(user=user)
+        api = ckanapi.TestAppCKAN(self.app, apikey=user['apikey'])
+
+        resource = api.action.resource_create(package_id=dataset['id'],
+            name='test-resource',
+            upload=custom_helpers.get_csv_file(
+                'test-data/lahmans-baseball-database/AllstarFull.csv'))
+
+        assert resource['name'] == 'test-resource'
+
+    def test_resource_create_with_url(self):
+        '''If you create a resource giving a URL instead of uploading a file,
+        and not specifying a resource name, the filename should be extracted
+        from the URL.
+
+        '''
+        user = factories.User()
+        package = factories.Dataset()
+        api = ckanapi.TestAppCKAN(self.app, apikey=user['apikey'])
+
+        resource = api.action.resource_create(package_id=package['id'],
+            url='http://example.com/resources/foo.csv')
+
+        resource = api.action.resource_show(id=resource['id'])
+        assert resource['name'] == 'foo.csv'
+
+    def test_resource_create_url_with_trailing_slash(self):
+
+        user = factories.User()
+        package = factories.Dataset()
+        api = ckanapi.TestAppCKAN(self.app, apikey=user['apikey'])
+
+        resource = api.action.resource_create(package_id=package['id'],
+            url='http://example.com/resources/')
+
+        resource = api.action.resource_show(id=resource['id'])
+        assert resource['name'] == 'resources'
+
+    def test_resource_create_url_with_no_path(self):
+
+        user = factories.User()
+        package = factories.Dataset()
+        api = ckanapi.TestAppCKAN(self.app, apikey=user['apikey'])
+
+        resource = api.action.resource_create(package_id=package['id'],
+            url='http://example.com')
+
+        resource = api.action.resource_show(id=resource['id'])
+        assert resource['name'] == 'example.com'

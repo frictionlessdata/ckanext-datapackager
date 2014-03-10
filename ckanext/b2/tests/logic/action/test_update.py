@@ -3,13 +3,17 @@
 '''
 import nose.tools
 
+import ckanapi
+
 import ckan.new_tests.factories as factories
 import ckan.new_tests.helpers as helpers
-import ckanext.b2.tests.helpers as custom_helpers
 import ckan.plugins.toolkit as toolkit
 
+import ckanext.b2.tests.helpers as custom_helpers
 
-class TestUpdate(custom_helpers.FunctionalTestBaseClass):
+
+class TestResourceSchemaFieldUpdate(custom_helpers.FunctionalTestBaseClass):
+    '''Functional tests for resource_schema_field_update.'''
 
     def test_resource_schema_field_update_name(self):
         '''Simple test that updating a schema field's name works.'''
@@ -385,3 +389,93 @@ class TestUpdate(custom_helpers.FunctionalTestBaseClass):
             resource_id=resource['id'], index=3)
         assert field['index'] == 3
         assert field['name'] == 'new-name'
+
+
+class TestResourceUpdate(custom_helpers.FunctionalTestBaseClass):
+    '''Functional tests for resource_update.
+
+    Tests this extension's custom resource_update schema.
+
+    '''
+    def test_resource_update_to_empty_name(self):
+        '''If a user updates a resource and sets its name field to empty, the
+        name should be changed to the name of the resource's uploaded file.
+
+        '''
+        user = factories.User()
+        dataset = factories.Dataset(user=user)
+        api = ckanapi.TestAppCKAN(self.app, apikey=user['apikey'])
+        resource = api.action.resource_create(package_id=dataset['id'],
+            name='test-resource',
+            upload=custom_helpers.get_csv_file(
+                'test-data/lahmans-baseball-database/AllstarFull.csv'))
+        assert resource['name'] == 'test-resource'  # Just to be sure.
+
+        resource['name'] = ''
+        helpers.call_action('resource_update', **resource)
+
+        resource = helpers.call_action('resource_show', id=resource['id'])
+        assert resource['name'] == 'AllstarFull.csv'
+
+    def test_resource_update_with_missing_name(self):
+        '''If a user updates a resource and does not pass a name field, the
+        name should be changed to the name of the resource's uploaded file.
+
+        '''
+        user = factories.User()
+        dataset = factories.Dataset(user=user)
+        api = ckanapi.TestAppCKAN(self.app, apikey=user['apikey'])
+        resource = api.action.resource_create(package_id=dataset['id'],
+            name='test-resource',
+            upload=custom_helpers.get_csv_file(
+                'test-data/lahmans-baseball-database/AllstarFull.csv'))
+
+        del resource['name']
+        helpers.call_action('resource_update', **resource)
+
+        resource = helpers.call_action('resource_show', id=resource['id'])
+        assert resource['name'] == 'AllstarFull.csv'
+
+    def test_resource_update_to_duplicate_name(self):
+        user = factories.User()
+        dataset = factories.Dataset(user=user)
+        resource_1 = factories.Resource(dataset=dataset)
+        api = ckanapi.TestAppCKAN(self.app, apikey=user['apikey'])
+        resource_2 = api.action.resource_create(package_id=dataset['id'],
+            name='test-resource',
+            upload=custom_helpers.get_csv_file(
+                'test-data/lahmans-baseball-database/AllstarFull.csv'))
+
+        resource_2['name'] = resource_1['name']
+        nose.tools.assert_raises(toolkit.ValidationError,
+            helpers.call_action, 'resource_update', **resource_2)
+
+    def test_resource_update_to_good_name(self):
+        user = factories.User()
+        dataset = factories.Dataset(user=user)
+        api = ckanapi.TestAppCKAN(self.app, apikey=user['apikey'])
+        resource = api.action.resource_create(package_id=dataset['id'],
+            name='test-resource',
+            upload=custom_helpers.get_csv_file(
+                'test-data/lahmans-baseball-database/AllstarFull.csv'))
+
+        resource['name'] = 'new-name'
+        helpers.call_action('resource_update', **resource)
+
+        resource = helpers.call_action('resource_show', id=resource['id'])
+        assert resource['name'] == 'new-name'
+
+    def test_resource_update_to_url(self):
+        user = factories.User()
+        dataset = factories.Dataset(user=user)
+        api = ckanapi.TestAppCKAN(self.app, apikey=user['apikey'])
+        resource = api.action.resource_create(package_id=dataset['id'],
+            upload=custom_helpers.get_csv_file(
+                'test-data/lahmans-baseball-database/AllstarFull.csv'))
+        original_name = resource['name']
+
+        resource['url'] = 'http://example-resource.com/foo.csv'
+        helpers.call_action('resource_update', **resource)
+
+        resource = helpers.call_action('resource_show', id=resource['id'])
+        assert resource['name'] == original_name

@@ -39,10 +39,9 @@ def resource_schema_field_delete(context, data_dict):
     assert len(new_fields) == len(schema['fields']) - 1
     schema['fields'] = new_fields
 
-    # We need to pass the resource URL to resource_update or we get a
-    # validation error, so we need to call resource_show() here to get it.
-    url = toolkit.get_action('resource_show')(context,
-                                              {'id': resource_id})['url']
+    resource_dict = toolkit.get_action('resource_show')(context,
+                                       {'id': resource_id})
 
     toolkit.get_action('resource_update')(context,
-        {'id': resource_id, 'url': url, 'schema': json.dumps(schema)})
+        {'id': resource_id, 'url': resource_dict['url'],
+         'name': resource_dict['name'], 'schema': json.dumps(schema)})

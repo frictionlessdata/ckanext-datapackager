@@ -1,8 +1,17 @@
 '''Test helper functions and classes.'''
 
+import os
+
 import ckan.config.middleware
 import pylons.config as config
 import webtest
+
+
+def get_csv_file(relative_path):
+        path = os.path.join(os.path.split(__file__)[0], relative_path)
+        abspath = os.path.abspath(path)
+        csv_file = open(abspath)
+        return csv_file
 
 
 def _get_test_app():
@@ -36,7 +45,7 @@ def _load_plugin(plugin):
     config['ckan.plugins'] = ' '.join(plugins)
 
 
-class FunctionalTestBaseClass(object):
+class FunctionalTestBaseClass():
     '''A base class for functional test classes to inherit from.
 
     This handles loading the b2 plugin and resetting the CKAN config after your
@@ -54,6 +63,11 @@ class FunctionalTestBaseClass(object):
         cls.original_config = config.copy()
         _load_plugin('b2')
         cls.app = _get_test_app()
+
+    def setup(self):
+        import ckan.model as model
+        model.Session.close_all()
+        model.repo.rebuild_db()
 
     @classmethod
     def teardown_class(cls):
