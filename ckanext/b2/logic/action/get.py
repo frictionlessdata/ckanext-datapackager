@@ -32,7 +32,7 @@ def resource_schema_show(context, data_dict):
             ckanext.b2.logic.schema.resource_schema_show_schema(),
             context)
     except custom_exceptions.InvalidResourceIDException, e:
-        raise toolkit.ValidationError(e)
+        raise toolkit.ValidationError(e.message)
     assert not errors  # Nothing in resource_schema_show_schema ever adds
                        # errors to the errors dict.
 
