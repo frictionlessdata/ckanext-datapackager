@@ -1,5 +1,7 @@
 import os.path
 
+import routes.mapper
+
 import ckan.plugins as plugins
 import ckan.plugins.toolkit as toolkit
 import ckan.common as common
@@ -67,6 +69,221 @@ class B2Plugin(plugins.SingletonPlugin, toolkit.DefaultDatasetForm):
         toolkit.add_template_directory(config, 'templates')
         toolkit.add_resource('fanstatic', 'b2')
 
+    def _default_routes(self, map_):
+        '''Make all the CKAN default routes that we use.
+
+        This re-makes some of the CKAN default routes, but only the ones that
+        we want. Some of these have been modified from the defaults, e.g.
+        replace "dataset" with "package" in URLs.
+
+        '''
+        GET = dict(method=['GET'])
+        PUT = dict(method=['PUT'])
+        POST = dict(method=['POST'])
+        DELETE = dict(method=['DELETE'])
+        GET_POST = dict(method=['GET', 'POST'])
+        PUT_POST = dict(method=['PUT', 'POST'])
+
+        map_.connect('home', '/', controller='home', action='index')
+
+        with routes.mapper.SubMapper(map_, controller='user') as m:
+            m.connect('/user/edit', action='edit')
+            # Note: openid users have slashes in their ids, so need the
+            # wildcard in the route.
+            m.connect('user_edit', '/user/edit/{id:.*}', action='edit',
+                    ckan_icon='cog')
+            m.connect('user_delete', '/user/delete/{id}', action='delete')
+            m.connect('/user/reset/{id:.*}', action='perform_reset')
+            m.connect('register', '/user/register', action='register')
+            m.connect('login', '/user/login', action='login')
+            m.connect('/user/_logout', action='logout')
+            m.connect('/user/logged_in', action='logged_in')
+            m.connect('/user/logged_out', action='logged_out')
+            m.connect('/user/logged_out_redirect', action='logged_out_page')
+            m.connect('/user/reset', action='request_reset')
+            m.connect('/user/me', action='me')
+            m.connect('/user/set_lang/{lang}', action='set_lang')
+            m.connect('user_datasets', '/user/{id:.*}', action='read',
+                    ckan_icon='sitemap')
+
+        with routes.mapper.SubMapper(map_, controller='package') as m:
+            m.connect('add dataset', '/package/new', action='new')
+            m.connect('/package/{action}',
+                    requirements=dict(action='|'.join([
+                        'list',
+                        'autocomplete',
+                    ])))
+
+            m.connect('/package/{action}/{id}/{revision}', action='read_ajax',
+                    requirements=dict(action='|'.join([
+                        'read',
+                        'edit',
+                    ])))
+            m.connect('/package/{action}/{id}',
+                    requirements=dict(action='|'.join([
+                        'new_resource',
+                        'read_ajax',
+                        'history_ajax',
+                        'delete',
+                        'api_data',
+                    ])))
+            m.connect('dataset_edit', '/package/edit/{id}', action='edit',
+                    ckan_icon='edit')
+            m.connect('/package/{id}.{format}', action='read')
+            m.connect('dataset_resources', '/package/resources/{id}',
+                    action='resources', ckan_icon='reorder')
+            m.connect('dataset_read', '/package/{id}', action='read',
+                    ckan_icon='sitemap')
+            m.connect('/package/{id}/resource/{resource_id}',
+                    action='resource_read')
+            m.connect('/package/{id}/resource_delete/{resource_id}',
+                    action='resource_delete')
+            m.connect('resource_edit',
+                      '/package/{id}/resource_edit/{resource_id}',
+                      action='resource_edit', ckan_icon='edit')
+            m.connect('/package/{id}/resource/{resource_id}/download',
+                    action='resource_download')
+            m.connect(
+                '/package/{id}/resource/{resource_id}/download/{filename}',
+                action='resource_download')
+            m.connect('/package/{id}/resource/{resource_id}/embed',
+                    action='resource_embedded_dataviewer')
+            m.connect('/package/{id}/resource/{resource_id}/viewer',
+                    action='resource_embedded_dataviewer', width="960",
+                    height="800")
+            m.connect('/package/{id}/resource/{resource_id}/preview',
+                    action='resource_datapreview')
+
+        register_list = [
+            'package',
+            'resource',
+            'tag',
+            'group',
+            'related',
+            'revision',
+            'licenses',
+            'rating',
+            'user',
+            'activity'
+        ]
+        register_list_str = '|'.join(register_list)
+
+        with routes.mapper.SubMapper(map_, controller='api',
+            path_prefix='/api{ver:/3|}', ver='/3') as m:
+            m.connect('/action/{logic_function}', action='action',
+                    conditions=GET_POST)
+
+        # /api ver 1, 2, 3 or none
+        with routes.mapper.SubMapper(map_, controller='api',
+            path_prefix='/api{ver:/1|/2|/3|}', ver='/1') as m:
+            m.connect('', action='get_api')
+            m.connect('/search/{register}', action='search')
+
+        # /api ver 1, 2 or none
+        with routes.mapper.SubMapper(map_, controller='api',
+            path_prefix='/api{ver:/1|/2|}', ver='/1') as m:
+            m.connect('/tag_counts', action='tag_counts')
+            m.connect('/rest', action='index')
+            m.connect('/qos/throughput/', action='throughput', conditions=GET)
+
+        # /api/rest ver 1, 2 or none
+        with routes.mapper.SubMapper(map_, controller='api',
+            path_prefix='/api{ver:/1|/2|}', ver='/1',
+            requirements=dict(register=register_list_str)) as m:
+
+            m.connect('/rest/{register}', action='list', conditions=GET)
+            m.connect('/rest/{register}', action='create', conditions=POST)
+            m.connect('/rest/{register}/{id}', action='show', conditions=GET)
+            m.connect('/rest/{register}/{id}', action='update', conditions=PUT)
+            m.connect('/rest/{register}/{id}', action='update',
+                      conditions=POST)
+            m.connect('/rest/{register}/{id}', action='delete',
+                      conditions=DELETE)
+            m.connect('/rest/{register}/{id}/:subregister', action='list',
+                    conditions=GET)
+            m.connect('/rest/{register}/{id}/:subregister', action='create',
+                    conditions=POST)
+            m.connect('/rest/{register}/{id}/:subregister/{id2}',
+                      action='create', conditions=POST)
+            m.connect('/rest/{register}/{id}/:subregister/{id2}',
+                      action='show', conditions=GET)
+            m.connect('/rest/{register}/{id}/:subregister/{id2}',
+                      action='update', conditions=PUT)
+            m.connect('/rest/{register}/{id}/:subregister/{id2}',
+                      action='delete', conditions=DELETE)
+
+        # /api/util ver 1, 2 or none
+        with routes.mapper.SubMapper(map_, controller='api',
+                                     path_prefix='/api{ver:/1|/2|}', ver='/1')
+                                     as m:
+            m.connect('/util/user/autocomplete', action='user_autocomplete')
+            m.connect('/util/is_slug_valid', action='is_slug_valid',
+                    conditions=GET)
+            m.connect('/util/dataset/autocomplete',
+                action='dataset_autocomplete', conditions=GET)
+            m.connect('/util/tag/autocomplete', action='tag_autocomplete',
+                    conditions=GET)
+            m.connect('/util/resource/format_autocomplete',
+                    action='format_autocomplete', conditions=GET)
+            m.connect('/util/resource/format_icon',
+                    action='format_icon', conditions=GET)
+            m.connect('/util/group/autocomplete', action='group_autocomplete')
+            m.connect('/util/markdown', action='markdown')
+            m.connect('/util/dataset/munge_name', action='munge_package_name')
+            m.connect('/util/dataset/munge_title_to_name',
+                    action='munge_title_to_package_name')
+            m.connect('/util/tag/munge', action='munge_tag')
+            m.connect('/util/status', action='status')
+            m.connect('/util/snippet/{snippet_path:.*}', action='snippet')
+            m.connect('/i18n/{lang}', action='i18n_js_translations')
+
+        with routes.mapper.SubMapper(map_,
+            controller='ckan.controllers.storage:StorageAPIController') as m:
+            m.connect('storage_api', '/api/storage', action='index')
+            m.connect('storage_api_set_metadata',
+                      '/api/storage/metadata/{label:.*}',
+                      action='set_metadata', conditions=PUT_POST)
+            m.connect('storage_api_get_metadata',
+                      '/api/storage/metadata/{label:.*}',
+                      action='get_metadata', conditions=GET)
+            m.connect('storage_api_auth_request',
+                    '/api/storage/auth/request/{label:.*}',
+                    action='auth_request')
+            m.connect('storage_api_auth_form',
+                    '/api/storage/auth/form/{label:.*}',
+                    action='auth_form')
+
+        with routes.mapper.SubMapper(map_,
+                controller='ckan.controllers.storage:StorageController') as m:
+            m.connect('storage_upload', '/storage/upload',
+                    action='upload')
+            m.connect('storage_upload_handle', '/storage/upload_handle',
+                    action='upload_handle')
+            m.connect('storage_upload_success', '/storage/upload/success',
+                    action='success')
+            m.connect('storage_upload_success_empty', '/storage/upload/success_empty',
+                    action='success_empty')
+            m.connect('storage_file', '/storage/f/{label:.*}',
+                    action='file')
+
+        with routes.mapper.SubMapper(map_, controller='util') as m:
+            m.connect('/i18n/strings_{lang}.js', action='i18n_js_strings')
+            m.connect('/util/redirect', action='redirect')
+            m.connect('/testing/primer', action='primer')
+            m.connect('/testing/markup', action='markup')
+
+        map_.connect('/*url', controller='template', action='view')
+
+        return map_
+
+
+    def after_map(self, map_):
+
+        # We seem to have to connect at least some of the default routes in
+        # both before_map() and after_map(), otherwise some of our changes of
+        # "dataset" to "package" don't work some of the time.
+        return self._default_routes(map_)
+
     def before_map(self, map_):
         '''Customize CKAN's route map and return it.
 
@@ -92,9 +309,22 @@ class B2Plugin(plugins.SingletonPlugin, toolkit.DefaultDatasetForm):
         # stupid 'You have been logged out' page that CKAN has by default.
         map_.redirect('/user/logged_out_redirect', '/')
 
+        # This makes the second stage of the dataset creation process skip
+        # straight to the dataset read page, instead of going to the third
+        # stage, which we're not using.
         map_.connect('/dataset/new_metadata/{id}',
             controller='ckanext.b2.controllers.package:B2PackageController',
             action='new_metadata')
+
+        # Add in just the CKAN default routes that we're using.
+        map_ = self._default_routes(map_)
+
+        # This route matches any URL and sends them all to 404. All routes
+        # except the ones defined above will be 404'd, including all CKAN's
+        # default routes except the ones we add back in above.
+        map_.connect(R'{url:.*}',
+            controller='ckanext.b2.controllers.fourohfour:B2404Controller',
+            action='fourohfour')
 
         return map_
 
