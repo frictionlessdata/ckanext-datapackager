@@ -214,8 +214,7 @@ class B2Plugin(plugins.SingletonPlugin, toolkit.DefaultDatasetForm):
 
         # /api/util ver 1, 2 or none
         with routes.mapper.SubMapper(map_, controller='api',
-                                     path_prefix='/api{ver:/1|/2|}', ver='/1')
-                                     as m:
+            path_prefix='/api{ver:/1|/2|}', ver='/1') as m:
             m.connect('/util/user/autocomplete', action='user_autocomplete')
             m.connect('/util/is_slug_valid', action='is_slug_valid',
                     conditions=GET)
