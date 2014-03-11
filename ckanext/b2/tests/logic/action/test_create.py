@@ -455,3 +455,55 @@ class TestResourceCreate(custom_helpers.FunctionalTestBaseClass):
 
         resource = api.action.resource_show(id=resource['id'])
         assert resource['name'] == 'example.com'
+
+    def test_resource_create_with_no_format(self):
+        '''If no format is given when creating a resource, the resource's
+        format should be set to CSV.
+
+        '''
+        user = factories.User()
+        dataset = factories.Dataset()
+        api = ckanapi.TestAppCKAN(self.app, apikey=user['apikey'])
+
+        resource = api.action.resource_create(package_id=dataset['id'],
+            upload=custom_helpers.get_csv_file(
+                'test-data/lahmans-baseball-database/AllstarFull.csv'))
+
+        resource = api.action.resource_show(id=resource['id'])
+        assert resource['format'] == 'CSV'
+
+    def test_resource_create_with_empty_format(self):
+        '''If an empty format is given when creating a resource, the resource's
+        format should be set to CSV.
+
+        '''
+        user = factories.User()
+        dataset = factories.Dataset()
+        api = ckanapi.TestAppCKAN(self.app, apikey=user['apikey'])
+
+        for format_ in ('', ' '):
+            resource = api.action.resource_create(package_id=dataset['id'],
+                format=format_,
+                upload=custom_helpers.get_csv_file(
+                    'test-data/lahmans-baseball-database/AllstarFull.csv'))
+
+            resource = api.action.resource_show(id=resource['id'])
+            assert resource['format'] == 'CSV', resource['format']
+
+    def test_resource_create_with_custom_format(self):
+        '''If a format other than CSV is given when creating a resource, it
+        should be accepted.
+
+        '''
+        user = factories.User()
+        dataset = factories.Dataset()
+        api = ckanapi.TestAppCKAN(self.app, apikey=user['apikey'])
+
+        for format_ in ('jpeg', 'image/png', 'foobar'):
+            resource = api.action.resource_create(package_id=dataset['id'],
+                format=format_,
+                upload=custom_helpers.get_csv_file(
+                    'test-data/lahmans-baseball-database/AllstarFull.csv'))
+
+            resource = api.action.resource_show(id=resource['id'])
+            assert resource['format'] == format_

@@ -479,3 +479,63 @@ class TestResourceUpdate(custom_helpers.FunctionalTestBaseClass):
 
         resource = helpers.call_action('resource_show', id=resource['id'])
         assert resource['name'] == original_name
+
+    def test_resource_update_with_no_format(self):
+        '''If no format is given when updating a resource, the resource's
+        format should not be changed.
+
+        '''
+        user = factories.User()
+        dataset = factories.Dataset()
+        api = ckanapi.TestAppCKAN(self.app, apikey=user['apikey'])
+        resource = api.action.resource_create(package_id=dataset['id'],
+            upload=custom_helpers.get_csv_file(
+                'test-data/lahmans-baseball-database/AllstarFull.csv'))
+        resource = api.action.resource_show(id=resource['id'])
+        old_format = resource['format']
+
+        resource['name'] = 'new-name'
+        del resource['format']
+        resource = api.action.resource_update(**resource)
+
+        resource = api.action.resource_show(id=resource['id'])
+        assert resource['format'] == old_format
+
+    def test_resource_update_with_empty_format(self):
+        '''If an empty format is given when updating a resource, the resource's
+        format should not be changed.
+
+        '''
+        user = factories.User()
+        dataset = factories.Dataset()
+        api = ckanapi.TestAppCKAN(self.app, apikey=user['apikey'])
+        resource = api.action.resource_create(package_id=dataset['id'],
+            upload=custom_helpers.get_csv_file(
+                'test-data/lahmans-baseball-database/AllstarFull.csv'))
+        old_format = api.action.resource_show(id=resource['id'])['format']
+
+        for format_ in ('', ' '):
+            api.action.resource_update(id=resource['id'], format=format_,
+                url=resource['url'])
+
+            resource = api.action.resource_show(id=resource['id'])
+            assert resource['format'] == old_format
+
+    def test_resource_update_with_custom_format(self):
+        '''If a format other than CSV is given when updating a resource, it
+        should be accepted.
+
+        '''
+        user = factories.User()
+        dataset = factories.Dataset()
+        api = ckanapi.TestAppCKAN(self.app, apikey=user['apikey'])
+        resource = api.action.resource_create(package_id=dataset['id'],
+            upload=custom_helpers.get_csv_file(
+                'test-data/lahmans-baseball-database/AllstarFull.csv'))
+
+        for format_ in ('jpeg', 'image/png', 'foobar'):
+            resource = api.action.resource_update(id=resource['id'],
+                format=format_, url=resource['url'])
+
+            resource = api.action.resource_show(id=resource['id'])
+            assert resource['format'] == format_

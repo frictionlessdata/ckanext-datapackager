@@ -33,10 +33,13 @@ def _generate_resource_name(context, key, converted_data, package):
 
     # Get the filename of the uploaded or linked-to file from the resource's
     # URL.
-    url = converted_data.get(('resources', key[1], 'url'))
-    if url.endswith('/'):
-        url = url[:-1]
-    name = url.split('/')[-1]
+    name = converted_data.get(('resources', key[1], 'url'))
+
+    if name is df.missing:
+        name = toolkit._('Unnamed file')
+    elif name.endswith('/'):
+        name = name[:-1]
+    name = name.split('/')[-1]
 
     if _is_name_unique(context, name, key, converted_data, package):
         return name
@@ -188,3 +191,22 @@ def field_type_validator(value, context):
         raise toolkit.Invalid(
             toolkit._("Field type must be one of: {valid_types}").format(
                 valid_types=valid_types))
+
+
+def resource_format_validator(value, context):
+
+    if not value:
+        value = ''
+    else:
+        value = unicode(value)
+
+    value = value.strip()
+
+    if value:
+        return value
+    else:
+        # Always set the resource format to CSV if none is given.
+        # There's currently a CKAN pull request to implement guessing resource
+        # formats from mime types, once that's merged we should adopt it
+        # instead: <https://github.com/ckan/ckan/pull/1350>
+        return 'csv'

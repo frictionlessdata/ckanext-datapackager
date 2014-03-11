@@ -138,16 +138,23 @@ class B2Plugin(plugins.SingletonPlugin, toolkit.DefaultDatasetForm):
         # Make this plugin the default IDatasetForm plugin.
         return True
 
+    def _modify_package_schema(self, schema):
+        schema['resources']['name'] = [
+            custom_validators.resource_name_validator]
+        schema['resources']['format'] = [
+            navl_validators.ignore_missing,
+            custom_validators.resource_format_validator,
+        ]
+        return schema
+
     def create_package_schema(self):
 
         schema = super(B2Plugin, self).create_package_schema()
-        schema['resources']['name'] = [
-            custom_validators.resource_name_validator]
+        schema = self._modify_package_schema(schema)
         return schema
 
     def update_package_schema(self):
 
         schema = super(B2Plugin, self).update_package_schema()
-        schema['resources']['name'] = [
-            custom_validators.resource_name_validator]
+        schema = self._modify_package_schema(schema)
         return schema
