@@ -6,8 +6,10 @@
   {% if pkg %}
     {% set dataset = pkg.title or pkg.name %}
 
-    {# Change the link text from Datasets to Packages. #}
-    <li>{% link_for _('Packages'), controller='package', action='search' %}</li>
+    {# Replace / Packages in the breadcrumbs with / Sean Hammond (or whoever
+       is logged-in. #}
+    {{ h.build_nav('user_datasets', c.userobj.display_name|truncate(35),
+                   id=c.userobj.name) }}
 
     <li{{ self.breadcrumb_content_selected() }}>{% link_for dataset|truncate(30), controller='package', action='read', id=pkg.name %}</li>
   {% else %}
