@@ -35,9 +35,7 @@ def _generate_resource_name(context, key, converted_data, package):
     # URL.
     name = converted_data.get(('resources', key[1], 'url'))
 
-    if name is df.missing:
-        name = toolkit._('Unnamed file')
-    elif name.endswith('/'):
+    if name.endswith('/'):
         name = name[:-1]
     name = name.split('/')[-1]
 
