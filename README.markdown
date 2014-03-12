@@ -1,7 +1,7 @@
 [![Build Status](https://travis-ci.org/ckan/ckanext-b2.png?branch=travis)](https://travis-ci.org/ckan/ckanext-b2) [![Coverage Status](https://coveralls.io/repos/ckan/ckanext-b2/badge.png?branch=master)](https://coveralls.io/r/ckan/ckanext-b2?branch=master)
 
-This is a CKAN extension that contains the CKAN theme and plugins for the B2
-Metadata Generator.
+This is a CKAN extension that contains the CKAN theme and plugins for the
+Open Knowledge Data Packager.
 
 To install the latest development version on Ubuntu 12.04, first
 [install CKAN 2.2 from source](http://docs.ckan.org/en/ckan-2.2/install-from-source.html)
