@@ -121,7 +121,6 @@ class B2Plugin(plugins.SingletonPlugin, toolkit.DefaultDatasetForm):
                     ])))
             m.connect('/package/{action}/{id}',
                     requirements=dict(action='|'.join([
-                        'new_resource',
                         'read_ajax',
                         'history_ajax',
                         'delete',
@@ -130,29 +129,32 @@ class B2Plugin(plugins.SingletonPlugin, toolkit.DefaultDatasetForm):
             m.connect('dataset_edit', '/package/edit/{id}', action='edit',
                     ckan_icon='edit')
             m.connect('/package/{id}.{format}', action='read')
-            m.connect('dataset_resources', '/package/resources/{id}',
+            m.connect('dataset_resources', '/package/files/{id}',
                     action='resources', ckan_icon='reorder')
             m.connect('dataset_read', '/package/{id}', action='read',
                     ckan_icon='sitemap')
-            m.connect('/package/{id}/resource/{resource_id}',
+            m.connect('/package/{id}/file/{resource_id}',
                     action='resource_read')
-            m.connect('/package/{id}/resource_delete/{resource_id}',
+            m.connect('/package/{id}/file_delete/{resource_id}',
                     action='resource_delete')
             m.connect('resource_edit',
-                      '/package/{id}/resource_edit/{resource_id}',
+                      '/package/{id}/file_edit/{resource_id}',
                       action='resource_edit', ckan_icon='edit')
-            m.connect('/package/{id}/resource/{resource_id}/download',
+            m.connect('/package/{id}/file/{resource_id}/download',
                     action='resource_download')
             m.connect(
-                '/package/{id}/resource/{resource_id}/download/{filename}',
+                '/package/{id}/file/{resource_id}/download/{filename}',
                 action='resource_download')
-            m.connect('/package/{id}/resource/{resource_id}/embed',
+            m.connect('/package/{id}/file/{resource_id}/embed',
                     action='resource_embedded_dataviewer')
-            m.connect('/package/{id}/resource/{resource_id}/viewer',
+            m.connect('/package/{id}/file/{resource_id}/viewer',
                     action='resource_embedded_dataviewer', width="960",
                     height="800")
-            m.connect('/package/{id}/resource/{resource_id}/preview',
+            m.connect('/package/{id}/file/{resource_id}/preview',
                     action='resource_datapreview')
+
+        map_.connect('/package/new_file/{id}', controller='package',
+                     action='new_resource')
 
         register_list = [
             'package',
