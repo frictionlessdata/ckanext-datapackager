@@ -23,7 +23,7 @@ class TestB2PackageController(custom_helpers.FunctionalTestBaseClass):
         package_name = 'my-test-package'
 
         # Get the new package page (first form).
-        response = self.app.get('/dataset/new', extra_environ=extra_environ)
+        response = self.app.get('/package/new', extra_environ=extra_environ)
         assert response.status_int == 200
 
         # Fill out the form and submit it.
@@ -53,12 +53,12 @@ class TestB2PackageController(custom_helpers.FunctionalTestBaseClass):
 
         # Follow the redirect to the third form.
         assert response.status_int == 302
-        assert '/dataset/new_metadata/my-test-package' in response.location
+        assert '/dataset/new_metadata/my-test-package' in response.location, response.location
         response = response.follow(extra_environ=extra_environ)
 
         # The third form immediately redirects you to the dataset read page.
         assert response.status_int == 302
-        assert '/dataset/my-test-package' in response.location
+        assert '/package/my-test-package' in response.location
         response = response.follow(extra_environ=extra_environ)
 
         assert response.status_int == 200
