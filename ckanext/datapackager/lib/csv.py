@@ -4,8 +4,6 @@ These are meant to be reusable library functions not tied to CKAN, so they
 shouldn't know anything about CKAN.
 
 '''
-import StringIO
-
 import pandas
 import numpy
 
@@ -31,16 +29,25 @@ def infer_schema_from_csv_file(path):
     guess the types of the columns.
 
     '''
-    # Read the first 1024 bytes of the file into a pandas dataframe.
-    dataframe = pandas.read_csv(StringIO.StringIO(open(path).read(1024)))
+    dataframe = pandas.read_csv(path)
+    description = dataframe.describe()  # Summary stats about the columns.
 
     fields = []
     for (index, column) in enumerate(dataframe.columns):
-        fields.append({
+
+        field = {
             "index": index,
             "name": column,
             "type": _dtype_to_json_table_schema_type(dataframe[column].dtype),
-        })
+        }
+
+        # Add some descriptive statistics about the column to the field dict.
+        column_description = description.get(column)
+        if column_description is not None:
+            for key in column_description.keys():
+                field[key] = column_description[key]
+
+        fields.append(field)
 
     schema = {
         "fields": fields,
