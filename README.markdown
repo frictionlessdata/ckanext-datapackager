@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/ckan/ckanext-b2.png?branch=travis)](https://travis-ci.org/ckan/ckanext-b2) [![Coverage Status](https://coveralls.io/repos/ckan/ckanext-b2/badge.png?branch=master)](https://coveralls.io/r/ckan/ckanext-b2?branch=master)
+[![Build Status](https://travis-ci.org/ckan/ckanext-datapackager.png?branch=travis)](https://travis-ci.org/ckan/ckanext-datapackager) [![Coverage Status](https://coveralls.io/repos/ckan/ckanext-datapackager/badge.png?branch=master)](https://coveralls.io/r/ckan/ckanext-datapackager?branch=master)
 
 This is a CKAN extension that contains the CKAN theme and plugins for the
 Open Knowledge Data Packager.
@@ -7,17 +7,17 @@ To install the latest development version on Ubuntu 12.04, first
 [install CKAN 2.2 from source](http://docs.ckan.org/en/ckan-2.2/install-from-source.html)
 and then (assuming you installed CKAN in the default location):
 
-    sudo apt-get install build-essential  # Install packages needed to build ckanext-b2
+    sudo apt-get install build-essential  # Install packages needed to build ckanext-datapackager
     . /usr/lib/ckan/default/bin/activate  # Activate your CKAN virtualenv
     cd /usr/lib/ckan/default/src/ckan
-    git checkout b2  # ckanext-b2 currently requires this custom CKAN branch
-    pip install -e 'git+https://github.com/ckan/ckanext-b2.git#egg=ckanext-b2'
-    pip install -r ../ckanext-b2/requirements.txt
+    git checkout datapackager  # ckanext-datapackager currently requires this custom CKAN branch
+    pip install -e 'git+https://github.com/ckan/ckanext-datapackager.git#egg=ckanext-datapackager'
+    pip install -r ../ckanext-datapackager/requirements.txt
 
 The final `pip install -r` command may take a while to run, because it installs
 [pandas](http://pandas.pydata.org/) which requires a lot of compiling.
 
-Then add `b2` to the `ckan.plugins` setting in your CKAN config file, and
+Then add `datapackager` to the `ckan.plugins` setting in your CKAN config file, and
 restart your web server.
 
 
@@ -32,11 +32,11 @@ To run the tests:
 
     nosetests --nologcapture --ckan --with-pylons=test.ini
 
-Note that ckanext-b2's `test.ini` file assumes that the relative path from it
+Note that ckanext-datapackager's `test.ini` file assumes that the relative path from it
 to CKAN's `test-core.ini` file is `../ckan/test-core.ini`, i.e. that you have
-CKAN and ckanext-b2 installed next to each other in the same directory. This
+CKAN and ckanext-datapackager installed next to each other in the same directory. This
 would normally be the case if you've done development installs of CKAN and
-ckanext-b2.
+ckanext-datapackager.
 
 
 ### Coverage
@@ -46,9 +46,9 @@ virtualenv:
 
     pip install coverage
 
-Then run nosetests like this from the top-level `ckanext-b2` directory:
+Then run nosetests like this from the top-level `ckanext-datapackager` directory:
 
-    nosetests --nologcapture --ckan --with-pylons=test.ini --with-coverage --cover-package=ckanext.b2 --cover-inclusive --cover-erase .
+    nosetests --nologcapture --ckan --with-pylons=test.ini --with-coverage --cover-package=ckanext.datapackager --cover-inclusive --cover-erase .
 
 To get a nice, HTML-formatted coverage report in `cover/index.html` add the
 `--cover-html` option.

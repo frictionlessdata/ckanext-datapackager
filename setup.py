@@ -4,7 +4,7 @@ import sys, os
 version = '0.0'
 
 setup(
-    name='ckanext-b2',
+    name='ckanext-datapackager',
     version=version,
     description="",
     long_description='''
@@ -16,7 +16,7 @@ setup(
     url='',
     license='',
     packages=find_packages(exclude=['ez_setup', 'examples', 'tests']),
-    namespace_packages=['ckanext', 'ckanext.b2'],
+    namespace_packages=['ckanext', 'ckanext.datapackager'],
     include_package_data=True,
     zip_safe=False,
     install_requires=[
@@ -25,6 +25,6 @@ setup(
     entry_points='''
         [ckan.plugins]
         # Add plugins here, e.g.
-        b2=ckanext.b2.plugin:B2Plugin
+        datapackager=ckanext.datapackager.plugin:DataPackagerPlugin
     ''',
 )
