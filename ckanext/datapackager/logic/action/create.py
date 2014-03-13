@@ -4,7 +4,7 @@ import ckan.plugins.toolkit as toolkit
 import ckan.lib.navl.dictization_functions as dictization_functions
 
 import ckanext.datapackager.logic.schema as schema
-import ckanext.datapackager.exceptions as custom_exceptions
+import ckanext.datapackager.exceptions as exceptions
 
 
 def resource_schema_field_create(context, data_dict):
@@ -62,7 +62,7 @@ def resource_schema_field_create(context, data_dict):
     try:
         data_dict, errors = dictization_functions.validate(data_dict,
             schema.resource_schema_field_create_schema(), context)
-    except custom_exceptions.InvalidResourceIDException, e:
+    except exceptions.InvalidResourceIDException, e:
         raise toolkit.ValidationError(e)
     if errors:
         raise toolkit.ValidationError(errors)
@@ -102,27 +102,17 @@ def resource_schema_pkey_create(context, data_dict):
     :rtype: string or list of strings
 
     '''
-    data_dict, errors = dictization_functions.validate(data_dict,
-        schema.resource_schema_pkey_create_schema(), context)
-    if errors:
-        raise toolkit.ValidationError(errors)
+    # Fail if the resource already has a primary key.
+    resource_id = toolkit.get_or_bust(data_dict, 'resource_id')
+    try:
+        pkey = toolkit.get_action('resource_schema_pkey_show')(context,
+            {'resource_id': resource_id})
+    except exceptions.InvalidResourceIDException:
+        raise toolkit.ValidationError(toolkit._("Invalid resource_id"))
+    if pkey is not None:
+        raise toolkit.Invalid(toolkit._("The resource already has a primary "
+                                        "key"))
 
-    resource_id = data_dict.pop('resource_id')
-
-    schema_ = toolkit.get_action('resource_schema_show')(context,
-        {'resource_id': resource_id})
-
-    schema_['primaryKey'] = data_dict['pkey']
-    schema_ = json.dumps(schema_)
-
-    resource_dict = toolkit.get_action('resource_show')(context,
-        {'id': resource_id})
-
-    toolkit.get_action('resource_update')(context,
-        {'id': resource_id, 'url': resource_dict['url'],
-         'name': resource_dict['name'], 'schema': schema_})
-
-    # This is probably unnecessary as we already have the schema above.
-    pkey = toolkit.get_action('resource_schema_pkey_show')(context,
-        {'resource_id': resource_id})
-    return pkey
+    # Otherwise create is the same as update.
+    return toolkit.get_action('resource_schema_pkey_update')(context,
+                                                             data_dict)

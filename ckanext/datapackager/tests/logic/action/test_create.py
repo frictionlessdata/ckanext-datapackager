@@ -604,6 +604,15 @@ class TestResourceSchemaPKeyCreate(custom_helpers.FunctionalTestBaseClass):
             api.action.resource_schema_pkey_create,
             resource_id='does-not-exist', pkey='foo')
 
+    def test_resource_schema_pkey_create_when_primary_key_already_exists(self):
+        resource, api = self._create_resources()
+        api.action.resource_schema_pkey_create(resource_id=resource['id'],
+            pkey='foo')
+
+        nose.tools.assert_raises(toolkit.ValidationError,
+            api.action.resource_schema_pkey_create,
+            resource_id=resource['id'], pkey='bar')
+
     # TODO
     #def test_resource_schema_pkey_create_with_nonunique_primary_key(self):
         #raise NotImplementedError

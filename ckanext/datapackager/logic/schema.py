@@ -72,7 +72,7 @@ def resource_schema_pkey_show_schema():
     return resource_schema_show_schema()
 
 
-def resource_schema_pkey_create_schema():
+def resource_schema_pkey_update_schema():
     return {
         'resource_id': [custom_validators.resource_id_validator],
         'pkey': [custom_validators.primary_key_validator],
