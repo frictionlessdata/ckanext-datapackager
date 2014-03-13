@@ -102,8 +102,5 @@ class TestPlugin(custom_helpers.FunctionalTestBaseClass):
         resource_show = api.action.resource_show(id=resource['id'])
 
         #try and load the schema as json string
-        try:
-            common.json.loads(resource_show['schema'])
-        except ValueError:
-            print resource_show['schema']
-            raise
+        print resource_show['schema']
+        common.json.loads(resource_show['schema'])

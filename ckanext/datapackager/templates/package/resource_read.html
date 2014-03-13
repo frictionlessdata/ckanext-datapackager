@@ -4,6 +4,9 @@
   {% if h.check_access('package_update', {'id':pkg.id }) %}
     <li>{% link_for _('Edit'), controller='package', action='resource_edit', id=pkg.name, resource_id=res.id, class_='btn', icon='edit' %}</li>
   {% endif %}
+  {% if  res.schema %}
+    <li>{% link_for _('View Schema'), controller='ckanext.datapackager.controllers.package:DataPackagerPackageController', action='view_metadata', package_id=pkg.name, resource_id=res.id, class_='btn', icon='eye-open' %}</li>
+  {% endif %}
   {% if res.url %}
     <li>
       <a class="btn btn-primary resource-url-analytics resource-type-{{ res.resource_type }}" href="{{ res.url }}">

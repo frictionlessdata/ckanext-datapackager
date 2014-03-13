@@ -1,0 +1,19 @@
+{% extends "package/base.html" %}
+
+{% set resource = h.get_resource_by_id(c.resource_id) %}
+
+{% block breadcrumb_content %}
+  <li>{% link_for c.user, controller='ckanext.datapackager.controllers.user:DataPackagerPackageController', action='read' %}</li>
+  <li>{% link_for c.package_id|truncate(20), controller='package', action='read', id=c.package_id %}</li>
+  <li>{% link_for resource.name|truncate(20), controller='package', action='resource_read', id=c.package_id, resource_id=c.resource_id %}</li>
+  <li>{% link_for _('schema'), controller='ckanext.datapackager.controllers.package:DataPackagerPackageController', action='view_metadata', package_id=c.package_id, resource_id=c.resource_id %}</li>
+  <li class="active">{{ c.index }}</li>
+{% endblock %}
+
+{% block primary_content %}
+  {% snippet 'package/snippets/resource_schema_field.html', resource_id=c.resource_id, index=c.index %}
+{% endblock %}
+
+{% block secondary_content %}
+  {% snippet 'package/snippets/resource_schema_list.html', resource_id=c.resource_id, package_id=c.package_id %}
+{% endblock %}
