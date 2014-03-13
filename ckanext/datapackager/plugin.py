@@ -354,6 +354,10 @@ class DataPackagerPlugin(plugins.SingletonPlugin, toolkit.DefaultDatasetForm):
                 ckanext.datapackager.logic.action.get.resource_schema_show,
             'resource_schema_field_show':
                 ckanext.datapackager.logic.action.get.resource_schema_field_show,
+            'resource_schema_pkey_show':
+                ckanext.datapackager.logic.action.get.resource_schema_pkey_show,
+            'resource_schema_pkey_create':
+                ckanext.datapackager.logic.action.create.resource_schema_pkey_create,
         }
 
     def package_types(self):

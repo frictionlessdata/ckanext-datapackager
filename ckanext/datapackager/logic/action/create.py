@@ -3,7 +3,7 @@ import json
 import ckan.plugins.toolkit as toolkit
 import ckan.lib.navl.dictization_functions as dictization_functions
 
-import ckanext.datapackager.logic.schema
+import ckanext.datapackager.logic.schema as schema
 import ckanext.datapackager.exceptions as custom_exceptions
 
 
@@ -61,8 +61,7 @@ def resource_schema_field_create(context, data_dict):
     '''
     try:
         data_dict, errors = dictization_functions.validate(data_dict,
-            ckanext.datapackager.logic.schema.resource_schema_field_create_schema(),
-            context)
+            schema.resource_schema_field_create_schema(), context)
     except custom_exceptions.InvalidResourceIDException, e:
         raise toolkit.ValidationError(e)
     if errors:
@@ -70,20 +69,60 @@ def resource_schema_field_create(context, data_dict):
 
     resource_id = data_dict.pop('resource_id')
 
-    schema = toolkit.get_action('resource_schema_show')(context,
+    schema_ = toolkit.get_action('resource_schema_show')(context,
         {'resource_id': resource_id})
 
-    schema['fields'].append(data_dict)
-    schema = json.dumps(schema)
+    schema_['fields'].append(data_dict)
+    schema_ = json.dumps(schema_)
 
     resource_dict = toolkit.get_action('resource_show')(context,
         {'id': resource_id})
 
     toolkit.get_action('resource_update')(context,
         {'id': resource_id, 'url': resource_dict['url'],
-         'name': resource_dict['name'], 'schema': schema})
+         'name': resource_dict['name'], 'schema': schema_})
 
     # This is probably unnecessary as we already have the schema above.
     field = toolkit.get_action('resource_schema_field_show')(context,
         {'resource_id': resource_id, 'index': data_dict['index']})
     return field
+
+
+def resource_schema_pkey_create(context, data_dict):
+    '''Add a primary key to a resource's schema.
+
+    :param resource_id: the ID of the resource
+    :type resource_id: string
+
+    :param pkey: the primary key, either the name of one of the fields or a
+        list of field names from the resource's schema
+    :type pkey: string or iterable of strings
+
+    :returns: the primary key that was created
+    :rtype: string or list of strings
+
+    '''
+    data_dict, errors = dictization_functions.validate(data_dict,
+        schema.resource_schema_pkey_create_schema(), context)
+    if errors:
+        raise toolkit.ValidationError(errors)
+
+    resource_id = data_dict.pop('resource_id')
+
+    schema_ = toolkit.get_action('resource_schema_show')(context,
+        {'resource_id': resource_id})
+
+    schema_['primaryKey'] = data_dict['pkey']
+    schema_ = json.dumps(schema_)
+
+    resource_dict = toolkit.get_action('resource_show')(context,
+        {'id': resource_id})
+
+    toolkit.get_action('resource_update')(context,
+        {'id': resource_id, 'url': resource_dict['url'],
+         'name': resource_dict['name'], 'schema': schema_})
+
+    # This is probably unnecessary as we already have the schema above.
+    pkey = toolkit.get_action('resource_schema_pkey_show')(context,
+        {'resource_id': resource_id})
+    return pkey

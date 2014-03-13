@@ -208,3 +208,25 @@ def resource_format_validator(value, context):
         # formats from mime types, once that's merged we should adopt it
         # instead: <https://github.com/ckan/ckan/pull/1350>
         return 'csv'
+
+
+def primary_key_validator(key, data, errors, context):
+
+    pkey = data[key]
+    resource_id = data[('resource_id',)]
+    schema = toolkit.get_action('resource_schema_show')(
+        context, {'resource_id': resource_id})
+
+    if not pkey:
+        raise toolkit.Invalid(toolkit._("No pkey provided"))
+
+    if isinstance(pkey, basestring):
+        pkey = [pkey]
+    elif not hasattr(pkey, '__iter__'):
+        raise toolkit.Invalid(toolkit._("Invalid pkey provided"))
+
+    field_names = [field['name'] for field in schema.get('fields', [])]
+
+    for field_name in pkey:
+        if field_name not in field_names:
+            raise toolkit.Invalid(toolkit._("No field with that name"))
