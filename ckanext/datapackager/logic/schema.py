@@ -77,3 +77,9 @@ def resource_schema_pkey_update_schema():
         'resource_id': [custom_validators.resource_id_validator],
         'pkey': [custom_validators.primary_key_validator],
     }
+
+
+def resource_schema_pkey_delete_schema():
+    return {
+        'resource_id': [custom_validators.resource_id_validator],
+    }

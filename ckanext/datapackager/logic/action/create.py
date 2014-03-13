@@ -110,8 +110,8 @@ def resource_schema_pkey_create(context, data_dict):
     except exceptions.InvalidResourceIDException:
         raise toolkit.ValidationError(toolkit._("Invalid resource_id"))
     if pkey is not None:
-        raise toolkit.Invalid(toolkit._("The resource already has a primary "
-                                        "key"))
+        raise toolkit.ValidationError(toolkit._("The resource already has a "
+                                                "primary key"))
 
     # Otherwise create is the same as update.
     return toolkit.get_action('resource_schema_pkey_update')(context,

@@ -360,6 +360,8 @@ class DataPackagerPlugin(plugins.SingletonPlugin, toolkit.DefaultDatasetForm):
                 ckanext.datapackager.logic.action.create.resource_schema_pkey_create,
             'resource_schema_pkey_update':
                 ckanext.datapackager.logic.action.update.resource_schema_pkey_update,
+            'resource_schema_pkey_delete':
+                ckanext.datapackager.logic.action.delete.resource_schema_pkey_delete,
         }
 
     def package_types(self):
