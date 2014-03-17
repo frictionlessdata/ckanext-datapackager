@@ -1,0 +1,24 @@
+{% ckan_extends %}
+
+{% block subtitle %}{{ _('Packages') }}{% endblock %}
+
+{% block breadcrumb_content %}
+  {% if pkg %}
+    {% set dataset = pkg.title or pkg.name %}
+
+    {# Replace / Packages in the breadcrumbs with / Sean Hammond (or whoever
+       is logged-in. #}
+    {{ h.build_nav('user_datasets', c.userobj.display_name|truncate(35),
+                   id=c.userobj.name) }}
+
+    <li{{ self.breadcrumb_content_selected() }}>{% link_for dataset|truncate(30), controller='package', action='read', id=pkg.name %}</li>
+  {% else %}
+
+    {# Change the link text from Datasets to Packages. #}
+    <li>{% link_for _('Packages'), controller='package', action='search' %}</li>
+
+    {# Change the breadcrumb text from dataset to package and also fix the
+       capitalization. #}
+    <li class="active"><a href="">{{ _('Create package') }}</a></li>
+  {% endif %}
+{% endblock %}

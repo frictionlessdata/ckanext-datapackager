@@ -3,3 +3,4 @@
 *~
 cover/*
 .coverage
+test-custom.ini
