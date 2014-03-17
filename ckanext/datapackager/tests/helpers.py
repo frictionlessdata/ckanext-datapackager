@@ -62,6 +62,7 @@ class FunctionalTestBaseClass():
         # Make a copy of the Pylons config, so we can restore it in teardown.
         cls.original_config = config.copy()
         _load_plugin('datapackager')
+        _load_plugin('downloadsdf')
         cls.app = _get_test_app()
 
     def setup(self):
@@ -75,3 +76,7 @@ class FunctionalTestBaseClass():
         # changed any config settings.
         config.clear()
         config.update(cls.original_config)
+
+    def setup(self):
+        import ckan.model as model
+        model.repo.rebuild_db()

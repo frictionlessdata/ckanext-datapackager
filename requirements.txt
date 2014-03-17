@@ -1,1 +1,2 @@
 pandas==0.13.1
+zipstream==1.0.3

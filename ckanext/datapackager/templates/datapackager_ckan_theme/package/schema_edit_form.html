@@ -1,0 +1,9 @@
+{% extends "package/base.html" %}
+
+{% import 'macros/autoform.html' as autoform %}
+
+{% block primary_content %}
+  <form method='post' action="" class="form-horizontal">
+  {{ autoform.generate(form_items, data, errors) }}
+  </form>
+{% endblock %}

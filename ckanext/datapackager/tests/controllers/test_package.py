@@ -1,7 +1,10 @@
 '''Functional tests for controllers/package.py.'''
 import os
+import zipfile
+import StringIO
+import json
 
-import nose.tools as nt
+import nose.tools
 
 import ckan.model as model
 import ckan.new_tests.factories as factories
@@ -9,6 +12,13 @@ import ckan.new_tests.helpers as helpers
 import ckan.plugins.toolkit as toolkit
 import ckanext.datapackager.tests.helpers as custom_helpers
 import ckanapi
+
+
+def _get_csv_file(relative_path):
+        path = os.path.join(os.path.split(__file__)[0], relative_path)
+        abspath = os.path.abspath(path)
+        csv_file = open(abspath)
+        return csv_file
 
 
 class TestDataPackagerPackageController(
@@ -85,6 +95,118 @@ class TestDataPackagerPackageController(
         schema = resource['schema']
         assert 'fields' in schema
 
+    def test_download_sdf(self):
+        '''Test downloading a Simple Data Format ZIP file of a package.
+
+        '''
+        user = factories.Sysadmin()
+        api = ckanapi.TestAppCKAN(self.app, apikey=user['apikey'])
+        dataset = factories.Dataset()
+
+        # Add a resource with a linked-to, not uploaded, data file.
+        linked_resource = factories.Resource(dataset=dataset,
+            url='http://test.com/test-url-1',
+            schema='{"fields":[{"type":"string", "name":"col1"}]}')
+
+        # Add a resource with an uploaded data file.
+        csv_path = '../test-data/lahmans-baseball-database/AllstarFull.csv'
+        csv_file = _get_csv_file(csv_path)
+        api.action.resource_create(package_id=dataset['id'],
+            name='AllstarFull.csv', upload=csv_file)
+
+        # Download the package's SDF ZIP file.
+        url = toolkit.url_for(
+            controller='ckanext.datapackager.controllers.package:DataPackagerPackageController',
+            action='download_sdf',
+            package_id=dataset['name'])
+        response = self.app.get(url)
+
+        # Open the response as a ZIP file.
+        zip_ = zipfile.ZipFile(StringIO.StringIO(response.body))
+
+        # Check that the ZIP file contains the files we expect.
+        nose.tools.assert_equals(zip_.namelist(),
+                                 ['AllstarFull.csv', 'datapackage.json'])
+
+        # Extract datapackage.json from the zip file and load it as json.
+        datapackage = json.load(zip_.open('datapackage.json'))
+
+        # Check the contents of the datapackage.json file.
+        nose.tools.assert_equals(dataset['name'], datapackage['name'])
+
+        resources = datapackage['resources']
+        nose.tools.assert_equals(linked_resource['url'], resources[0]['url'])
+        schema = resources[0]['schema']
+        nose.tools.assert_equals(
+            {'fields': [{'type': 'string', 'name': 'col1'}]}, schema)
+
+        nose.tools.assert_equals(resources[1]['path'], 'AllstarFull.csv')
+
+        # Check the contenst of the AllstarFull.csv file.
+        assert (zip_.open('AllstarFull.csv').read() ==
+                _get_csv_file(csv_path).read())
+
+    def test_download_sdf_with_three_files(self):
+        '''Upload three CSV files to a package and test downloading the ZIP.'''
+
+        user = factories.Sysadmin()
+        api = ckanapi.TestAppCKAN(self.app, apikey=user['apikey'])
+        dataset = factories.Dataset()
+
+        def filename(path):
+            return os.path.split(path)[1]
+
+        csv_paths = ('../test-data/lahmans-baseball-database/AllstarFull.csv',
+            '../test-data/lahmans-baseball-database/PitchingPost.csv',
+            '../test-data/lahmans-baseball-database/TeamsHalf.csv')
+        for path in csv_paths:
+            csv_file = _get_csv_file(path)
+            api.action.resource_create(package_id=dataset['id'],
+                name=filename(path), upload=csv_file)
+
+        # Download the package's SDF ZIP file.
+        url = toolkit.url_for(
+            controller='ckanext.datapackager.controllers.package:DataPackagerPackageController',
+            action='download_sdf',
+            package_id=dataset['name'])
+        response = self.app.get(url)
+
+        # Open the response as a ZIP file.
+        zip_ = zipfile.ZipFile(StringIO.StringIO(response.body))
+
+        # Check that the ZIP file contains the files we expect.
+        nose.tools.assert_equals(zip_.namelist(),
+            [filename(path) for path in csv_paths] + ['datapackage.json'])
+
+        # Extract datapackage.json from the zip file and load it as json.
+        datapackage = json.load(zip_.open('datapackage.json'))
+
+        # Check the contents of the datapackage.json file.
+        nose.tools.assert_equals(dataset['name'], datapackage['name'])
+        resources = datapackage['resources']
+        for csv_path, resource in zip(csv_paths, resources):
+            nose.tools.assert_equals(resource['path'], filename(csv_path))
+            assert 'schema' in resource
+
+        # Check the contents of the CSV files.
+        for csv_path in csv_paths:
+            assert (zip_.open(filename(csv_path)).read() ==
+                    _get_csv_file(csv_path).read())
+
+    def test_that_download_button_is_on_page(self):
+        '''Tests that the download button is shown on the package pages.'''
+
+        dataset = factories.Dataset()
+
+        response = self.app.get('/package/{0}'.format(dataset['name']))
+        soup = response.html
+        download_button = soup.find(id='download_sdf_button')
+        download_url = download_button['href']
+        assert download_url == toolkit.url_for(
+            controller='ckanext.datapackager.controllers.package:DataPackagerPackageController',
+            action='download_sdf',
+            package_id=dataset['name'])
+
     def test_resource_schema_field(self):
         #create test package and resource
         usr = toolkit.get_action('get_site_user')({'model':model,'ignore_auth': True},{})
@@ -107,25 +229,25 @@ class TestDataPackagerPackageController(
         start = response.body.index('Snippet package/snippets/resource_schema_field.html start')
         end = response.body.index('Snippet package/snippets/resource_schema_field.html end')
         snippet = response.body[start:end]
-        nt.assert_in('index', snippet)
-        nt.assert_in('0', snippet)
-        nt.assert_in('type', snippet)
-        nt.assert_in('string', snippet)
-        nt.assert_in('name', snippet)
-        nt.assert_in('playerID', snippet)
+        nose.tools.assert_in('index', snippet)
+        nose.tools.assert_in('0', snippet)
+        nose.tools.assert_in('type', snippet)
+        nose.tools.assert_in('string', snippet)
+        nose.tools.assert_in('name', snippet)
+        nose.tools.assert_in('playerID', snippet)
 
         #check the list of links to other fields are in the secondary content
         start = response.body.index('Snippet package/snippets/resource_schema_list.html start')
         end = response.body.index('Snippet package/snippets/resource_schema_list.html end')
         snippet = response.body[start:end]
-        nt.assert_in('playerID', snippet)
-        nt.assert_in('yearID', snippet)
-        nt.assert_in('gameNum', snippet)
-        nt.assert_in('gameID', snippet)
-        nt.assert_in('teamID', snippet)
-        nt.assert_in('lgID', snippet)
-        nt.assert_in('GP', snippet)
-        nt.assert_in('startingPos', snippet)
+        nose.tools.assert_in('playerID', snippet)
+        nose.tools.assert_in('yearID', snippet)
+        nose.tools.assert_in('gameNum', snippet)
+        nose.tools.assert_in('gameID', snippet)
+        nose.tools.assert_in('teamID', snippet)
+        nose.tools.assert_in('lgID', snippet)
+        nose.tools.assert_in('GP', snippet)
+        nose.tools.assert_in('startingPos', snippet)
 
     def test_resource_schema(self):
         #create test package and resource
@@ -151,11 +273,11 @@ class TestDataPackagerPackageController(
         snippet = response.body[start:end]
 
         # check that the list of schema fields have been rendered into our template
-        nt.assert_in('playerID', snippet)
-        nt.assert_in('yearID', snippet)
-        nt.assert_in('gameNum', snippet)
-        nt.assert_in('gameID', snippet)
-        nt.assert_in('teamID', snippet)
-        nt.assert_in('lgID', snippet)
-        nt.assert_in('GP', snippet)
-        nt.assert_in('startingPos', snippet)
+        nose.tools.assert_in('playerID', snippet)
+        nose.tools.assert_in('yearID', snippet)
+        nose.tools.assert_in('gameNum', snippet)
+        nose.tools.assert_in('gameID', snippet)
+        nose.tools.assert_in('teamID', snippet)
+        nose.tools.assert_in('lgID', snippet)
+        nose.tools.assert_in('GP', snippet)
+        nose.tools.assert_in('startingPos', snippet)
