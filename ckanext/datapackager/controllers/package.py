@@ -19,3 +19,9 @@ class DataPackagerPackageController(toolkit.BaseController):
 
         base.redirect(helpers.url_for(controller='package', action='read',
                                       id=id))
+
+    def view_metadata(self, package_id, resource_id):
+        return toolkit.render('package/resource_schema.html')
+
+    def view_metadata_field(self, package_id, resource_id, index):
+        return toolkit.render('package/resource_schema_field.html')
