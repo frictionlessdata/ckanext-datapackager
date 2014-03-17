@@ -325,6 +325,17 @@ class DataPackagerPlugin(plugins.SingletonPlugin, toolkit.DefaultDatasetForm):
             controller='ckanext.datapackager.controllers.package:DataPackagerPackageController',
             action='new_metadata')
 
+        map_.connect(
+            '/package/{package_id}/file/{resource_id}/schema/{index}',
+            controller='ckanext.datapackager.controllers.package:DataPackagerPackageController',
+            action='view_metadata_field',
+        )
+
+        map_.connect(
+            '/package/{package_id}/file/{resource_id}/schema',
+            controller='ckanext.datapackager.controllers.package:DataPackagerPackageController',
+            action='view_metadata',
+        )
         # Add in just the CKAN default routes that we're using.
         map_ = self._default_routes(map_)
 
@@ -343,7 +354,12 @@ class DataPackagerPlugin(plugins.SingletonPlugin, toolkit.DefaultDatasetForm):
         See ITemplateHelpers.
 
         '''
-        return {'resource_display_name': custom_helpers.resource_display_name}
+        return {
+            'resource_display_name': custom_helpers.resource_display_name,
+            'get_resource_schema_field': custom_helpers.get_resource_schema_field,
+            'get_resource_schema': custom_helpers.get_resource_schema,
+            'get_resource_by_id': custom_helpers.get_resource,
+        }
 
     def after_upload(self, context, resource):
         resource['schema'] = common.json.dumps(
@@ -362,6 +378,14 @@ class DataPackagerPlugin(plugins.SingletonPlugin, toolkit.DefaultDatasetForm):
                 ckanext.datapackager.logic.action.get.resource_schema_show,
             'resource_schema_field_show':
                 ckanext.datapackager.logic.action.get.resource_schema_field_show,
+            'resource_schema_pkey_show':
+                ckanext.datapackager.logic.action.get.resource_schema_pkey_show,
+            'resource_schema_pkey_create':
+                ckanext.datapackager.logic.action.create.resource_schema_pkey_create,
+            'resource_schema_pkey_update':
+                ckanext.datapackager.logic.action.update.resource_schema_pkey_update,
+            'resource_schema_pkey_delete':
+                ckanext.datapackager.logic.action.delete.resource_schema_pkey_delete,
         }
 
     def package_types(self):

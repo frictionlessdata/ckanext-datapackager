@@ -183,3 +183,100 @@ class TestDelete(custom_helpers.FunctionalTestBaseClass):
         nose.tools.assert_raises(toolkit.ValidationError, helpers.call_action,
             'resource_schema_field_show', resource_id=resource['id'],
             index=1)
+
+    def _create_resource(self):
+        resource = factories.Resource(dataset=factories.Dataset())
+        helpers.call_action('resource_schema_field_create',
+            resource_id=resource['id'], index=0, name='zero')
+        helpers.call_action('resource_schema_field_create',
+            resource_id=resource['id'], index=1, name='one')
+        helpers.call_action('resource_schema_field_create',
+            resource_id=resource['id'], index=2, name='two')
+        helpers.call_action('resource_schema_pkey_create',
+            resource_id=resource['id'], pkey=['one', 'two'])
+        return resource['id']
+
+    def test_resource_schema_pkey_delete(self):
+        '''Test deleting the primary key from a resource schema.'''
+
+        resource_id = self._create_resource()
+
+        helpers.call_action('resource_schema_pkey_delete',
+                            resource_id=resource_id)
+
+        schema = helpers.call_action('resource_schema_show',
+                                     resource_id=resource_id)
+        assert 'primaryKey' not in schema
+
+    def test_resource_pkey_field_delete_with_invalid_resource_id(self):
+        '''Deleting a primary key with an invalid resource ID should raise
+        ValidationError.
+
+        '''
+        self._create_resource()
+
+        for resource_id in ([], {}, '', [1, 2, 3], {'foo': 'bar'}):
+            nose.tools.assert_raises(toolkit.ValidationError,
+                helpers.call_action, 'resource_schema_pkey_delete',
+                resource_id=resource_id)
+
+    def test_resource_schema_pkey_delete_with_nonexistent_resource_id(self):
+        '''Deleting a primary key with a resource ID that doesn't exist should
+        raise ValidationError.
+
+        '''
+        self._create_resource()
+
+        for resource_id in ([], {}, '', [1,2,3], {'foo': 'bar'}):
+            nose.tools.assert_raises(toolkit.ValidationError,
+                helpers.call_action, 'resource_schema_pkey_delete',
+                resource_id='abcdefg')
+
+    def test_resource_schema_pkey_delete_with_no_resource_id(self):
+        '''Deleting a primary key with no resource ID should raise
+        ValidationError.
+
+        '''
+        self._create_resource()
+
+        nose.tools.assert_raises(toolkit.ValidationError,
+            helpers.call_action, 'resource_schema_pkey_delete')
+
+    def test_resource_schema_pkey_delete_extra_params(self):
+        '''Unknown params passed to resource_schema_pkey_delete should be
+        ignored, the primary key should still be deleted as long as the correct
+        resource_id is given.
+
+        '''
+        resource_id = self._create_resource()
+
+        helpers.call_action('resource_schema_pkey_delete',
+                            resource_id=resource_id, foo='foo', bar='bar')
+
+        schema = helpers.call_action('resource_schema_show',
+                                     resource_id=resource_id)
+        assert 'primaryKey' not in schema
+
+    def delete_pkey_when_there_is_no_pkey(self):
+        '''Trying to delete the primary key from a resource that doesn't have
+        one should be a no-op.
+
+        '''
+        resource = factories.Resource(dataset=factories.Dataset())
+        helpers.call_action('resource_schema_field_create',
+            resource_id=resource['id'], index=0, name='zero')
+        helpers.call_action('resource_schema_field_create',
+            resource_id=resource['id'], index=1, name='one')
+        helpers.call_action('resource_schema_field_create',
+            resource_id=resource['id'], index=2, name='two')
+
+        resource_before = helpers.call_action('resource_show',
+                                              id=resource['id'])
+
+        helpers.call_action('resource_schema_pkey_delete',
+            resource_id=resource['id'])
+
+        resource_after = helpers.call_action('resource_show',
+                                             id=resource['id'])
+
+        assert resource_before == resource_after

@@ -1,0 +1,8 @@
+{# Renders a resource's schema #}
+{% set schema = h.get_resource_schema(resource_id) %}
+<dl class="dl-horizontal">
+{% for field in schema.fields %}
+  <dt>{{ field.type }}</dt>
+  <dd>{{ field.name }}</dd>
+{% endfor %}
+</dl>

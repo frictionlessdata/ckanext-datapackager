@@ -3,7 +3,7 @@ import json
 import ckan.plugins.toolkit as toolkit
 import ckan.lib.navl.dictization_functions as dictization_functions
 
-import ckanext.datapackager.logic.schema
+import ckanext.datapackager.logic.schema as schema
 import ckanext.datapackager.exceptions as custom_exceptions
 import ckanext.datapackager.lib.sdf as sdf
 
@@ -30,8 +30,7 @@ def resource_schema_show(context, data_dict):
     '''
     try:
         data_dict, errors = dictization_functions.validate(data_dict,
-            ckanext.datapackager.logic.schema.resource_schema_show_schema(),
-            context)
+            schema.resource_schema_show_schema(), context)
     except custom_exceptions.InvalidResourceIDException, e:
         raise toolkit.ValidationError(e.message)
     assert not errors  # Nothing in resource_schema_show_schema ever adds
@@ -41,9 +40,9 @@ def resource_schema_show(context, data_dict):
 
     resource_dict = toolkit.get_action('resource_show')(context,
         {'id': resource_id})
-    schema = resource_dict.get('schema', _empty_json_table_schema())
-    schema = json.loads(schema)
-    return schema
+    schema_ = resource_dict.get('schema', _empty_json_table_schema())
+    schema_ = json.loads(schema_)
+    return schema_
 
 
 @toolkit.side_effect_free
@@ -62,14 +61,13 @@ def resource_schema_field_show(context, data_dict):
     '''
     try:
         data_dict, errors = dictization_functions.validate(data_dict,
-            ckanext.datapackager.logic.schema.resource_schema_field_show_schema(),
-            context)
+            schema.resource_schema_field_show_schema(), context)
     except custom_exceptions.InvalidResourceIDException, e:
         raise toolkit.ValidationError(e)
     if errors:
         raise toolkit.ValidationError(errors)
 
-    schema = toolkit.get_action('resource_schema_show')(context,
+    schema_ = toolkit.get_action('resource_schema_show')(context,
         {'resource_id': data_dict['resource_id']})
 
     # Find the field with the given index.
@@ -77,7 +75,7 @@ def resource_schema_field_show(context, data_dict):
     # in the list of fields! There may not be fields with indices 0, 1 or 2,
     # and the fields may have been added out of order.
     field = None
-    for field_ in schema['fields']:
+    for field_ in schema_['fields']:
         if field_['index'] == data_dict['index']:
             field = field_
             break
@@ -117,3 +115,28 @@ def package_to_sdf(context, data_dict):
                                                   {'name_or_id': package_id})
     return sdf.convert_to_sdf(pkg_dict,
         pkg_zipstream=context.get('pkg_zipstream'))
+
+
+def resource_schema_pkey_show(context, data_dict):
+    '''Return the given resource's primary key.
+
+    :param resource_id: the ID of the resource whose schema should be returned
+    :type resource_id: string
+
+    :returns: the resource's primary key
+    :rtype: string
+
+    '''
+    data_dict, errors = dictization_functions.validate(data_dict,
+        schema.resource_schema_pkey_show_schema(), context)
+    assert not errors  # Nothing in resource_schema_show_schema ever adds
+                       # errors to the errors dict.
+
+    resource_id = data_dict.pop('resource_id')
+
+    resource_dict = toolkit.get_action('resource_show')(context,
+        {'id': resource_id})
+    schema_ = resource_dict.get('schema', _empty_json_table_schema())
+    schema_ = json.loads(schema_)
+    pkey = schema_.get('primaryKey')
+    return pkey

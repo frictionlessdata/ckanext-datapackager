@@ -45,3 +45,9 @@ class DataPackagerPackageController(toolkit.BaseController):
         toolkit.get_action('package_to_sdf')(context, {'id': package_id})
 
         return pkg_zipstream
+
+    def view_metadata(self, package_id, resource_id):
+        return toolkit.render('package/resource_schema.html')
+
+    def view_metadata_field(self, package_id, resource_id, index):
+        return toolkit.render('package/resource_schema_field.html')

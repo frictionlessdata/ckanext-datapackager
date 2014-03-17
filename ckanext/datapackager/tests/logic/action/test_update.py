@@ -539,3 +539,120 @@ class TestResourceUpdate(custom_helpers.FunctionalTestBaseClass):
 
             resource = api.action.resource_show(id=resource['id'])
             assert resource['format'] == format_
+
+
+class TestResourceSchemaPKeyUpdate(custom_helpers.FunctionalTestBaseClass):
+    '''Functional tests for resource_schema_pkey_update.'''
+
+    def _create_resources(self):
+        resource = factories.Resource(dataset=factories.Dataset())
+        api = ckanapi.TestAppCKAN(self.app, apikey=factories.User()['apikey'])
+        api.action.resource_schema_field_create(resource_id=resource['id'],
+            index=0, name='foo')
+        api.action.resource_schema_field_create(resource_id=resource['id'],
+            index=1, name='bar')
+        api.action.resource_schema_pkey_create(resource_id=resource['id'],
+            pkey='foo')
+        return resource, api
+
+    def test_resource_schema_pkey_update_string(self):
+
+        resource, api = self._create_resources()
+
+        result = api.action.resource_schema_pkey_update(
+            resource_id=resource['id'], pkey='bar')
+
+        schema = api.action.resource_schema_show(resource_id=resource['id'])
+        assert schema['primaryKey'] == 'bar'
+        assert result == 'bar', ("resource_schema_pkey_update should return "
+            "the created primary key")
+
+
+    def test_resource_schema_pkey_update_list(self):
+
+        resource, api = self._create_resources()
+
+        pkey = ['foo', 'bar']
+        result = api.action.resource_schema_pkey_update(
+            resource_id=resource['id'], pkey=pkey)
+
+        schema = api.action.resource_schema_show(resource_id=resource['id'])
+        assert schema['primaryKey'] == pkey
+        assert result == pkey, ("resource_schema_pkey_update should return "
+            "the created primary key")
+
+    def test_resource_schema_pkey_update_string_with_nonexistent_name(self):
+
+        resource, api = self._create_resources()
+
+        nose.tools.assert_raises(toolkit.ValidationError,
+            api.action.resource_schema_pkey_update, resource_id=resource['id'],
+            pkey='does-not-exist')
+
+    def test_resource_schema_pkey_update_list_with_nonexistent_name(self):
+
+        resource, api = self._create_resources()
+
+        nose.tools.assert_raises(toolkit.ValidationError,
+            api.action.resource_schema_pkey_update, resource_id=resource['id'],
+            pkey=['foo', 'bar', 'does-not-exist'])
+
+    def test_resource_schema_pkey_update_with_invalid_primary_key(self):
+
+        resource, api = self._create_resources()
+
+        for key in (None, -1, 0.23, 59, True, False, '', ' ', [], {},
+                    [None, -1, 0.23, 59, True, False, '', ' ']):
+            nose.tools.assert_raises(toolkit.ValidationError,
+                api.action.resource_schema_pkey_update,
+                resource_id=resource['id'], pkey=key)
+
+    def test_resource_schema_pkey_update_with_missing_primary_key(self):
+
+        resource, api = self._create_resources()
+
+        nose.tools.assert_raises(toolkit.ValidationError,
+            api.action.resource_schema_pkey_update, resource_id=resource['id'])
+
+    def test_resource_schema_pkey_update_with_invalid_resource_id(self):
+
+        resource, api = self._create_resources()
+
+        for resource_id in ([], {}, '', [1,2,3], {'foo': 'bar'}, 'abcdefghij'):
+            nose.tools.assert_raises(toolkit.ValidationError,
+                api.action.resource_schema_pkey_update,
+                resource_id=resource_id, pkey='foo')
+
+    def test_resource_schema_pkey_update_with_missing_resource_id(self):
+
+        resource, api = self._create_resources()
+
+        nose.tools.assert_raises(toolkit.ValidationError,
+            api.action.resource_schema_pkey_update, pkey='bar')
+
+    def test_resource_schema_pkey_update_with_nonexistent_resource_id(self):
+
+        resource, api = self._create_resources()
+
+        nose.tools.assert_raises(toolkit.ValidationError,
+            api.action.resource_schema_pkey_update,
+            resource_id='does-not-exist', pkey='bar')
+
+    def test_resource_schema_pkey_update_when_key_does_not_already_exist(self):
+        resource = factories.Resource(dataset=factories.Dataset())
+        api = ckanapi.TestAppCKAN(self.app, apikey=factories.User()['apikey'])
+        api.action.resource_schema_field_create(resource_id=resource['id'],
+            index=0, name='foo')
+        api.action.resource_schema_field_create(resource_id=resource['id'],
+            index=1, name='bar')
+
+        pkey=['foo', 'bar']
+        api.action.resource_schema_pkey_update(resource_id=resource['id'],
+            pkey=pkey)
+
+        schema = api.action.resource_schema_show(resource_id=resource['id'])
+        assert schema['primaryKey'] == pkey
+
+    # TODO
+    #def test_resource_schema_pkey_create_with_nonunique_primary_key(self):
+        #raise NotImplementedError

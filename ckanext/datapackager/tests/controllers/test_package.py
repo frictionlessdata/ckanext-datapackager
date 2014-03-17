@@ -1,13 +1,15 @@
 '''Functional tests for controllers/package.py.'''
-import os.path
+import os
 import zipfile
 import StringIO
 import json
 
 import nose.tools
 
-import ckan.plugins.toolkit as toolkit
+import ckan.model as model
 import ckan.new_tests.factories as factories
+import ckan.new_tests.helpers as helpers
+import ckan.plugins.toolkit as toolkit
 import ckanext.datapackager.tests.helpers as custom_helpers
 import ckanapi
 
@@ -204,3 +206,78 @@ class TestDataPackagerPackageController(
             controller='ckanext.datapackager.controllers.package:DataPackagerPackageController',
             action='download_sdf',
             package_id=dataset['name'])
+
+    def test_resource_schema_field(self):
+        #create test package and resource
+        usr = toolkit.get_action('get_site_user')({'model':model,'ignore_auth': True},{})
+        path = os.path.join(os.path.dirname(__file__), os.pardir, 'test-data',
+                            'lahmans-baseball-database', 'AllstarFull.csv')
+        upload = open(path)
+        package = helpers.call_action('package_create', name='test-package')
+        api = ckanapi.TestAppCKAN(self.app, apikey=usr['apikey'])
+        resource = api.action.resource_create(
+            package_id=package['id'],
+            upload=upload,
+            format='csv',
+            can_be_previewed=True,
+        )
+
+        #render page
+        response = self.app.get('/package/{0}/file/{1}/schema/0'.format(package['id'], resource['id']))
+
+        #test that our snippet is rendered
+        start = response.body.index('Snippet package/snippets/resource_schema_field.html start')
+        end = response.body.index('Snippet package/snippets/resource_schema_field.html end')
+        snippet = response.body[start:end]
+        nose.tools.assert_in('index', snippet)
+        nose.tools.assert_in('0', snippet)
+        nose.tools.assert_in('type', snippet)
+        nose.tools.assert_in('string', snippet)
+        nose.tools.assert_in('name', snippet)
+        nose.tools.assert_in('playerID', snippet)
+
+        #check the list of links to other fields are in the secondary content
+        start = response.body.index('Snippet package/snippets/resource_schema_list.html start')
+        end = response.body.index('Snippet package/snippets/resource_schema_list.html end')
+        snippet = response.body[start:end]
+        nose.tools.assert_in('playerID', snippet)
+        nose.tools.assert_in('yearID', snippet)
+        nose.tools.assert_in('gameNum', snippet)
+        nose.tools.assert_in('gameID', snippet)
+        nose.tools.assert_in('teamID', snippet)
+        nose.tools.assert_in('lgID', snippet)
+        nose.tools.assert_in('GP', snippet)
+        nose.tools.assert_in('startingPos', snippet)
+
+    def test_resource_schema(self):
+        #create test package and resource
+        usr = toolkit.get_action('get_site_user')({'model':model,'ignore_auth': True},{})
+        path = os.path.join(os.path.dirname(__file__), os.pardir, 'test-data',
+                            'lahmans-baseball-database', 'AllstarFull.csv')
+        upload = open(path)
+        package = helpers.call_action('package_create', name='test-package')
+        api = ckanapi.TestAppCKAN(self.app, apikey=usr['apikey'])
+        resource = api.action.resource_create(
+            package_id=package['id'],
+            upload=upload,
+            format='csv',
+            can_be_previewed=True,
+        )
+
+        #render page
+        response = self.app.get('/package/{0}/file/{1}/schema'.format(package['id'], resource['id']))
+
+        #test that our snippet is rendered
+        start = response.body.index('Snippet package/snippets/resource_schema.html start')
+        end = response.body.index('Snippet package/snippets/resource_schema.html end')
+        snippet = response.body[start:end]
+
+        # check that the list of schema fields have been rendered into our template
+        nose.tools.assert_in('playerID', snippet)
+        nose.tools.assert_in('yearID', snippet)
+        nose.tools.assert_in('gameNum', snippet)
+        nose.tools.assert_in('gameID', snippet)
+        nose.tools.assert_in('teamID', snippet)
+        nose.tools.assert_in('lgID', snippet)
+        nose.tools.assert_in('GP', snippet)
+        nose.tools.assert_in('startingPos', snippet)
