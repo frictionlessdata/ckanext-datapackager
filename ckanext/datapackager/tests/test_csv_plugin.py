@@ -11,7 +11,7 @@ import ckan.model as model
 import ckan.plugins
 import ckan.plugins.toolkit as toolkit
 import ckan.new_tests.helpers as helpers
-import ckanext.simplecsvpreview.plugin as csvpreview
+import ckanext.datapackager.plugin as datapackager_plugin
 
 
 class TestSimpleCsvPreviewPlugin(unittest.TestCase):
@@ -25,7 +25,7 @@ class TestSimpleCsvPreviewPlugin(unittest.TestCase):
         app = ckan.config.middleware.make_app(config['global_conf'], **config)
         cls.app = webtest.TestApp(app)
 
-        cls.p = csvpreview.SimpleCsvPreviewPlugin()
+        cls.p = datapackager_plugin.SimpleCsvPreviewPlugin()
 
     @classmethod
     def tearDownClass(cls):
