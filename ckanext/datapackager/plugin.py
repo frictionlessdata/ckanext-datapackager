@@ -1,11 +1,12 @@
-import os.path
-
+import csv
+import itertools
 import routes.mapper
 
 import ckan.plugins as plugins
 import ckan.plugins.toolkit as toolkit
 import ckan.common as common
 import ckan.lib.navl.validators as navl_validators
+import ckan.lib.uploader as uploader
 
 import ckanext.datapackager.lib.helpers as custom_helpers
 import ckanext.datapackager.lib.csv as lib_csv
@@ -15,7 +16,6 @@ import ckanext.datapackager.logic.action.update
 import ckanext.datapackager.logic.action.get
 import ckanext.datapackager.logic.action.delete
 import ckanext.datapackager.logic.validators as custom_validators
-import ckanext.datapackager.exceptions as exceptions
 
 
 def _infer_schema_for_resource(resource):
@@ -28,9 +28,103 @@ def _infer_schema_for_resource(resource):
     # we assume the resource does have an uploaded file and this line will not
     # raise an exception.
     path = util.get_path_to_resource_file(resource)
-
     schema = lib_csv.infer_schema_from_csv_file(path)
     return schema
+
+
+class SimpleCsvPreviewPlugin(plugins.SingletonPlugin):
+    plugins.implements(plugins.IConfigurable)
+    plugins.implements(plugins.IConfigurer)
+    plugins.implements(plugins.IResourcePreview)
+
+    DEFAULT_COLUMN_LIMIT = 10
+
+    def configure(self, config):
+        toolkit.requires_ckan_version('2.2')
+        preview_limit = config.get('ckan.simple_csv_preview.column_limit',
+                                   SimpleCsvPreviewPlugin.DEFAULT_COLUMN_LIMIT)
+        try:
+            self.preview_limit = int(preview_limit)
+        except (ValueError, TypeError):
+            raise toolkit.ValidationError(
+                {'ckan.simple_csv_preview.column_limit': 'Invalid Integer'}
+            )
+
+    def update_config(self, config):
+        plugins.toolkit.add_template_directory(config,
+                                               'templates/simplecsvpreview')
+
+    def can_preview(self, data_dict):
+        resource = data_dict['resource']
+
+        # should probably check out the details of mime/format
+        # in https://github.com/ckan/ckan/pull/1350 and have this match
+        # the pr there
+        format = resource['format'].lower() if resource.get('format') else None
+        mimetype = resource['mimetype'].lower() if resource.get('mimetype') else None
+        types = ('csv', 'text/csv')
+        is_csv = (format or mimetype) in types
+
+        if resource.get('on_same_domain') and is_csv:
+            return {'can_preview': True, 'quality': 1, }
+
+        return {'can_preview': False}
+
+    def setup_template_variables(self, context, data_dict):
+        '''Adds csv_preview_data to the c variable.
+
+        Will add the number of lines defined in
+        ckan.simple_csv_preview.column_limit to csv_preview data, the preview
+        data is transposed so the csv headers run down the left and each row
+        of the csv file will appear as a column in the preview
+        '''
+        assert self.can_preview(data_dict)
+        upload = uploader.ResourceUpload(data_dict['resource'])
+
+        try:
+            resource_id = data_dict['resource']['id']
+            with open(upload.get_path(resource_id)) as csv_file:
+                try:
+                    dialect = csv.Sniffer().sniff(csv_file.read(1024))
+                    csv_file.seek(0)
+                    csv_reader = csv.reader(csv_file, dialect)
+                    csv_data = itertools.islice(csv_reader, self.preview_limit)
+                    plugins.toolkit.c.csv_preview_data = zip(*csv_data)
+                except csv.Error, e:
+                    plugins.toolkit.c.csv_error = e.message
+        except IOError as e:
+            plugins.toolkit.c.csv_error = e.message
+
+    def preview_template(self, context, data_dict):
+        return 'csv.html'
+
+
+class DownloadSDFPlugin(plugins.SingletonPlugin):
+    '''Plugin that adds downloading packages in Simple Data Format.
+
+    Adds a Download button to package pages that downloads a Simple Data Format
+    ZIP file of the package. Also adds an API for getting a package descriptor
+    Simple Data Format JSON.
+
+    '''
+    plugins.implements(plugins.IActions)
+    plugins.implements(plugins.IConfigurer)
+    plugins.implements(plugins.IRoutes, inherit=True)
+
+    def update_config(self, config):
+        toolkit.add_template_directory(config, 'templates/download_sdf')
+
+    def before_map(self, map_):
+        map_.connect('/package/{package_id}/downloadsdf',
+            controller='ckanext.datapackager.controllers.package:DataPackagerPackageController',
+            action='download_sdf')
+        return map_
+
+    def get_actions(self):
+        return {
+            'package_to_sdf':
+                ckanext.datapackager.logic.action.get.package_to_sdf,
+        }
 
 
 class DataPackagerPlugin(plugins.SingletonPlugin, toolkit.DefaultDatasetForm):
@@ -50,7 +144,8 @@ class DataPackagerPlugin(plugins.SingletonPlugin, toolkit.DefaultDatasetForm):
         See IConfigurer.
 
         '''
-        toolkit.add_template_directory(config, 'templates')
+        toolkit.add_template_directory(config,
+                                       'templates/datapackager_ckan_theme')
         toolkit.add_resource('fanstatic', 'datapackager')
 
     def _default_routes(self, map_):

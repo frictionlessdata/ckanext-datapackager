@@ -1,0 +1,13 @@
+{% ckan_extends %}
+
+{% block primary_content_inner %}
+  <div style="float:right; margin-left:10px">
+    <a href="{% url_for controller='ckanext.datapackager.controllers.package:DataPackagerPackageController', action='download_sdf', package_id=pkg.name %}"
+       class='btn btn-primary', id='download_sdf_button'>
+       <i class='icon-download'></i> Download
+    </a>
+  </div>
+  {{ super() }}
+{% endblock %}
+
+{% block package_additional_info %}{% endblock %}
