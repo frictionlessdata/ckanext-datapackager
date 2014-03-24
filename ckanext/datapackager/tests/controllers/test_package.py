@@ -88,9 +88,8 @@ class TestDataPackagerPackageController(
     def test_resource_schema_field(self):
         #create test package and resource
         usr = toolkit.get_action('get_site_user')({'model':model,'ignore_auth': True},{})
-        path = os.path.join(os.path.dirname(__file__), os.pardir, 'test-data',
-                            'lahmans-baseball-database', 'AllstarFull.csv')
-        upload = open(path)
+        upload = custom_helpers.get_csv_file(
+            'test-data/lahmans-baseball-database/AllstarFull.csv')
         package = helpers.call_action('package_create', name='test-package')
         api = ckanapi.TestAppCKAN(self.app, apikey=usr['apikey'])
         resource = api.action.resource_create(
@@ -130,9 +129,8 @@ class TestDataPackagerPackageController(
     def test_resource_schema(self):
         #create test package and resource
         usr = toolkit.get_action('get_site_user')({'model':model,'ignore_auth': True},{})
-        path = os.path.join(os.path.dirname(__file__), os.pardir, 'test-data',
-                            'lahmans-baseball-database', 'AllstarFull.csv')
-        upload = open(path)
+        upload = custom_helpers.get_csv_file(
+            'test-data/lahmans-baseball-database/AllstarFull.csv')
         package = helpers.call_action('package_create', name='test-package')
         api = ckanapi.TestAppCKAN(self.app, apikey=usr['apikey'])
         resource = api.action.resource_create(

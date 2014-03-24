@@ -5,6 +5,8 @@ import ckan.lib.navl.dictization_functions as dictization_functions
 
 import ckanext.datapackager.logic.schema as schema
 import ckanext.datapackager.exceptions as exceptions
+import ckanext.datapackager.lib.csv as csv
+import ckanext.datapackager.lib.util as util
 
 
 def resource_schema_field_create(context, data_dict):
@@ -69,14 +71,29 @@ def resource_schema_field_create(context, data_dict):
 
     resource_id = data_dict.pop('resource_id')
 
-    schema_ = toolkit.get_action('resource_schema_show')(context,
-        {'resource_id': resource_id})
-
-    schema_['fields'].append(data_dict)
-    schema_ = json.dumps(schema_)
-
     resource_dict = toolkit.get_action('resource_show')(context,
         {'id': resource_id})
+
+    if data_dict.get('type') in ('date', 'time', 'datetime'):
+
+        try:
+            path = util.get_path_to_resource_file(resource_dict)
+        except exceptions.ResourceFileDoesNotExistException:
+            path = None
+
+        if path:
+            try:
+                data_dict['temporal_extent'] = csv.temporal_extent(path,
+                                                 column_num=data_dict['index'])
+            except ValueError:
+                pass
+            except TypeError:
+                pass
+
+    schema_ = toolkit.get_action('resource_schema_show')(context,
+        {'resource_id': resource_id})
+    schema_['fields'].append(data_dict)
+    schema_ = json.dumps(schema_)
 
     toolkit.get_action('resource_update')(context,
         {'id': resource_id, 'url': resource_dict['url'],
@@ -85,6 +102,7 @@ def resource_schema_field_create(context, data_dict):
     # This is probably unnecessary as we already have the schema above.
     field = toolkit.get_action('resource_schema_field_show')(context,
         {'resource_id': resource_id, 'index': data_dict['index']})
+
     return field
 
 

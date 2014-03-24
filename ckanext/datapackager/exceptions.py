@@ -8,3 +8,12 @@ class InvalidResourceIDException(Exception):
 
     '''
     pass
+
+
+class ResourceFileDoesNotExistException(Exception):
+    '''The exception that's raised when trying to get the path to a resource's
+    file in the FileStore, if that resource doesn't have a file in the
+    FileStore.
+
+    '''
+    pass

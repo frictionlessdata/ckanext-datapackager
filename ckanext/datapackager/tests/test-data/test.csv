@@ -1,2 +1,2 @@
-datetime,timedelta,integer,number,boolean,object
-20111230 00:00:00,one hour,10,1.6,True,Foobar
+datetime,timedelta,integer,number,boolean,another_boolean,object
+20111230 00:00:00,one hour,10,1.6,True,False,Foobar

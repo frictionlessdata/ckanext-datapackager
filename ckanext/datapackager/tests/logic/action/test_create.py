@@ -332,6 +332,174 @@ class TestResourceSchemaFieldCreate(custom_helpers.FunctionalTestBaseClass):
         field = fields[0]
         assert field == {'index': 3, 'name': 'foo'}
 
+    def test_resource_schema_field_create_date(self):
+        '''Test that a temporal extent is added to the field, when creating
+        a field of type date.
+
+        '''
+        user = factories.User()
+        package = factories.Dataset()
+        api = ckanapi.TestAppCKAN(self.app, apikey=user['apikey'])
+        csv_file = custom_helpers.get_csv_file(
+            'test-data/lahmans-baseball-database/AllstarFull.csv')
+        resource = api.action.resource_create(package_id=package['id'],
+                                              upload=csv_file)
+
+        # Delete the field from the schema so we can re-create it.
+        api.action.resource_schema_field_delete(resource_id=resource['id'],
+                                                index=1)
+
+        # Re-create the field with date type.
+        api.action.resource_schema_field_create(resource_id=resource['id'],
+                                                index=1, name='yearID',
+                                                type='date')
+
+        field = helpers.call_action('resource_schema_field_show',
+                                     resource_id=resource['id'], index=1)
+
+        # Unit tests elsewhere check that the temporal extent value is correct,
+        # here we're just testing that it's present.
+        assert 'temporal_extent' in field
+
+    def test_resource_schema_field_create_datetime(self):
+        '''Test that a temporal extent is added to the field, when creating
+        a field of type datetime.
+
+        '''
+        user = factories.User()
+        package = factories.Dataset()
+        api = ckanapi.TestAppCKAN(self.app, apikey=user['apikey'])
+        csv_file = custom_helpers.get_csv_file('test-data/datetimes.csv')
+        resource = api.action.resource_create(package_id=package['id'],
+                                              upload=csv_file)
+
+        # Delete the field from the schema so we can re-create it.
+        api.action.resource_schema_field_delete(resource_id=resource['id'],
+                                                index=1)
+
+        # Re-create the field with datetime type.
+        api.action.resource_schema_field_create(resource_id=resource['id'],
+                                                index=1, name='yearID',
+                                                type='datetime')
+
+        field = helpers.call_action('resource_schema_field_show',
+                                     resource_id=resource['id'], index=1)
+
+        # Unit tests elsewhere check that the temporal extent value is correct,
+        # here we're just testing that it's present.
+        assert 'temporal_extent' in field
+
+    def test_resource_schema_field_create_time(self):
+        '''Test that a temporal extent is added to the field, when creating
+        a field of type time.
+
+        '''
+        user = factories.User()
+        package = factories.Dataset()
+        api = ckanapi.TestAppCKAN(self.app, apikey=user['apikey'])
+        csv_file = custom_helpers.get_csv_file('test-data/times.csv')
+        resource = api.action.resource_create(package_id=package['id'],
+                                              upload=csv_file)
+
+        # Delete the field from the schema so we can re-create it.
+        api.action.resource_schema_field_delete(resource_id=resource['id'],
+                                                index=1)
+
+        # Re-create the field with time type.
+        api.action.resource_schema_field_create(resource_id=resource['id'],
+                                                index=1, name='yearID',
+                                                type='time')
+
+        field = helpers.call_action('resource_schema_field_show',
+                                     resource_id=resource['id'], index=1)
+
+        # Unit tests elsewhere check that the temporal extent value is correct,
+        # here we're just testing that it's present.
+        assert 'temporal_extent' in field
+
+    def test_resource_schema_field_create_time_with_link_resource(self):
+        '''If a resource schema field with type time is created for a resource
+        that has a URL to a remote file rather than an uploaded file, then no
+        temporal extent should be added to the field.
+
+        Since there's no uploaded file, the code for computing the temporal
+        extent for the field won't work. This test is mostly here to make sure
+        we don't crash in this case.
+
+        '''
+        resource = factories.Resource(dataset=factories.Dataset())
+        user = factories.User()
+        api = ckanapi.TestAppCKAN(self.app, apikey=user['apikey'])
+
+        api.action.resource_schema_field_create(resource_id=resource['id'],
+                                                index=1, name='yearID',
+                                                type='time')
+
+        field = helpers.call_action('resource_schema_field_show',
+                                     resource_id=resource['id'], index=1)
+        assert 'temporal_extent' not in field
+
+    def test_resource_schema_field_create_date_with_invalid_value(self):
+        '''Test calling resource_schema_field_create() and setting the type of
+        the field to date, when the corresponding column in the CSV file
+        contains non-date values.
+
+        The code for computing the temporal extent of the field can't work if
+        the column doesn't contain temporal data. This test is mostly here to
+        make sure we don't crash in this case.
+
+        '''
+        user = factories.User()
+        package = factories.Dataset()
+        api = ckanapi.TestAppCKAN(self.app, apikey=user['apikey'])
+        csv_file = custom_helpers.get_csv_file('test-data/test.csv')
+        resource = api.action.resource_create(package_id=package['id'],
+                                              upload=csv_file)
+
+        # Delete the field from the schema so we can re-create it.
+        api.action.resource_schema_field_delete(resource_id=resource['id'],
+                                                index=6)
+
+        # Re-create the field with date type.
+        api.action.resource_schema_field_create(resource_id=resource['id'],
+                                                index=6, name='object',
+                                                type='date')
+
+        field = helpers.call_action('resource_schema_field_show',
+                                     resource_id=resource['id'], index=6)
+
+        assert 'temporal_extent' not in field
+
+    def test_resource_schema_field_create_with_naive_and_aware_dates(self):
+        '''Test calling resource_schema_field_create() when the corresponding
+        column in the CSV file contains a mix of naive and aware date strings.
+
+        The temporal extent of the column cannot be computed in this case.
+        This test is mostly here to make sure we don't crash in this case.
+
+        '''
+        user = factories.User()
+        package = factories.Dataset()
+        api = ckanapi.TestAppCKAN(self.app, apikey=user['apikey'])
+        csv_file = custom_helpers.get_csv_file(
+            'test-data/naive-and-aware-dates.csv')
+        resource = api.action.resource_create(package_id=package['id'],
+                                              upload=csv_file)
+
+        # Delete the field from the schema so we can re-create it.
+        api.action.resource_schema_field_delete(resource_id=resource['id'],
+                                                index=1)
+
+        # Re-create the field with date type.
+        api.action.resource_schema_field_create(resource_id=resource['id'],
+                                                index=1, name='object',
+                                                type='date')
+
+        field = helpers.call_action('resource_schema_field_show',
+                                     resource_id=resource['id'], index=1)
+
+        assert 'temporal_extent' not in field
+
 
 class TestResourceCreate(custom_helpers.FunctionalTestBaseClass):
     '''Functional tests for resource_create.
@@ -612,7 +780,3 @@ class TestResourceSchemaPKeyCreate(custom_helpers.FunctionalTestBaseClass):
         nose.tools.assert_raises(toolkit.ValidationError,
             api.action.resource_schema_pkey_create,
             resource_id=resource['id'], pkey='bar')
-
-    # TODO
-    #def test_resource_schema_pkey_create_with_nonunique_primary_key(self):
-        #raise NotImplementedError

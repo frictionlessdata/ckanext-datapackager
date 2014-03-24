@@ -9,31 +9,13 @@ import ckan.lib.navl.validators as navl_validators
 
 import ckanext.datapackager.lib.helpers as custom_helpers
 import ckanext.datapackager.lib.csv as lib_csv
+import ckanext.datapackager.lib.util as util
 import ckanext.datapackager.logic.action.create
 import ckanext.datapackager.logic.action.update
 import ckanext.datapackager.logic.action.get
 import ckanext.datapackager.logic.action.delete
 import ckanext.datapackager.logic.validators as custom_validators
-
-
-def _get_path_to_resource_file(resource_dict):
-    '''Return the local filesystem path to an uploaded resource file.
-
-    The given ``resource_dict`` should be for a resource whose file has been
-    uploaded to the FileStore.
-
-    :param resource_dict: dict of the resource whose file you want
-    :type resource_dict: a resource dict, e.g. from action ``resource_show``
-
-    :rtype: string
-    :returns: the absolute path to the resource file on the local filesystem
-
-    '''
-    # We need to do a direct import here, there's no nicer way yet.
-    import ckan.lib.uploader as uploader
-    upload = uploader.ResourceUpload(resource_dict)
-    path = upload.get_path(resource_dict['id'])
-    return os.path.abspath(path)
+import ckanext.datapackager.exceptions as exceptions
 
 
 def _infer_schema_for_resource(resource):
@@ -41,10 +23,12 @@ def _infer_schema_for_resource(resource):
 
     This will guess column headers and types from the resource's CSV file.
 
-    Assumes a resource with a CSV file uploaded to the FileStore.
-
     '''
-    path = _get_path_to_resource_file(resource)
+    # Note: Since this function is only called after uploading a file,
+    # we assume the resource does have an uploaded file and this line will not
+    # raise an exception.
+    path = util.get_path_to_resource_file(resource)
+
     schema = lib_csv.infer_schema_from_csv_file(path)
     return schema
 
@@ -354,11 +338,14 @@ class DataPackagerPlugin(plugins.SingletonPlugin, toolkit.DefaultDatasetForm):
         }
 
     def after_upload(self, context, resource):
-        resource['schema'] = common.json.dumps(
-            _infer_schema_for_resource(resource))
+
+        schema = _infer_schema_for_resource(resource)
+        schema = common.json.dumps(schema)
+        resource['schema'] = schema
         toolkit.get_action('resource_update')(context, resource)
 
     def get_actions(self):
+
         return {
             'resource_schema_field_create':
                 ckanext.datapackager.logic.action.create.resource_schema_field_create,
