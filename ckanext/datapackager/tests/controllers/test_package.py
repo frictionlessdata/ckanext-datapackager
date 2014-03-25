@@ -5,12 +5,15 @@ import StringIO
 import json
 
 import nose.tools
+import bs4
 
+from ckan.common import OrderedDict
 import ckan.model as model
 import ckan.new_tests.factories as factories
 import ckan.new_tests.helpers as helpers
 import ckan.plugins.toolkit as toolkit
 import ckanext.datapackager.tests.helpers as custom_helpers
+import ckanext.datapackager.controllers.package as package_controller
 import ckanapi
 
 
@@ -281,3 +284,234 @@ class TestDataPackagerPackageController(
         nose.tools.assert_in('lgID', snippet)
         nose.tools.assert_in('GP', snippet)
         nose.tools.assert_in('startingPos', snippet)
+
+    def test_view_edit_metadata(self):
+        user = factories.User()
+        extra_environ = {'REMOTE_USER': str(user['name'])}
+        #create test package and resource
+        path = os.path.join(os.path.dirname(__file__), os.pardir, 'test-data',
+                            'lahmans-baseball-database', 'AllstarFull.csv')
+        upload = open(path)
+        package = helpers.call_action('package_create', name='test-package')
+        api = ckanapi.TestAppCKAN(self.app, apikey=user['apikey'])
+        resource = api.action.resource_create(
+            package_id=package['id'],
+            upload=upload,
+            format='csv',
+            can_be_previewed=True,
+        )
+
+        response = self.app.get('/package/{0}/file/{1}/schema/0/edit'.format(package['id'], resource['id']),
+            extra_environ=extra_environ)
+        soup = bs4.BeautifulSoup(response.body)
+        form_dict = dict((i.attrs['name'], i.attrs['value'])
+            for i in soup.form.findAll('input'))
+
+        nose.tools.assert_equals(sorted(form_dict.items()),
+            sorted({
+                u'name-type': u'type',
+                u'value-type': u'string',
+                u'name-name': u'name',
+                u'value-2': u'',
+                u'name-2': u'',
+                u'value-name': u'playerID'
+            }.items())
+        )
+
+    def test_submit_metadata(self):
+        user = factories.User()
+        extra_environ = {'REMOTE_USER': str(user['name'])}
+
+        #create test package and upload a test csv file.
+        path = os.path.join(os.path.dirname(__file__), os.pardir, 'test-data',
+                            'data.csv')
+        upload = open(path)
+        package = helpers.call_action('package_create', name='test-package')
+        api = ckanapi.TestAppCKAN(self.app, apikey=user['apikey'])
+        resource = api.action.resource_create(
+            package_id=package['id'],
+            upload=upload,
+            format='csv',
+            can_be_previewed=True,
+        )
+
+        #post new data to the metadata editor
+        #webtest multiple submit does not work so we cannot use the response.forms
+        #form.submit('delete', index=0) does not work and is bugged in our current
+        #version of web test!
+        response = self.app.post('/package/{0}/file/{1}/schema/0/edit'.format(package['id'], resource['id']),
+            OrderedDict([
+                (u'name-type', u'type'), (u'value-type', u'string'),
+                (u'name-2', u'new'),(u'value-2', u'new value'),
+                (u'name-name', u'name'),  (u'value-name', u'date'),
+            ]),
+            extra_environ=extra_environ,
+        )
+
+        #check that our new metadata has been saved to the resource
+        resource_schema_field = api.action.resource_schema_field_show(
+            index=0, resource_id=resource['id'])
+
+        #check that the output matches.
+        expected_output = {
+            u'index': 0,
+            u'type': u'string',
+            u'name': u'date',
+            u'new': u'new value'
+        }
+
+        nose.tools.assert_equals(
+            sorted(resource_schema_field),
+            sorted(expected_output)
+        )
+
+    def test_delete_metadata(self):
+        '''test that deletion from a schema field through the editor works'''
+        user = factories.User()
+        extra_environ = {
+            'REMOTE_USER': str(user['name']),
+        }
+
+        #create test package and upload a test csv file.
+        path = os.path.join(os.path.dirname(__file__), os.pardir, 'test-data',
+                            'data.csv')
+        upload = open(path)
+        api = ckanapi.TestAppCKAN(self.app, apikey=user['apikey'])
+        package = api.action.package_create(name='test-package')
+        resource = api.action.resource_create(
+            package_id=package['id'],
+            upload=upload,
+            format='csv',
+            can_be_previewed=True,
+        )
+
+        #post new data to the metadata editor removing one of the elements
+        response = self.app.post('/package/{0}/file/{1}/schema/0/edit'.format(package['id'], resource['id']),
+            OrderedDict([
+                (u'name-type', u'type'), (u'value-type', u'string'),
+                (u'name-name', u'name'),  (u'value-name', u'date'),
+                (u'delete', u'name-type'),
+            ]),
+            extra_environ=extra_environ,
+        )
+
+        #save me some future debugging time
+        #we should not have a validation error here, we constructed the dict!
+        assert not 'The following errors were found' in response.body
+
+        #check that our new metadata has been saved to the resource
+        resource_schema_field = api.action.resource_schema_field_show(
+            index=0, resource_id=resource['id'])
+
+        #check that the output matches.
+        expected_output = {
+            u'index': 0,
+            u'name': u'date',
+        }
+
+        nose.tools.assert_equals(
+            sorted(resource_schema_field.items()),
+            sorted(expected_output.items())
+        )
+
+    def test_editor_raises_validation_error(self):
+        '''test that a validation error is raised when no name is given and
+        is a required field '''
+        user = factories.User()
+        extra_environ = {'REMOTE_USER': str(user['name'])}
+
+        #create test package and upload a test csv file.
+        path = os.path.join(os.path.dirname(__file__), os.pardir, 'test-data',
+                            'data.csv')
+        upload = open(path)
+        package = helpers.call_action('package_create', name='test-package')
+        api = ckanapi.TestAppCKAN(self.app, apikey=user['apikey'])
+        resource = api.action.resource_create(
+            package_id=package['id'],
+            upload=upload,
+            format='csv',
+            can_be_previewed=True,
+        )
+
+        #post new data to the metadata editor removing one of the elements
+        response = self.app.post('/package/{0}/file/{1}/schema/0/edit'.format(package['id'], resource['id']),
+            OrderedDict([
+                (u'name-type', u'type'), (u'value-type', u'string'),
+            ]),
+            extra_environ=extra_environ,
+        )
+ 
+        #check that an error message has been displayed
+        nose.tools.assert_in(
+            'The following errors were found',
+            response.body
+        )
+
+    def test_editor_with_unauthorized_user(self):
+        user = factories.User()
+        #create test package and resource
+        path = os.path.join(os.path.dirname(__file__), os.pardir, 'test-data',
+                            'lahmans-baseball-database', 'AllstarFull.csv')
+        upload = open(path)
+        package = helpers.call_action('package_create', name='test-package')
+        api = ckanapi.TestAppCKAN(self.app, apikey=user['apikey'])
+        resource = api.action.resource_create(
+            package_id=package['id'],
+            upload=upload,
+            format='csv',
+            can_be_previewed=True,
+        )
+
+        #make an unauthorized request to the editor.
+        response = self.app.post('/package/{0}/file/{1}/schema/0/edit'.format(package['id'], resource['id']),
+            OrderedDict([
+                (u'name-type', u'type'), (u'value-type', u'string'),
+                (u'name-2', u'new'),(u'value-2', u'new value'),
+                (u'name-name', u'name'),  (u'value-name', u'date'),
+            ]),
+        )
+        #test that we were redirected to the login page
+        nose.tools.assert_equals(302, response.status_int)
+        nose.tools.assert_in('/user/login?came_from', response.location)
+
+
+
+class TestRegroupFields(object):
+    def test_regroup_fields(self):
+        input_dict = {
+            'name-field_a': 'field a',
+            'value-field_a': 'a string',
+            'name-field-b': 'field b',
+            'value-field-b': 1,
+            'name-field-c': 'field c',
+            'value-field-c': 2,
+        }
+
+        expected_output = {
+            'field a': 'a string',
+            'field b': 1,
+            'field c': 2,
+        }
+        nose.tools.assert_equals(
+            sorted(package_controller._regroup_fields(input_dict).items()),
+            sorted(expected_output.items()),
+        )
+
+    def test_deleted_field(self):
+        input_dict = {
+            'name-field_a': 'field a',
+            'value-field_a': 'a string',
+            'name-field-b': 'field b',
+            'value-field-b': 1,
+            'name-field-c': 'field c',
+            'value-field-c': 2,
+        }
+
+        expected_output = {
+            'field a': 'a string',
+            'field b': 1,
+        }
+        nose.tools.assert_equals(
+            sorted(package_controller._regroup_fields(input_dict, deleted='name-field-c').items()),
+            sorted(expected_output.items()),
+        )

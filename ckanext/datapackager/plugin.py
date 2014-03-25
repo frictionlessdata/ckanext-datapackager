@@ -396,6 +396,12 @@ class DataPackagerPlugin(plugins.SingletonPlugin, toolkit.DefaultDatasetForm):
             action='new_metadata')
 
         map_.connect(
+            '/package/{package_id}/file/{resource_id}/schema/{index}/edit',
+            controller='ckanext.datapackager.controllers.package:DataPackagerPackageController',
+            action='edit_metadata_field',
+        )
+
+        map_.connect(
             '/package/{package_id}/file/{resource_id}/schema/{index}',
             controller='ckanext.datapackager.controllers.package:DataPackagerPackageController',
             action='view_metadata_field',
@@ -406,6 +412,7 @@ class DataPackagerPlugin(plugins.SingletonPlugin, toolkit.DefaultDatasetForm):
             controller='ckanext.datapackager.controllers.package:DataPackagerPackageController',
             action='view_metadata',
         )
+
         # Add in just the CKAN default routes that we're using.
         map_ = self._default_routes(map_)
 
