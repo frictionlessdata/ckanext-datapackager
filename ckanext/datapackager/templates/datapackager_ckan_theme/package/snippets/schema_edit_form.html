@@ -1,0 +1,52 @@
+{% import 'macros/schema_form.html' as form %}
+
+<form method="POST" action="{% url_for controller='ckanext.datapackager.controllers.package:DataPackagerPackageController', action='edit_metadata_field', package_id=package_id, resource_id=resource_id, index=column %}" class="control-group">
+  <legend>Editing Metadata For Column {{column}}</legend>
+  {% if errors %}
+  <div class="alert alert-error">
+    The following errors were found
+    <ul>
+      {% for field, error in errors.iteritems() %}
+      <li>{{field}}: {{error}}</li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+
+  {% for name, value in schema_form.iteritems() %}
+  <div class="row-fluid">
+    {{ form.text(id="name-"~loop.index0, name="name-"~name, value=name, prepend='Name', _class='pull-right') }}
+
+    <div class="span6">
+      <div class="input-prepend input-append">
+        <span class="add-on">Value</span>
+        <input type="text" id="value-{{loop.index0}}" name="value-{{name}}" value="{{value}}">
+        <button type="submit" class="btn btn-danger" name="delete" value="name-{{name}}">
+          <i class="icon-remove-sign"></i>
+        </button>
+      </div>
+    </div>
+
+  </div>
+
+    {% if loop.last %}
+    <div class="row-fluid">
+      {{ form.text(id="name-"~loop.index, name="name-"~loop.index, prepend='Name', _class='pull-right') }}
+      {{ form.text(id="value-"~loop.index, name="value-"~loop.index,  prepend='Value') }}
+    </div>
+    {% endif %}
+
+  {% else %}
+    <div class="row-fluid">
+    {{ form.text(id="name-0", name="name-0", prepend='Name', _class='pull-right') }}
+    {{ form.text(id="value-0", name="value-0", prepend='Value') }}
+    </div>
+  {% endfor %}
+
+
+  <div class="row-fluid">
+    <div class="form-actions span12">
+      <button type="submit" class="btn btn-primary" name="save" value="save">Save</button>
+    </div>
+  </div>
+</form>

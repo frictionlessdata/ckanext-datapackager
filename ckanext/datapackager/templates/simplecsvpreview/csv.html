@@ -13,7 +13,13 @@
   <tr>
     {% for col in row %}
       {% if loop.first %}
-      <th>{{ col }}</th>
+      <th>
+        {% if h.check_access('package_update', {'id':c.package.id }) %}
+          <a href="{% url_for controller='ckanext.datapackager.controllers.package:DataPackagerPackageController', action='edit_metadata_field', index=loop.index0, resource_id=c.resource.id, package_id=c.package.name %}" target="_top">{{col}}</a>
+        {% else %}
+          {{col}}
+        {% endif %}
+        </th>
       {% else %}
       <td>{{ col }}</td>
       {% endif %}

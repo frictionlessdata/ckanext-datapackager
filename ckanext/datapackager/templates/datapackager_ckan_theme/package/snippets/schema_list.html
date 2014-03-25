@@ -1,0 +1,14 @@
+{% set schema = h.get_resource_schema(resource_id) %}
+
+{% if schema %}
+  <section class="module module-narrow schema">
+    <h2 class="module-heading"><i class="icon-copy"></i> {{ _("Schema fields") }}</h2>
+    <ul class="unstyled nav nav-simple">
+      {% for field in schema.fields %}
+        <li class="nav-item{{ ' active' if active == field.index }}">
+          {% link_for field.name, controller='ckanext.datapackager.controllers.package:DataPackagerPackageController', action='edit_metadata_field', index=field.index, resource_id=resource_id, package_id=package_id %}
+        </li>
+      {% endfor %}
+    </ul>
+  </section>
+{% endif %}
