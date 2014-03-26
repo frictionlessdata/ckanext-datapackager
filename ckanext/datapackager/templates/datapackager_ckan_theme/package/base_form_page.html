@@ -4,27 +4,21 @@
   <section class="module module-narrow module-shallow">
 
     {# Change the text of the sidebar header #}
-    <h2 class="module-heading"><i class="icon-info-sign"></i> {{ _('What is a data package?') }}</h2>
+    <h2 class="module-heading"><i class="icon-info-sign"></i> {{ _('Package metadata') }}</h2>
 
     <div class="module-content">
 
       {# Change the texts of the help paragraphs here. #}
-      <p>
-        {% trans %}
-          A data package is a <abbr class="initialism">ZIP</abbr> file
-          containing one or more data files
-          (e.g. <abbr class="initialism">CSV</abbr> files) and a
-          <code>datapackage.json</code> file with metadata
-          (name, description, etc.) about those
-          <abbr class="initialism">CSV</abbr> files.
-        {% endtrans %}
-      </p>
-      <p>
-        {% trans %}
-          With this form you can enter your metadata and upload your data
-          files, and a data package will be created for you to download.
-        {% endtrans %}
-      </p>
+      <p>{% trans %}
+          On this page you enter some metadata about your data package.
+          This metadata will be shown on the package's web page, and will be
+          in the <code>datapackage.json</code> file in the package's downloadable
+          <abbr class="initialism">ZIP</abbr> file.
+      {% endtrans %}</p>
+      <p>{% trans %}
+          On the next page, you can start uploading the <abbr class="initialism">CSV</abbr>
+          files for your package.
+      {% endtrans %}</p>
     </div>
   </section>
 {% endblock %}
