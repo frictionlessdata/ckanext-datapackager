@@ -10,22 +10,23 @@
             <h1 class="page-heading">
               Welcome to the Open Knowledge Data Packager!
             </h1>
-            <p class="lead">This is a site that lets you upload some
-            <abbr class="initialism">CSV</abbr> files, enter some metadata for
-            them, and then publish your "data package" as a downloadable
-            <abbr class="initialism">ZIP</abbr> file containing your
-            <abbr class="initialism">CSV</abbr> files and a
-            <code>datapackage.json</code> file with your metadata in it.</p>
+
             <p class="lead">
-              <a class="btn btn-success" href="{% url_for controller='user', action='login' %}">
-                Login
-              </a>
-              or
-              <a class="btn btn-success" href="{% url_for controller='user', action='register' %}">
-                Register
-              </a>
+              The Data Packager is a web app for creating and publishing
+              <a href="http://dataprotocols.org/tabular-data-package/">Tabular Data Packages</a>.
+            </p>
+
+            <p class="lead">
+              <a class="btn btn-success" href="{% url_for controller='user', action='login' %}">Login</a>
+              or <a class="btn btn-success" href="{% url_for controller='user', action='register' %}">Register</a>
               to start creating data packages.
             </p>
+
+            <p>For features and documentation, see the
+            <a href="{% url_for 'about' %}">About</a>
+            and
+            <a href="{% url_for 'api' %}">API</a>
+            pages.</p>
           </header>
         </div>
       </div>

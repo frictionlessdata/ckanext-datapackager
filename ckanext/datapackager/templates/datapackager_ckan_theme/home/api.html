@@ -1,0 +1,21 @@
+{% extends "page.html" %}
+
+{% block subtitle %}{{ _('Data Packager API Documentation') }}{% endblock %}
+
+{% block breadcrumb_content %}
+  <li class="active">{% link_for _('API Documentation'), controller='ckanext.datapackager.controllers.packkage:DataPackagerAPIController', action='api' %}</li>
+{% endblock %}
+
+{% block primary %}
+  <article class="module">
+    <div class="module-content">
+      {% block about %}
+        <h1 class="page-heading">Data Packager API Documentation</h1>
+
+        <p>TODO: Insert API docs here.</p>
+      {% endblock %}
+    </div>
+  </article>
+{% endblock %}
+
+{% block secondary %}{% endblock %}

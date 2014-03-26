@@ -164,6 +164,9 @@ class DataPackagerPlugin(plugins.SingletonPlugin, toolkit.DefaultDatasetForm):
         PUT_POST = dict(method=['PUT', 'POST'])
 
         map_.connect('home', '/', controller='home', action='index')
+        map_.connect('about', '/about', controller='home', action='about')
+        map_.connect('api', '/api', controller='ckanext.datapackager.controllers.home:DataPackagerHomeController',
+                     action='api')
 
         with routes.mapper.SubMapper(map_, controller='user') as m:
             m.connect('/user/edit', action='edit')
@@ -257,7 +260,6 @@ class DataPackagerPlugin(plugins.SingletonPlugin, toolkit.DefaultDatasetForm):
         # /api ver 1, 2, 3 or none
         with routes.mapper.SubMapper(map_, controller='api',
             path_prefix='/api{ver:/1|/2|/3|}', ver='/1') as m:
-            m.connect('', action='get_api')
             m.connect('/search/{register}', action='search')
 
         # /api ver 1, 2 or none
