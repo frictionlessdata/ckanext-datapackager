@@ -2,6 +2,9 @@
 
 '''
 import os.path
+import mock
+
+import nose.tools
 
 import ckanapi
 import ckan.new_tests.factories as factories
@@ -100,3 +103,54 @@ class TestPlugin(custom_helpers.FunctionalTestBaseClass):
         #try and load the schema as json string
         print resource_show['schema']
         common.json.loads(resource_show['schema'])
+
+    @mock.patch('ckanext.datapackager.lib.csv.infer_schema_from_csv_file')
+    def test_user_is_warned_when_uploading_a_non_csv_file(self, mock):
+        mock.side_effect = UnicodeDecodeError('','',1,1,'')
+
+        user = factories.User()
+        extra_environ = {'REMOTE_USER': str(user['name'])}
+        package_title = 'my test package'
+        package_name = 'my-test-package'
+
+        # Get the new package page (first form).
+        response = self.app.get('/package/new', extra_environ=extra_environ)
+        assert response.status_int == 200
+
+        # Fill out the form and submit it.
+        form = response.forms[0]
+        form['title'] = package_title
+        form['name'] = package_name
+        form['version'] = '0.1beta'
+        form['notes'] = 'Just a test package nothing to see here'
+        response = form.submit('save', extra_environ=extra_environ)
+
+        # Follow the redirect to the second form.
+        assert response.status_int == 302
+        response = response.follow(extra_environ=extra_environ)
+
+        assert response.status_int == 200
+
+        # Get the CSV file to upload.
+        path = '../test-data/spacer.gif'
+        path = os.path.join(os.path.split(__file__)[0], path)
+        abspath = os.path.abspath(path)
+
+        # Fill out the form and submit it.
+        form = response.forms[0]
+        form['upload'] = ('upload', abspath)
+        form['name'] = 'My test CSV file'
+        response = form.submit('save', extra_environ=extra_environ)
+
+        # Follow the redirect to the third form.
+        assert response.status_int == 302
+        assert '/dataset/new_metadata/my-test-package' in response.location, response.location
+        response = response.follow(extra_environ=extra_environ)
+
+        # The third form immediately redirects you to the dataset read page.
+        assert response.status_int == 302
+        assert '/package/my-test-package' in response.location
+        response = response.follow(extra_environ=extra_environ)
+
+        nose.tools.assert_in('does not seem to be a csv', response.body)
+        nose.tools.assert_in('Failed to calculate', response.body)

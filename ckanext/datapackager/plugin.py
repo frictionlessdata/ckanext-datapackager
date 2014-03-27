@@ -1,12 +1,15 @@
-import csv
 import itertools
+
+import unicodecsv
 import routes.mapper
+import pandas.parser
 
 import ckan.plugins as plugins
 import ckan.plugins.toolkit as toolkit
 import ckan.common as common
 import ckan.lib.navl.validators as navl_validators
 import ckan.lib.uploader as uploader
+import ckan.lib.helpers as helpers
 
 import ckanext.datapackager.lib.helpers as custom_helpers
 import ckanext.datapackager.lib.csv as lib_csv
@@ -28,6 +31,13 @@ def _infer_schema_for_resource(resource):
     # we assume the resource does have an uploaded file and this line will not
     # raise an exception.
     path = util.get_path_to_resource_file(resource)
+
+    if not lib_csv.resource_is_csv_file(path):
+        helpers.flash_notice(
+            'This file does not seem to be a csv file. '
+            'You could try validating this file at http://csvlint.io'
+        )
+
     schema = lib_csv.infer_schema_from_csv_file(path)
     return schema
 
@@ -85,12 +95,12 @@ class SimpleCsvPreviewPlugin(plugins.SingletonPlugin):
             resource_id = data_dict['resource']['id']
             with open(upload.get_path(resource_id)) as csv_file:
                 try:
-                    dialect = csv.Sniffer().sniff(csv_file.read(1024))
+                    dialect = unicodecsv.Sniffer().sniff(csv_file.read(1024))
                     csv_file.seek(0)
-                    csv_reader = csv.reader(csv_file, dialect)
+                    csv_reader = unicodecsv.reader(csv_file, dialect)
                     csv_data = itertools.islice(csv_reader, self.preview_limit)
                     plugins.toolkit.c.csv_preview_data = zip(*csv_data)
-                except csv.Error, e:
+                except unicodecsv.Error, e:
                     plugins.toolkit.c.csv_error = e.message
         except IOError as e:
             plugins.toolkit.c.csv_error = e.message
@@ -442,11 +452,16 @@ class DataPackagerPlugin(plugins.SingletonPlugin, toolkit.DefaultDatasetForm):
         }
 
     def after_upload(self, context, resource):
-
-        schema = _infer_schema_for_resource(resource)
-        schema = common.json.dumps(schema)
-        resource['schema'] = schema
-        toolkit.get_action('resource_update')(context, resource)
+        try:
+            schema = _infer_schema_for_resource(resource)
+            schema = common.json.dumps(schema)
+            resource['schema'] = schema
+            toolkit.get_action('resource_update')(context, resource)
+        except (pandas.parser.CParserError, UnicodeDecodeError):
+            helpers.flash_error(
+                'Failed to calculate summary statistics for uploaded csv file. '
+                'No schema has been saved for this file.'
+            )
 
     def get_actions(self):
 

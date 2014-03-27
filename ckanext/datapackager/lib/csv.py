@@ -9,6 +9,9 @@ import datetime
 import pandas
 import numpy
 import dateutil
+import magic
+
+import ckan.lib.helpers as helpers
 
 
 def _dtype_to_json_table_schema_type(dtype):
@@ -126,3 +129,10 @@ def temporal_extent(path, column_num):
                                     max=time_series.max().isoformat())
 
     return extent
+
+
+def resource_is_csv_file(path):
+    csv_types = ['text/plain','text/csv','text/tsv',
+                 'text/comma-seperated-values']
+    file_type = magic.from_file(path)
+    return file_type in csv_types
