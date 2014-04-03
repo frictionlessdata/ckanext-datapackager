@@ -93,6 +93,7 @@ class SimpleCsvPreviewPlugin(plugins.SingletonPlugin):
 
         try:
             resource_id = data_dict['resource']['id']
+            import ipdb; ipdb.set_trace()
             with open(upload.get_path(resource_id)) as csv_file:
                 try:
                     dialect = unicodecsv.Sniffer().sniff(csv_file.read(1024))
@@ -109,10 +110,10 @@ class SimpleCsvPreviewPlugin(plugins.SingletonPlugin):
         return 'csv.html'
 
 
-class DownloadSDFPlugin(plugins.SingletonPlugin):
-    '''Plugin that adds downloading packages in Simple Data Format.
+class DownloadTabularDataFormatPlugin(plugins.SingletonPlugin):
+    '''Plugin that adds downloading packages in Tabular Data Format.
 
-    Adds a Download button to package pages that downloads a Simple Data Format
+    Adds a Download button to package pages that downloads a Tabular Data Format
     ZIP file of the package. Also adds an API for getting a package descriptor
     Simple Data Format JSON.
 
@@ -122,18 +123,18 @@ class DownloadSDFPlugin(plugins.SingletonPlugin):
     plugins.implements(plugins.IRoutes, inherit=True)
 
     def update_config(self, config):
-        toolkit.add_template_directory(config, 'templates/download_sdf')
+        toolkit.add_template_directory(config, 'templates/download_tdf')
 
     def before_map(self, map_):
-        map_.connect('/package/{package_id}/downloadsdf',
+        map_.connect('/package/{package_id}/download_tabular_data_format',
             controller='ckanext.datapackager.controllers.package:DataPackagerPackageController',
-            action='download_sdf')
+            action='download_tabular_data_format')
         return map_
 
     def get_actions(self):
         return {
-            'package_to_sdf':
-                ckanext.datapackager.logic.action.get.package_to_sdf,
+            'package_to_tabular_data_format':
+                ckanext.datapackager.logic.action.get.package_to_tabular_data_format,
         }
 
 

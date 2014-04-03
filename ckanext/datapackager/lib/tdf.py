@@ -1,4 +1,4 @@
-'''Some library functions for dealing with Simple Data Format.
+'''Some library functions for dealing with Tabular Data Format.
 
 (Including converting CKAN's package and resource formats into SDF.)
 
@@ -12,8 +12,8 @@ import ckan.plugins.toolkit as toolkit
 import ckanext.datapackager.lib.util as util
 
 
-def _convert_to_sdf_resource(resource_dict, pkg_zipstream=None):
-    '''Convert a CKAN resource dict into a Simple Data Format resource dict.
+def _convert_to_tdf_resource(resource_dict, pkg_zipstream=None):
+    '''Convert a CKAN resource dict into a Tabular Data Format resource dict.
 
     :param pkg_zipstream: If given and if the resource has a file uploaded to
         the FileStore, then the file will be written to the zipstream and the
@@ -45,12 +45,12 @@ def _convert_to_sdf_resource(resource_dict, pkg_zipstream=None):
     return resource
 
 
-def convert_to_sdf(pkg_dict, pkg_zipstream=None):
-    '''Convert the given CKAN package dict into a Simple Data Format dict.
+def convert_to_tdf(pkg_dict, pkg_zipstream=None):
+    '''Convert the given CKAN package dict into a Tabular Data Format dict.
 
     Convert the given package dict into a dict that, if dumped to a JSON
     string, can form the valid contents of the package descriptor file in a
-    Simple Data Format data package.
+    Tabular Data Format data package.
 
     :param pkg_zipstream: If given, a datapackage.json file and data files for
         each of the package's resources (if the resource has a file uploaded to
@@ -63,14 +63,14 @@ def convert_to_sdf(pkg_dict, pkg_zipstream=None):
     '''
     data_package = {
         'name': pkg_dict['name'],
-        'resources': [_convert_to_sdf_resource(r, pkg_zipstream)
+        'resources': [_convert_to_tdf_resource(r, pkg_zipstream)
                       for r in pkg_dict.get('resources', None)]
     }
 
     if pkg_zipstream:
         # We are building a ZIP file for this package.
 
-        tmp_dir = os.path.join(tempfile.gettempdir(), 'ckan-sdf')
+        tmp_dir = os.path.join(tempfile.gettempdir(), 'ckan-tdf')
         if not os.path.exists(tmp_dir):
             os.makedirs(os.path.join(tmp_dir))
 

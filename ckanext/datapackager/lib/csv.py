@@ -35,7 +35,7 @@ def infer_schema_from_csv_file(path):
     guess the types of the columns.
 
     '''
-    dataframe = pandas.read_csv(path)
+    dataframe = pandas.read_csv(path, sep=None)
     description = dataframe.describe()  # Summary stats about the columns.
 
     fields = []

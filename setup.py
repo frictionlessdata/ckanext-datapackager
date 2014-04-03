@@ -26,7 +26,7 @@ setup(
         [ckan.plugins]
         # Add plugins here, e.g.
         datapackager=ckanext.datapackager.plugin:DataPackagerPlugin
-        downloadsdf=ckanext.datapackager.plugin:DownloadSDFPlugin
+        downloadtdf=ckanext.datapackager.plugin:DownloadTabularDataFormatPlugin
         simplecsvpreview=ckanext.datapackager.plugin:SimpleCsvPreviewPlugin
     ''',
 )
