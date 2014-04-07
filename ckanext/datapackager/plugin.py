@@ -93,7 +93,6 @@ class SimpleCsvPreviewPlugin(plugins.SingletonPlugin):
 
         try:
             resource_id = data_dict['resource']['id']
-            import ipdb; ipdb.set_trace()
             with open(upload.get_path(resource_id)) as csv_file:
                 try:
                     dialect = unicodecsv.Sniffer().sniff(csv_file.read(1024))

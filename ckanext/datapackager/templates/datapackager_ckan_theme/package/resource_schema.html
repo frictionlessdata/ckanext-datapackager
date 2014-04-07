@@ -5,10 +5,6 @@
 {% set resource = h.get_resource_by_id(c.resource_id) %}
 
 {% block breadcrumb_content %}
-  {% set dataset = pkg.title or pkg.name %}
-
-  {# Replace / Packages in the breadcrumbs with / Sean Hammond (or whoever
-     is logged-in. #}
   {{ h.build_nav('user_datasets', c.userobj.display_name|truncate(35),
                 id=c.userobj.name) }}
 
