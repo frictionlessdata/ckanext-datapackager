@@ -83,3 +83,29 @@ def resource_schema_pkey_delete_schema():
     return {
         'resource_id': [custom_validators.resource_id_validator],
     }
+
+
+def resource_schema_fkey_show_schema():
+    return {
+        'resource_id': [custom_validators.resource_id_validator],
+    }
+
+
+def resource_schema_fkey_delete_schema():
+    return {
+        'resource_id': [navl_validators.not_missing, custom_validators.resource_id_validator],
+        'fkeys': {
+            'field': [navl_validators.not_missing, custom_validators.foreign_key_field_validator],
+        }
+    }
+
+
+def resource_schema_fkey_update_schema():
+    return {
+        'resource_id': [navl_validators.not_missing, custom_validators.resource_id_validator],
+        'fkeys': {
+            'field': [navl_validators.not_missing, custom_validators.foreign_key_field_validator],
+            'referenced_resource_id': [navl_validators.not_missing, custom_validators.resource_id_validator],
+            'referenced_field': [navl_validators.not_missing, custom_validators.foreign_key_reference_validator],
+        }
+    }

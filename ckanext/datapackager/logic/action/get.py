@@ -139,3 +139,22 @@ def resource_schema_pkey_show(context, data_dict):
     schema_ = json.loads(schema_)
     pkey = schema_.get('primaryKey')
     return pkey
+
+
+def resource_schema_fkey_show(context, data_dict):
+    '''Return the given resource's foreign keys
+
+    :param resource_id: the ID of the resource whose schema should be returned
+    :type resource_id: string
+
+    :returns: the resource's primary key
+    :rtype: list of string
+    '''
+    resource_id = data_dict.pop('resource_id')
+
+    resource_dict = toolkit.get_action('resource_show')(context,
+        {'id': resource_id})
+    schema_ = resource_dict.get('schema', _empty_json_table_schema())
+    schema_ = json.loads(schema_)
+    fkeys = schema_.get('foreignKeys')
+    return fkeys

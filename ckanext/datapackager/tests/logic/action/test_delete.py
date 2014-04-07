@@ -280,3 +280,66 @@ class TestDelete(custom_helpers.FunctionalTestBaseClass):
                                              id=resource['id'])
 
         assert resource_before == resource_after
+
+
+class TestFKeyDelete(custom_helpers.FunctionalTestBaseClass):
+    def _create_resource(self):
+        dataset = factories.Dataset()
+
+        resource_0 = factories.Resource(dataset=dataset)
+        helpers.call_action('resource_schema_field_create',
+            resource_id=resource_0['id'], index=0, name='zero')
+        helpers.call_action('resource_schema_field_create',
+            resource_id=resource_0['id'], index=1, name='one')
+        helpers.call_action('resource_schema_field_create',
+            resource_id=resource_0['id'], index=2, name='two')
+
+        resource_1 = factories.Resource(dataset=dataset)
+        helpers.call_action('resource_schema_field_create',
+            resource_id=resource_1['id'], index=0, name='zero_id')
+
+        helpers.call_action('resource_schema_fkey_create',
+            resource_id=resource_0['id'],
+            fkeys=[{
+                'field': 'zero',
+                'referenced_resource_id': resource_1['id'],
+                'referenced_field': 'zero_id',
+            }]
+        )
+
+        return resource_0['id'], resource_1['id']
+
+    def test_resource_schema_fkey_delete(self):
+        '''Test deleting the foreign key from a resource schema.'''
+        resource_0, resource_1 = self._create_resource()
+        helpers.call_action('resource_schema_fkey_delete',
+            resource_id=resource_0,
+            fkeys=[{
+                'field': 'zero',
+            }])
+
+        schema = helpers.call_action('resource_schema_show',
+                                     resource_id=resource_0)
+        nose.tools.assert_not_in(
+            'zero',
+            [i['fields'] for i in schema['foreignKeys']],
+        )
+
+    def test_resource_fkey_field_delete_with_invalid_resource_id(self):
+        self._create_resource()
+
+        for resource_id in ([], {}, '', [1, 2, 3], {'foo': 'bar'}):
+            nose.tools.assert_raises(toolkit.ValidationError,
+                helpers.call_action, 'resource_schema_fkey_delete',
+                resource_id=resource_id)
+
+    def test_resource_fkey_delete_with_bad_fkey(self):
+        '''Test deleting the foreign key from a resource schema.'''
+        resource_0, resource_1 = self._create_resource()
+        nose.tools.assert_raises(
+            toolkit.ValidationError,
+            helpers.call_action,
+            'resource_schema_fkey_delete',
+            resource_id=resource_0,
+            fkeys=[{'field': 'does not exist', }],
+        )

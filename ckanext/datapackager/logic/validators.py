@@ -230,3 +230,71 @@ def primary_key_validator(key, data, errors, context):
     for field_name in pkey:
         if field_name not in field_names:
             raise toolkit.Invalid(toolkit._("No field with that name"))
+
+
+def foreign_key_field_validator(key, data, errors, context):
+    fkey_fields = data[key]
+    resource_id = data[('resource_id', )]
+
+    schema = toolkit.get_action('resource_schema_show')(
+        context, {'resource_id': resource_id})
+
+    if isinstance(fkey_fields, basestring):
+        fkey_fields = [fkey_fields]
+
+    field_names = [field['name'] for field in schema.get('fields', [])]
+
+    for field_name in fkey_fields:
+        if field_name not in field_names:
+            raise toolkit.Invalid(toolkit._("No field with that name"))
+
+
+def foreign_key_reference_validator(key, data, errors, context):
+    referenced_resource_id = data[(key[0], key[1], 'referenced_resource_id', )]
+
+    try:
+        referenced_schema = toolkit.get_action('resource_schema_show')(
+            context, {'resource_id': referenced_resource_id})
+    except toolkit.ValidationError:
+        raise toolkit.Invalid(toolkit._("referenced resource id invalid"))
+
+    # check that the field and the referenced field are in the same data
+    # package
+    resource_id = data[('resource_id', )]
+    package_id = context['resource'].get_package_id()
+    package = toolkit.get_action('package_show')(context, {'id': package_id})
+    resource_ids = set(r['id'] for r in package['resources'])
+
+    if resource_id not in resource_ids:
+        raise toolkit.Invalid(toolkit._("referenced resource not in same dataset"))
+
+    referenced_field = data[key]
+    if isinstance(referenced_field, basestring):
+        referenced_field = [referenced_field]
+
+    # check that the length of the foreign key is the same as the referenced field
+    foreign_key_field = data[(key[0], key[1], 'field')]
+    if isinstance(foreign_key_field, basestring):
+        foreign_key_field = [foreign_key_field]
+
+    try:
+        foreign_key_field_len = len(foreign_key_field)
+    except TypeError:
+        raise toolkit.Invalid(toolkit._('fkey field is invalid type'))
+
+    if len(referenced_field) != foreign_key_field_len:
+        raise toolkit.Invalid(toolkit._("field and referenced_fields must be the same length"))
+
+    # check that the referenced field name is valid
+    referenced_field_names = [f['name'] for f in referenced_schema.get('fields', [])]
+
+    for field in referenced_field:
+        if field not in referenced_field_names:
+            raise toolkit.Invalid(toolkit._("No field with that name"))
+
+    # add the resource name to the data dict
+    referenced_resource = context['resource']
+    if referenced_resource.name:
+        data[(key[0], key[1], 'referenced_resource')] = referenced_resource.name
+    else:
+        data['referenced_resource'] = referenced_resource.id

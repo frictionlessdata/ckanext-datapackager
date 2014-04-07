@@ -484,6 +484,14 @@ class DataPackagerPlugin(plugins.SingletonPlugin, toolkit.DefaultDatasetForm):
                 ckanext.datapackager.logic.action.update.resource_schema_pkey_update,
             'resource_schema_pkey_delete':
                 ckanext.datapackager.logic.action.delete.resource_schema_pkey_delete,
+            'resource_schema_fkey_show':
+                ckanext.datapackager.logic.action.get.resource_schema_fkey_show,
+            'resource_schema_fkey_update':
+                ckanext.datapackager.logic.action.update.resource_schema_fkey_update,
+            'resource_schema_fkey_create':
+                ckanext.datapackager.logic.action.create.resource_schema_fkey_create,
+            'resource_schema_fkey_delete':
+                ckanext.datapackager.logic.action.delete.resource_schema_fkey_delete,
         }
 
     def package_types(self):

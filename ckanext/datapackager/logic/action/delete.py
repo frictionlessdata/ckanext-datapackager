@@ -75,3 +75,43 @@ def resource_schema_pkey_delete(context, data_dict):
     toolkit.get_action('resource_update')(context,
         {'id': resource_id, 'url': resource_dict['url'],
          'name': resource_dict['name'], 'schema': schema_})
+
+
+def resource_schema_fkey_delete(context, data_dict):
+    '''Delete a resource's schema's foreign key.
+
+    :param resource_id: the ID of the resource
+    :type resource_id: string
+
+    :param fields: the fields which are foreign keys that will be deleted
+    :type fields: list of string
+
+    '''
+    try:
+        data_dict, errors = dictization_functions.validate(data_dict,
+            schema.resource_schema_fkey_delete_schema(), context)
+    except exceptions.InvalidResourceIDException:
+        raise toolkit.ValidationError(toolkit._("Invalid resource_id"))
+    if errors:
+        raise toolkit.ValidationError(errors)
+
+    resource_id = data_dict['resource_id']
+
+    schema_ = toolkit.get_action('resource_schema_show')(context,
+        {'resource_id': resource_id})
+
+    # replace the foreignKey in the schema with a dict containing
+    # all the keys except the ones in the fields parameters
+    if 'foreignKeys' in schema_:
+        fkeys = [i['field'] for i in data_dict['fkeys']]
+        foreignKeys = schema_['foreignKeys']
+        foreignKey = [i for i in foreignKeys if i['fields'] not in fkeys]
+        schema_['foreignKeys'] = foreignKey
+    schema_ = json.dumps(schema_)
+
+    resource_dict = toolkit.get_action('resource_show')(context,
+        {'id': resource_id})
+
+    toolkit.get_action('resource_update')(context,
+        {'id': resource_id, 'url': resource_dict['url'],
+         'name': resource_dict['name'], 'schema': schema_})
