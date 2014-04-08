@@ -10,6 +10,7 @@ import pandas
 import numpy
 import dateutil
 import magic
+import ckanext.datapackager.lib.tzinfos as tzinfos
 
 import ckan.lib.helpers as helpers
 
@@ -82,7 +83,7 @@ def _parse(datestring):
     strings.
 
     '''
-    return dateutil.parser.parse(datestring, ignoretz=False,
+    return dateutil.parser.parse(datestring, ignoretz=False, tzinfos=tzinfos.tzinfos,
                                  default=datetime.datetime(1, 1, 1, 0, 0, 0))
 
 

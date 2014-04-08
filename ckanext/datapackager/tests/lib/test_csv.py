@@ -170,7 +170,10 @@ def test_temporal_extent_with_timezone():
 
     extent = lib_csv.temporal_extent(csv_file, column_num=1)
 
-    assert extent == '2007-09-25T10:36:28+02:00/2007-09-28T09:11:45+02:00'
+    nose.tools.assert_equals(
+        extent,
+        '2007-09-25T10:36:28+01:00/2007-09-28T09:11:45+01:00'
+    )
 
 
 def test_temporal_extent_with_mixed_naive_and_aware_dates():
@@ -197,7 +200,10 @@ def test_temporal_extent_with_mixed_timezones():
     csv_file = StringIO.StringIO(csv_text)
 
     extent = lib_csv.temporal_extent(csv_file, column_num=1)
-    assert extent == '2007-09-25T10:36:28+02:00/2007-09-28T09:11:45+00:00'
+    nose.tools.assert_equals(
+        extent,
+        '2007-09-25T10:36:28+01:00/2007-09-28T09:11:45+00:00'
+    )
 
 
 def test_temporal_extent_with_nonexistent_path():
