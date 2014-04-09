@@ -804,11 +804,9 @@ class TestResourceSchemaFKeyCreate(custom_helpers.FunctionalTestBaseClass):
         resource_0, resource_1 = self._create_resource()
         helpers.call_action('resource_schema_fkey_create',
             resource_id=resource_0,
-            fkeys=[{
-                'field': 'zero',
-                'referenced_resource_id': resource_1,
-                'referenced_field': 'zero_id',
-            }]
+            field='zero',
+            referenced_resource_id=resource_1,
+            referenced_field='zero_id',
         )
 
         schema = helpers.call_action('resource_schema_fkey_show',
@@ -821,11 +819,9 @@ class TestResourceSchemaFKeyCreate(custom_helpers.FunctionalTestBaseClass):
         resource_0, resource_1 = self._create_resource()
         helpers.call_action('resource_schema_fkey_create',
             resource_id=resource_0,
-            fkeys=[{
-                'field': ['zero', 'one'],
-                'referenced_resource_id': resource_1,
-                'referenced_field': ['zero_id', 'one_id'],
-            }]
+            field=['zero', 'one'],
+            referenced_resource_id=resource_1,
+            referenced_field=['zero_id', 'one_id'],
         )
 
         schema = helpers.call_action('resource_schema_show',
@@ -843,23 +839,20 @@ class TestResourceSchemaFKeyCreate(custom_helpers.FunctionalTestBaseClass):
             helpers.call_action,
             'resource_schema_fkey_create',
             resource_id='does-not-exist',
-            fkeys=[{
-                'field': 'zero',
-                'referenced_resource_id': resource_1,
-                'referenced_field': 'zero_id',
-            }],
+            field='zero',
+            referenced_resource_id=resource_1,
+            referenced_field='zero_id',
         )
 
-    def test_fkey_create_already_exists(self):
+    def test_fkey_create_uid_already_exists(self):
         resource_0, resource_1 = self._create_resource()
 
         helpers.call_action('resource_schema_fkey_create',
             resource_id=resource_0,
-            fkeys=[{
-                'field': 'zero',
-                'referenced_resource_id': resource_1,
-                'referenced_field': 'zero_id',
-            }]
+            fkey_uid='uid',
+            field='zero',
+            referenced_resource_id=resource_1,
+            referenced_field='zero_id',
         )
 
         nose.tools.assert_raises(
@@ -867,11 +860,10 @@ class TestResourceSchemaFKeyCreate(custom_helpers.FunctionalTestBaseClass):
             helpers.call_action,
             'resource_schema_fkey_create',
             resource_id=resource_0,
-            fkeys=[{
-                'field': 'zero',
-                'referenced_resource_id': resource_1,
-                'referenced_field': 'zero_id',
-            }]
+            fkey_uid='uid',
+            field='zero',
+            referenced_resource_id=resource_1,
+            referenced_field='zero_id',
         )
 
     def test_fkey_create_with_bad_name_string(self):
@@ -882,11 +874,9 @@ class TestResourceSchemaFKeyCreate(custom_helpers.FunctionalTestBaseClass):
             helpers.call_action,
             'resource_schema_fkey_create',
             resource_id=resource_0,
-            fkeys=[{
-                'field': 'does-not-exist',
-                'referenced_resource_id': resource_1,
-                'referenced_field': 'zero_id',
-            }],
+            field='does-not-exist',
+            referenced_resource_id=resource_1,
+            referenced_field='zero_id',
         )
 
     def test_fkey_create_with_no_fkey(self):
@@ -897,11 +887,9 @@ class TestResourceSchemaFKeyCreate(custom_helpers.FunctionalTestBaseClass):
             helpers.call_action,
             'resource_schema_fkey_create',
             resource_id=resource_0,
-            fkeys=[{
-                #no fkey
-                'referenced_resource_id': resource_1,
-                'referenced_field': 'zero_id',
-            }],
+            #field='zero',
+            referenced_resource_id=resource_1,
+            referenced_field='zero_id',
         )
 
     def test_fkey_create_with_no_referenced_key(self):
@@ -912,12 +900,9 @@ class TestResourceSchemaFKeyCreate(custom_helpers.FunctionalTestBaseClass):
             helpers.call_action,
             'resource_schema_fkey_create',
             resource_id=resource_0,
-            fkeys=[{
-                'field': 'zero',
-                'referenced_resource_id': resource_1,
-                #'referenced_field': 'zero_id',
-                }
-            ],
+            field='zero',
+            #referenced_resource_id=resource_1,
+            referenced_field='zero_id',
         )
 
     def test_fkey_create_with_no_referenced_resource(self):
@@ -928,12 +913,9 @@ class TestResourceSchemaFKeyCreate(custom_helpers.FunctionalTestBaseClass):
             helpers.call_action,
             'resource_schema_fkey_create',
             resource_id=resource_0,
-            fkeys=[{
-                'field': 'zero',
-                #'referenced_resource_id': resource_1,
-                'referenced_field': 'zero_id',
-                }
-            ],
+            field='zero',
+            referenced_resource_id=resource_1,
+            #referenced_field='zero_id',
         )
 
     def test_fkey_create_length_of_fkey_and_referenced_different(self):
@@ -946,12 +928,9 @@ class TestResourceSchemaFKeyCreate(custom_helpers.FunctionalTestBaseClass):
             helpers.call_action,
             'resource_schema_fkey_create',
             resource_id=resource_0,
-            fkeys=[{
-                'field': ['zero', 'one'],
-                'referenced_resource_id': resource_1,
-                'referenced_field': 'zero_id',
-                }
-            ],
+            field=['zero', 'one'],
+            referenced_resource_id=resource_1,
+            referenced_field='zero_id',
         )
 
     def test_fkey_create_across_datasets(self):
@@ -973,10 +952,7 @@ class TestResourceSchemaFKeyCreate(custom_helpers.FunctionalTestBaseClass):
             helpers.call_action,
             'resource_schema_fkey_create',
             resource_id=resource_0['id'],
-            fkeys=[{
-                'field': ['zero', 'one'],
-                'referenced_resource_id': resource_1['id'],
-                'referenced_field': 'zero_id',
-                }
-            ],
+            field='zero',
+            referenced_resource_id=resource_1,
+            referenced_field='zero_id',
         )
