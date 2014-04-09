@@ -780,3 +780,203 @@ class TestResourceSchemaPKeyCreate(custom_helpers.FunctionalTestBaseClass):
         nose.tools.assert_raises(toolkit.ValidationError,
             api.action.resource_schema_pkey_create,
             resource_id=resource['id'], pkey='bar')
+
+
+class TestResourceSchemaFKeyCreate(custom_helpers.FunctionalTestBaseClass):
+    def _create_resource(self):
+        dataset = factories.Dataset()
+
+        resource_0 = factories.Resource(dataset=dataset)
+        helpers.call_action('resource_schema_field_create',
+            resource_id=resource_0['id'], index=0, name='zero')
+        helpers.call_action('resource_schema_field_create',
+            resource_id=resource_0['id'], index=1, name='one')
+
+        resource_1 = factories.Resource(dataset=dataset)
+        helpers.call_action('resource_schema_field_create',
+            resource_id=resource_1['id'], index=0, name='zero_id')
+        helpers.call_action('resource_schema_field_create',
+            resource_id=resource_1['id'], index=1, name='one_id')
+
+        return resource_0['id'], resource_1['id']
+
+    def test_fkey_create_string(self):
+        resource_0, resource_1 = self._create_resource()
+        helpers.call_action('resource_schema_fkey_create',
+            resource_id=resource_0,
+            fkeys=[{
+                'field': 'zero',
+                'referenced_resource_id': resource_1,
+                'referenced_field': 'zero_id',
+            }]
+        )
+
+        schema = helpers.call_action('resource_schema_fkey_show',
+            resource_id=resource_0)
+
+        nose.tools.assert_equals('zero', schema[0]['fields'])
+        nose.tools.assert_equals('zero_id', schema[0]['reference']['fields'])
+
+    def test_fkey_create_list(self):
+        resource_0, resource_1 = self._create_resource()
+        helpers.call_action('resource_schema_fkey_create',
+            resource_id=resource_0,
+            fkeys=[{
+                'field': ['zero', 'one'],
+                'referenced_resource_id': resource_1,
+                'referenced_field': ['zero_id', 'one_id'],
+            }]
+        )
+
+        schema = helpers.call_action('resource_schema_show',
+            resource_id=resource_0)
+        nose.tools.assert_equals(
+            ['zero', 'one'],
+            schema['foreignKeys'][0]['fields']
+        )
+
+    def test_fkey_create_with_bad_resource(self):
+        resource_0, resource_1 = self._create_resource()
+
+        nose.tools.assert_raises(
+            toolkit.ValidationError,
+            helpers.call_action,
+            'resource_schema_fkey_create',
+            resource_id='does-not-exist',
+            fkeys=[{
+                'field': 'zero',
+                'referenced_resource_id': resource_1,
+                'referenced_field': 'zero_id',
+            }],
+        )
+
+    def test_fkey_create_already_exists(self):
+        resource_0, resource_1 = self._create_resource()
+
+        helpers.call_action('resource_schema_fkey_create',
+            resource_id=resource_0,
+            fkeys=[{
+                'field': 'zero',
+                'referenced_resource_id': resource_1,
+                'referenced_field': 'zero_id',
+            }]
+        )
+
+        nose.tools.assert_raises(
+            toolkit.ValidationError,
+            helpers.call_action,
+            'resource_schema_fkey_create',
+            resource_id=resource_0,
+            fkeys=[{
+                'field': 'zero',
+                'referenced_resource_id': resource_1,
+                'referenced_field': 'zero_id',
+            }]
+        )
+
+    def test_fkey_create_with_bad_name_string(self):
+        resource_0, resource_1 = self._create_resource()
+
+        nose.tools.assert_raises(
+            toolkit.ValidationError,
+            helpers.call_action,
+            'resource_schema_fkey_create',
+            resource_id=resource_0,
+            fkeys=[{
+                'field': 'does-not-exist',
+                'referenced_resource_id': resource_1,
+                'referenced_field': 'zero_id',
+            }],
+        )
+
+    def test_fkey_create_with_no_fkey(self):
+        resource_0, resource_1 = self._create_resource()
+
+        nose.tools.assert_raises(
+            toolkit.ValidationError,
+            helpers.call_action,
+            'resource_schema_fkey_create',
+            resource_id=resource_0,
+            fkeys=[{
+                #no fkey
+                'referenced_resource_id': resource_1,
+                'referenced_field': 'zero_id',
+            }],
+        )
+
+    def test_fkey_create_with_no_referenced_key(self):
+        resource_0, resource_1 = self._create_resource()
+
+        nose.tools.assert_raises(
+            toolkit.ValidationError,
+            helpers.call_action,
+            'resource_schema_fkey_create',
+            resource_id=resource_0,
+            fkeys=[{
+                'field': 'zero',
+                'referenced_resource_id': resource_1,
+                #'referenced_field': 'zero_id',
+                }
+            ],
+        )
+
+    def test_fkey_create_with_no_referenced_resource(self):
+        resource_0, resource_1 = self._create_resource()
+
+        nose.tools.assert_raises(
+            toolkit.ValidationError,
+            helpers.call_action,
+            'resource_schema_fkey_create',
+            resource_id=resource_0,
+            fkeys=[{
+                'field': 'zero',
+                #'referenced_resource_id': resource_1,
+                'referenced_field': 'zero_id',
+                }
+            ],
+        )
+
+    def test_fkey_create_length_of_fkey_and_referenced_different(self):
+        '''try to create a fkey where the fkey is a list and the referenced
+        key is a list. Should raise a validation error'''
+        resource_0, resource_1 = self._create_resource()
+
+        nose.tools.assert_raises(
+            toolkit.ValidationError,
+            helpers.call_action,
+            'resource_schema_fkey_create',
+            resource_id=resource_0,
+            fkeys=[{
+                'field': ['zero', 'one'],
+                'referenced_resource_id': resource_1,
+                'referenced_field': 'zero_id',
+                }
+            ],
+        )
+
+    def test_fkey_create_across_datasets(self):
+        '''test that creating across datapackages fails'''
+        resource_0 = factories.Resource(dataset=factories.Dataset())
+        helpers.call_action('resource_schema_field_create',
+            resource_id=resource_0['id'], index=0, name='zero')
+        helpers.call_action('resource_schema_field_create',
+            resource_id=resource_0['id'], index=1, name='one')
+
+        resource_1 = factories.Resource(dataset=factories.Dataset())
+        helpers.call_action('resource_schema_field_create',
+            resource_id=resource_1['id'], index=0, name='zero_id')
+        helpers.call_action('resource_schema_field_create',
+            resource_id=resource_1['id'], index=1, name='one_id')
+
+        nose.tools.assert_raises(
+            toolkit.ValidationError,
+            helpers.call_action,
+            'resource_schema_fkey_create',
+            resource_id=resource_0['id'],
+            fkeys=[{
+                'field': ['zero', 'one'],
+                'referenced_resource_id': resource_1['id'],
+                'referenced_field': 'zero_id',
+                }
+            ],
+        )

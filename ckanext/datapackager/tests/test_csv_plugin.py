@@ -2,6 +2,7 @@ import os
 import mock
 import unittest
 
+import bs4
 import pylons.config as config
 import webtest
 import ckanapi
@@ -172,8 +173,10 @@ class TestSimpleCsvPreviewPlugin(unittest.TestCase):
         #values show up in the table
         resp = self.app.get('/dataset/{0}/resource/{1}/preview'.format(
             package['name'],  package['resources'][0]['id']))
+        soup = bs4.BeautifulSoup(resp.body)
+        date_header, price_header = soup.findAll('th')
         self.assertEquals('200 OK', resp.status)
-        self.assertIn('<th>date</th>', resp.body)
+        self.assertEquals('date', date_header.string.strip())
+        self.assertEquals('price', price_header.string.strip())
         self.assertIn('<td>1950-01-01</td>', resp.body)
-        self.assertIn('<th>price</th>', resp.body)
         self.assertIn('<td>34.730</td>', resp.body)

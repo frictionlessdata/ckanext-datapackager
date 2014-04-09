@@ -1,2 +1,3 @@
 pandas==0.13.1
 zipstream==1.0.3
+python-magic==0.4.6

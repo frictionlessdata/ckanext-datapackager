@@ -153,3 +153,46 @@ def resource_schema_pkey_update(context, data_dict):
     pkey = toolkit.get_action('resource_schema_pkey_show')(context,
         {'resource_id': resource_id})
     return pkey
+
+
+def resource_schema_fkey_update(context, data_dict):
+    '''Update a foreign key to a resource's schema.
+
+    :param resource_id: the ID of the resource
+    :type resource_id: string
+
+    :param fkeys: the foreign keys 
+    :type fkeys: list of dicts, each dict contains 'field' which is the field in
+        the resource that will be the foreign key. 'referenced_resource_id', the
+        resource containing the referenced field and 'referenced_field' the
+        field in the referenced resource.
+    '''
+    data_dict, errors = dictization_functions.validate(data_dict,
+        schema.resource_schema_fkey_update_schema(), context)
+    if errors:
+        raise toolkit.ValidationError(errors)
+
+    resource_id = data_dict['resource_id']
+
+    schema_ = toolkit.get_action('resource_schema_show')(context,
+        {'resource_id': resource_id})
+
+    fkeys = []
+    for fkey_dict in data_dict['fkeys']:
+        fkey = {
+            'fields': fkey_dict['field'],
+            'reference': {
+                'resource': fkey_dict['referenced_resource'],
+                'fields': fkey_dict['referenced_field'],
+            }
+        }
+        fkeys.append(fkey)
+
+    schema_['foreignKeys'] = fkeys
+    schema_ = json.dumps(schema_)
+    resource_dict = toolkit.get_action('resource_show')(context,
+        {'id': resource_id})
+
+    toolkit.get_action('resource_update')(context,
+        {'id': resource_id, 'url': resource_dict['url'],
+         'name': resource_dict['name'], 'schema': schema_})

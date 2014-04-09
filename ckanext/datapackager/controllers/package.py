@@ -61,8 +61,8 @@ class DataPackagerPackageController(toolkit.BaseController):
         base.redirect(helpers.url_for(controller='package', action='read',
                                       id=id))
 
-    def download_sdf(self, package_id):
-        '''Return the given package as a Simple Data Format ZIP file.
+    def download_tabular_data_format(self, package_id):
+        '''Return the given package as a Tabular Data Format ZIP file.
 
         '''
         context = {
@@ -76,12 +76,14 @@ class DataPackagerPackageController(toolkit.BaseController):
         r.content_type = 'application/octet-stream'
 
         # Make a zipstream and put it in the context. This means the
-        # package_to_sdf action will add files into the zipstream for us.
+        # package_to_tabular_data_format action will add files into 
+        # the zipstream for us.
         pkg_zipstream = zipstream.ZipFile(mode='w',
                                           compression=zipstream.ZIP_DEFLATED)
         context['pkg_zipstream'] = pkg_zipstream
 
-        toolkit.get_action('package_to_sdf')(context, {'id': package_id})
+        toolkit.get_action('package_to_tabular_data_format')(context,
+            {'id': package_id})
 
         return pkg_zipstream
 

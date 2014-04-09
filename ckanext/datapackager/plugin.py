@@ -1,12 +1,15 @@
-import csv
 import itertools
+
+import unicodecsv
 import routes.mapper
+import pandas.parser
 
 import ckan.plugins as plugins
 import ckan.plugins.toolkit as toolkit
 import ckan.common as common
 import ckan.lib.navl.validators as navl_validators
 import ckan.lib.uploader as uploader
+import ckan.lib.helpers as helpers
 
 import ckanext.datapackager.lib.helpers as custom_helpers
 import ckanext.datapackager.lib.csv_utils as csv_utils
@@ -28,6 +31,13 @@ def _infer_schema_for_resource(resource):
     # we assume the resource does have an uploaded file and this line will not
     # raise an exception.
     path = util.get_path_to_resource_file(resource)
+
+    if not csv_utils.resource_is_csv_file(path):
+        helpers.flash_notice(
+            'This file does not seem to be a csv file. '
+            'You could try validating this file at http://csvlint.io'
+        )
+
     schema = csv_utils.infer_schema_from_csv_file(path)
     return schema
 
@@ -85,12 +95,12 @@ class SimpleCsvPreviewPlugin(plugins.SingletonPlugin):
             resource_id = data_dict['resource']['id']
             with open(upload.get_path(resource_id)) as csv_file:
                 try:
-                    dialect = csv.Sniffer().sniff(csv_file.read(1024))
+                    dialect = unicodecsv.Sniffer().sniff(csv_file.read(1024))
                     csv_file.seek(0)
-                    csv_reader = csv.reader(csv_file, dialect)
+                    csv_reader = unicodecsv.reader(csv_file, dialect)
                     csv_data = itertools.islice(csv_reader, self.preview_limit)
                     plugins.toolkit.c.csv_preview_data = zip(*csv_data)
-                except csv.Error, e:
+                except unicodecsv.Error, e:
                     plugins.toolkit.c.csv_error = e.message
         except IOError as e:
             plugins.toolkit.c.csv_error = e.message
@@ -99,10 +109,10 @@ class SimpleCsvPreviewPlugin(plugins.SingletonPlugin):
         return 'csv.html'
 
 
-class DownloadSDFPlugin(plugins.SingletonPlugin):
-    '''Plugin that adds downloading packages in Simple Data Format.
+class DownloadTabularDataFormatPlugin(plugins.SingletonPlugin):
+    '''Plugin that adds downloading packages in Tabular Data Format.
 
-    Adds a Download button to package pages that downloads a Simple Data Format
+    Adds a Download button to package pages that downloads a Tabular Data Format
     ZIP file of the package. Also adds an API for getting a package descriptor
     Simple Data Format JSON.
 
@@ -112,18 +122,18 @@ class DownloadSDFPlugin(plugins.SingletonPlugin):
     plugins.implements(plugins.IRoutes, inherit=True)
 
     def update_config(self, config):
-        toolkit.add_template_directory(config, 'templates/download_sdf')
+        toolkit.add_template_directory(config, 'templates/download_tdf')
 
     def before_map(self, map_):
-        map_.connect('/package/{package_id}/downloadsdf',
+        map_.connect('/package/{package_id}/download_tabular_data_format',
             controller='ckanext.datapackager.controllers.package:DataPackagerPackageController',
-            action='download_sdf')
+            action='download_tabular_data_format')
         return map_
 
     def get_actions(self):
         return {
-            'package_to_sdf':
-                ckanext.datapackager.logic.action.get.package_to_sdf,
+            'package_to_tabular_data_format':
+                ckanext.datapackager.logic.action.get.package_to_tabular_data_format,
         }
 
 
@@ -442,11 +452,16 @@ class DataPackagerPlugin(plugins.SingletonPlugin, toolkit.DefaultDatasetForm):
         }
 
     def after_upload(self, context, resource):
-
-        schema = _infer_schema_for_resource(resource)
-        schema = common.json.dumps(schema)
-        resource['schema'] = schema
-        toolkit.get_action('resource_update')(context, resource)
+        try:
+            schema = _infer_schema_for_resource(resource)
+            schema = common.json.dumps(schema)
+            resource['schema'] = schema
+            toolkit.get_action('resource_update')(context, resource)
+        except (pandas.parser.CParserError, UnicodeDecodeError):
+            helpers.flash_error(
+                'Failed to calculate summary statistics for uploaded csv file. '
+                'No schema has been saved for this file.'
+            )
 
     def get_actions(self):
 
@@ -469,6 +484,14 @@ class DataPackagerPlugin(plugins.SingletonPlugin, toolkit.DefaultDatasetForm):
                 ckanext.datapackager.logic.action.update.resource_schema_pkey_update,
             'resource_schema_pkey_delete':
                 ckanext.datapackager.logic.action.delete.resource_schema_pkey_delete,
+            'resource_schema_fkey_show':
+                ckanext.datapackager.logic.action.get.resource_schema_fkey_show,
+            'resource_schema_fkey_update':
+                ckanext.datapackager.logic.action.update.resource_schema_fkey_update,
+            'resource_schema_fkey_create':
+                ckanext.datapackager.logic.action.create.resource_schema_fkey_create,
+            'resource_schema_fkey_delete':
+                ckanext.datapackager.logic.action.delete.resource_schema_fkey_delete,
         }
 
     def package_types(self):

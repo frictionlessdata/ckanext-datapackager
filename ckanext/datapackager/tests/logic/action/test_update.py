@@ -805,3 +805,38 @@ class TestResourceSchemaPKeyUpdate(custom_helpers.FunctionalTestBaseClass):
     # TODO
     #def test_resource_schema_pkey_create_with_nonunique_primary_key(self):
         #raise NotImplementedError
+
+
+class TestResourceSchemaFKeyUpdate(custom_helpers.FunctionalTestBaseClass):
+    def _create_resources(self):
+        resource = factories.Resource(dataset=factories.Dataset())
+        api = ckanapi.TestAppCKAN(self.app, apikey=factories.User()['apikey'])
+        api.action.resource_schema_field_create(resource_id=resource['id'],
+            index=0, name='foo')
+        api.action.resource_schema_field_create(resource_id=resource['id'],
+            index=1, name='bar')
+        api.action.resource_schema_pkey_create(resource_id=resource['id'],
+            pkey='foo')
+        return resource, api
+
+    def test_resource_schema_fkey_update(self):
+        api = ckanapi.TestAppCKAN(self.app, apikey=factories.User()['apikey'])
+
+        dataset = factories.Dataset()
+        resource_0 = factories.Resource(dataset=dataset, name='resource_0')
+        api.action.resource_schema_field_create(resource_id=resource_0['id'],
+            index=0, name='foo')
+        api.action.resource_schema_field_create(resource_id=resource_0['id'],
+            index=1, name='bar')
+
+        resource_1 = factories.Resource(dataset=dataset, name='resource_1')
+        api.action.resource_schema_field_create(resource_id=resource_1['id'],
+            index=0, name='foo_id')
+
+        api.action.resource_schema_fkey_update(resource_id=resource_0['id'],
+            fkeys=[{
+                'field': 'foo',
+                'referenced_resource_id': resource_1['id'],
+                'referenced_field': 'foo_id'
+            }]
+        )

@@ -9,6 +9,10 @@ import datetime
 import pandas
 import numpy
 import dateutil
+import magic
+import ckanext.datapackager.lib.tzinfos as tzinfos
+
+import ckan.lib.helpers as helpers
 
 
 def _dtype_to_json_table_schema_type(dtype):
@@ -32,7 +36,7 @@ def infer_schema_from_csv_file(path):
     guess the types of the columns.
 
     '''
-    dataframe = pandas.read_csv(path)
+    dataframe = pandas.read_csv(path, sep=None)
     description = dataframe.describe()  # Summary stats about the columns.
 
     fields = []
@@ -79,7 +83,7 @@ def _parse(datestring):
     strings.
 
     '''
-    return dateutil.parser.parse(datestring, ignoretz=False,
+    return dateutil.parser.parse(datestring, ignoretz=False, tzinfos=tzinfos.tzinfos,
                                  default=datetime.datetime(1, 1, 1, 0, 0, 0))
 
 
@@ -126,3 +130,10 @@ def temporal_extent(path, column_num):
                                     max=time_series.max().isoformat())
 
     return extent
+
+
+def resource_is_csv_file(path):
+    csv_types = ['text/plain','text/csv','text/tsv',
+                 'text/comma-seperated-values']
+    file_type = magic.from_file(path)
+    return file_type in csv_types

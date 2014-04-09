@@ -98,8 +98,8 @@ class TestDataPackagerPackageController(
         schema = resource['schema']
         assert 'fields' in schema
 
-    def test_download_sdf(self):
-        '''Test downloading a Simple Data Format ZIP file of a package.
+    def test_download_tdf(self):
+        '''Test downloading a Tabular Data Format ZIP file of a package.
 
         '''
         user = factories.Sysadmin()
@@ -120,7 +120,7 @@ class TestDataPackagerPackageController(
         # Download the package's SDF ZIP file.
         url = toolkit.url_for(
             controller='ckanext.datapackager.controllers.package:DataPackagerPackageController',
-            action='download_sdf',
+            action='download_tabular_data_format',
             package_id=dataset['name'])
         response = self.app.get(url)
 
@@ -149,7 +149,7 @@ class TestDataPackagerPackageController(
         assert (zip_.open('AllstarFull.csv').read() ==
                 _get_csv_file(csv_path).read())
 
-    def test_download_sdf_with_three_files(self):
+    def test_download_tdf_with_three_files(self):
         '''Upload three CSV files to a package and test downloading the ZIP.'''
 
         user = factories.Sysadmin()
@@ -170,7 +170,7 @@ class TestDataPackagerPackageController(
         # Download the package's SDF ZIP file.
         url = toolkit.url_for(
             controller='ckanext.datapackager.controllers.package:DataPackagerPackageController',
-            action='download_sdf',
+            action='download_tabular_data_format',
             package_id=dataset['name'])
         response = self.app.get(url)
 
@@ -203,11 +203,11 @@ class TestDataPackagerPackageController(
 
         response = self.app.get('/package/{0}'.format(dataset['name']))
         soup = response.html
-        download_button = soup.find(id='download_sdf_button')
+        download_button = soup.find(id='download_tdf_button')
         download_url = download_button['href']
         assert download_url == toolkit.url_for(
             controller='ckanext.datapackager.controllers.package:DataPackagerPackageController',
-            action='download_sdf',
+            action='download_tabular_data_format',
             package_id=dataset['name'])
 
     def test_resource_schema_field(self):

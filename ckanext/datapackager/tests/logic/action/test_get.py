@@ -228,7 +228,7 @@ class TestGet(custom_helpers.FunctionalTestBaseClass):
         assert helpers.call_action('resource_schema_field_show',
             resource_id=resource['id'], index=3) == field_3
 
-    def test_package_to_sdf(self):
+    def test_package_to_tabular_data_format(self):
 
         dataset = factories.Dataset()
         factories.Resource(dataset=dataset, url='http://test.com/test-url-1',
@@ -236,7 +236,8 @@ class TestGet(custom_helpers.FunctionalTestBaseClass):
         factories.Resource(dataset=dataset, url='http://test.com/test-url-2',
             schema='{"fields":[{"type":"string", "name":"col1"}]}')
 
-        sdf = helpers.call_action('package_to_sdf', id=dataset['name'])
+        tdf = helpers.call_action('package_to_tabular_data_format',
+                                  id=dataset['name'])
 
         expected_output = {
             'name': dataset['name'],
@@ -255,11 +256,11 @@ class TestGet(custom_helpers.FunctionalTestBaseClass):
                 }
             ]
         }
-        nose.tools.assert_equals(expected_output, sdf)
+        nose.tools.assert_equals(expected_output, tdf)
 
-    def test_package_to_sdf_with_missing_id(self):
+    def test_package_to_tdf_with_missing_id(self):
         nose.tools.assert_raises(
             toolkit.ValidationError,
             helpers.call_action,
-            'package_to_sdf',
+            'package_to_tabular_data_format',
         )

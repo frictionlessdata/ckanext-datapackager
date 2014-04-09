@@ -134,3 +134,31 @@ def resource_schema_pkey_create(context, data_dict):
     # Otherwise create is the same as update.
     return toolkit.get_action('resource_schema_pkey_update')(context,
                                                              data_dict)
+
+
+def resource_schema_fkey_create(context, data_dict):
+    '''Add a foreign key to a resource's schema.
+
+    :param resource_id: the ID of the resource
+    :type resource_id: string
+
+    :param fkeys: the foreign keys
+    :type fkeys: list of dicts, each dict contains 'field' which is the field in
+        the resource that will be the foreign key. 'referenced_resource_id', the
+        resource containing the referenced field and 'referenced_field' the
+        field in the referenced resource.
+    '''
+    try:
+        resource_id = toolkit.get_or_bust(data_dict, 'resource_id')
+        fkey = toolkit.get_action('resource_schema_fkey_show')(context,
+            {'resource_id': resource_id})
+    except toolkit.ObjectNotFound:
+        raise toolkit.ValidationError(toolkit._("Invalid resource_id"))
+
+    if fkey:
+        raise toolkit.ValidationError(toolkit._("The resource already has a "
+                                                "foreign key"))
+
+    # Otherwise create is the same as update.
+    return toolkit.get_action('resource_schema_fkey_update')(context,
+                                                             data_dict)
