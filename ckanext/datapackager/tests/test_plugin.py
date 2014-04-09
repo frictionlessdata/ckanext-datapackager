@@ -104,7 +104,7 @@ class TestPlugin(custom_helpers.FunctionalTestBaseClass):
         print resource_show['schema']
         common.json.loads(resource_show['schema'])
 
-    @mock.patch('ckanext.datapackager.lib.csv.infer_schema_from_csv_file')
+    @mock.patch('ckanext.datapackager.lib.csv_utils.infer_schema_from_csv_file')
     def test_user_is_warned_when_uploading_a_non_csv_file(self, mock):
         mock.side_effect = UnicodeDecodeError('','',1,1,'')
 

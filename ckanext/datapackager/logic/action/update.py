@@ -6,7 +6,7 @@ import ckan.lib.navl.dictization_functions as dictization_functions
 
 import ckanext.datapackager.logic.schema as schema
 import ckanext.datapackager.exceptions as exceptions
-import ckanext.datapackager.lib.csv as csv
+import ckanext.datapackager.lib.csv_utils as csv_utils
 import ckanext.datapackager.lib.util as util
 
 
@@ -78,7 +78,7 @@ def resource_schema_field_update(context, data_dict):
 
         if path:
             try:
-                data_dict['temporal_extent'] = csv.temporal_extent(path,
+                data_dict['temporal_extent'] = csv_utils.temporal_extent(path,
                                                  column_num=data_dict['index'])
             except ValueError:
                 pass

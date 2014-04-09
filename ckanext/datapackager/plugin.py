@@ -12,7 +12,7 @@ import ckan.lib.uploader as uploader
 import ckan.lib.helpers as helpers
 
 import ckanext.datapackager.lib.helpers as custom_helpers
-import ckanext.datapackager.lib.csv as lib_csv
+import ckanext.datapackager.lib.csv_utils as csv_utils
 import ckanext.datapackager.lib.util as util
 import ckanext.datapackager.logic.action.create
 import ckanext.datapackager.logic.action.update
@@ -32,13 +32,13 @@ def _infer_schema_for_resource(resource):
     # raise an exception.
     path = util.get_path_to_resource_file(resource)
 
-    if not lib_csv.resource_is_csv_file(path):
+    if not csv_utils.resource_is_csv_file(path):
         helpers.flash_notice(
             'This file does not seem to be a csv file. '
             'You could try validating this file at http://csvlint.io'
         )
 
-    schema = lib_csv.infer_schema_from_csv_file(path)
+    schema = csv_utils.infer_schema_from_csv_file(path)
     return schema
 
 
