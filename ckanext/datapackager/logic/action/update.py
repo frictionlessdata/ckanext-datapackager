@@ -1,4 +1,5 @@
 import json
+import uuid
 
 import ckan.plugins.toolkit as toolkit
 import ckan.lib.navl.dictization_functions as dictization_functions
@@ -161,11 +162,13 @@ def resource_schema_fkey_update(context, data_dict):
     :param resource_id: the ID of the resource
     :type resource_id: string
 
-    :param fkeys: the foreign keys 
-    :type fkeys: list of dicts, each dict contains 'field' which is the field in
-        the resource that will be the foreign key. 'referenced_resource_id', the
-        resource containing the referenced field and 'referenced_field' the
-        field in the referenced resource.
+    :param referenced_resource_id: the resource_id of containing the field
+        this foreign key is pointing to.
+    :param referenced_resource_id: string
+
+    :param referenced_field: the field referenced in the foreign csv file
+    :type referenceed_field: string
+
     '''
     data_dict, errors = dictization_functions.validate(data_dict,
         schema.resource_schema_fkey_update_schema(), context)
@@ -177,19 +180,22 @@ def resource_schema_fkey_update(context, data_dict):
     schema_ = toolkit.get_action('resource_schema_show')(context,
         {'resource_id': resource_id})
 
-    fkeys = []
-    for fkey_dict in data_dict['fkeys']:
-        fkey = {
-            'fields': fkey_dict['field'],
-            'reference': {
-                'resource': fkey_dict['referenced_resource'],
-                'fields': fkey_dict['referenced_field'],
-            }
+    current = schema_.get('foreignKeys', [])
+    # we update by just removing the fkey with the id we are updating and
+    # adding a new entry with same id
+    fkeys = [i for i in current if i['fkey_uid'] != data_dict['fkey_uid']]
+    fkeys.append({
+        'fields': data_dict['field'],
+        'fkey_uid': data_dict['fkey_uid'],
+        'reference': {
+            'resource': data_dict['referenced_resource'],
+            'fields': data_dict['referenced_field'],
         }
-        fkeys.append(fkey)
+    })
 
     schema_['foreignKeys'] = fkeys
     schema_ = json.dumps(schema_)
+
     resource_dict = toolkit.get_action('resource_show')(context,
         {'id': resource_id})
 

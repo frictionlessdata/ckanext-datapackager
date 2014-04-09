@@ -142,23 +142,45 @@ def resource_schema_fkey_create(context, data_dict):
     :param resource_id: the ID of the resource
     :type resource_id: string
 
-    :param fkeys: the foreign keys
-    :type fkeys: list of dicts, each dict contains 'field' which is the field in
-        the resource that will be the foreign key. 'referenced_resource_id', the
-        resource containing the referenced field and 'referenced_field' the
-        field in the referenced resource.
+    :param referenced_resource_id: the resource_id of containing the field
+        this foreign key is pointing to.
+    :param referenced_resource_id: string
+
+    :param referenced_field: the field referenced in the foreign csv file
+    :type referenceed_field: string
+
     '''
-    try:
-        resource_id = toolkit.get_or_bust(data_dict, 'resource_id')
-        fkey = toolkit.get_action('resource_schema_fkey_show')(context,
-            {'resource_id': resource_id})
-    except toolkit.ObjectNotFound:
-        raise toolkit.ValidationError(toolkit._("Invalid resource_id"))
+    data_dict, errors = dictization_functions.validate(data_dict,
+        schema.resource_schema_fkey_create_schema(), context)
+    if errors:
+        raise toolkit.ValidationError(errors)
 
-    if fkey:
-        raise toolkit.ValidationError(toolkit._("The resource already has a "
-                                                "foreign key"))
+    resource_id = data_dict['resource_id']
 
-    # Otherwise create is the same as update.
-    return toolkit.get_action('resource_schema_fkey_update')(context,
-                                                             data_dict)
+    schema_ = toolkit.get_action('resource_schema_show')(context,
+        {'resource_id': resource_id})
+
+    current = schema_.get('foreignKeys', [])
+    # we update by just removing the fkey with the id we are updating and
+    # adding a new entry with same id
+    current.append({
+        'fields': data_dict['field'],
+        'fkey_uid': data_dict['fkey_uid'],
+        'reference': {
+            'resource': data_dict['referenced_resource'],
+            'fields': data_dict['referenced_field'],
+        }
+    })
+
+    schema_['foreignKeys'] = current 
+    schema_ = json.dumps(schema_)
+
+    resource_dict = toolkit.get_action('resource_show')(context,
+        {'id': resource_id})
+
+    toolkit.get_action('resource_update')(context,
+        {'id': resource_id, 'url': resource_dict['url'],
+         'name': resource_dict['name'], 'schema': schema_})
+
+    return toolkit.get_action('resource_schema_show')(context,
+        {'resource_id': resource_id})

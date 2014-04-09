@@ -76,7 +76,3 @@ class FunctionalTestBaseClass():
         # changed any config settings.
         config.clear()
         config.update(cls.original_config)
-
-    def setup(self):
-        import ckan.model as model
-        model.repo.rebuild_db()

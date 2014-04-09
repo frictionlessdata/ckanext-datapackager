@@ -2,6 +2,7 @@
 
 '''
 import os.path
+import uuid
 
 import ckan.plugins.toolkit as toolkit
 import ckan.logic.validators as core_validators
@@ -232,6 +233,37 @@ def primary_key_validator(key, data, errors, context):
             raise toolkit.Invalid(toolkit._("No field with that name"))
 
 
+def foreign_key_identifier(key, data, errors, context):
+    # if no id was provided, generate one for the user
+    # if not we trust the user knows what the are doing
+    resource_id = data[('resource_id', )]
+    schema_ = toolkit.get_action('resource_schema_show')(context,
+        {'resource_id': resource_id})
+    uids = set(fkey['fkey_uid'] for fkey in
+        schema_.get('foreignKeys', []) if fkey.get('fkey_uid'))
+
+    if isinstance(data[key], df.Missing):
+        #check that our uuid does not clash
+        uid = str(uuid.uuid4())
+        while uid in uids:
+            uid = str(uuid.uuid4())
+        data[key] = uid
+    else:
+        if data[key] in uids:
+            raise toolkit.Invalid(
+                toolkit._("foreign key with that id already exists"))
+
+
+def foreign_key_identifier_exists(key, data, errors, context):
+    resource_id = data[('resource_id', )]
+    schema_ = toolkit.get_action('resource_schema_show')(context,
+        {'resource_id': resource_id})
+    uids = set(fkey['fkey_uid'] for fkey in schema_.get('foreignKeys'))
+
+    if data[key] not in uids:
+        raise toolkit.Invalid(toolkit._("No foreign key with that id"))
+        
+
 def foreign_key_field_validator(key, data, errors, context):
     fkey_fields = data[key]
     resource_id = data[('resource_id', )]
@@ -250,7 +282,7 @@ def foreign_key_field_validator(key, data, errors, context):
 
 
 def foreign_key_reference_validator(key, data, errors, context):
-    referenced_resource_id = data[(key[0], key[1], 'referenced_resource_id', )]
+    referenced_resource_id = data[('referenced_resource_id', )]
 
     try:
         referenced_schema = toolkit.get_action('resource_schema_show')(
@@ -273,7 +305,7 @@ def foreign_key_reference_validator(key, data, errors, context):
         referenced_field = [referenced_field]
 
     # check that the length of the foreign key is the same as the referenced field
-    foreign_key_field = data[(key[0], key[1], 'field')]
+    foreign_key_field = data[('field', )]
     if isinstance(foreign_key_field, basestring):
         foreign_key_field = [foreign_key_field]
 
@@ -295,6 +327,6 @@ def foreign_key_reference_validator(key, data, errors, context):
     # add the resource name to the data dict
     referenced_resource = context['resource']
     if referenced_resource.name:
-        data[(key[0], key[1], 'referenced_resource')] = referenced_resource.name
+        data[('referenced_resource', )] = referenced_resource.name
     else:
-        data['referenced_resource'] = referenced_resource.id
+        data[('referenced_resource', )] = referenced_resource.id

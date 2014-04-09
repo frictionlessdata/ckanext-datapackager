@@ -808,35 +808,57 @@ class TestResourceSchemaPKeyUpdate(custom_helpers.FunctionalTestBaseClass):
 
 
 class TestResourceSchemaFKeyUpdate(custom_helpers.FunctionalTestBaseClass):
-    def _create_resources(self):
-        resource = factories.Resource(dataset=factories.Dataset())
-        api = ckanapi.TestAppCKAN(self.app, apikey=factories.User()['apikey'])
-        api.action.resource_schema_field_create(resource_id=resource['id'],
-            index=0, name='foo')
-        api.action.resource_schema_field_create(resource_id=resource['id'],
-            index=1, name='bar')
-        api.action.resource_schema_pkey_create(resource_id=resource['id'],
-            pkey='foo')
-        return resource, api
+    def _create_resource(self):
+        dataset = factories.Dataset()
+
+        resource_0 = factories.Resource(dataset=dataset)
+        helpers.call_action('resource_schema_field_create',
+            resource_id=resource_0['id'], index=0, name='zero')
+        helpers.call_action('resource_schema_field_create',
+            resource_id=resource_0['id'], index=1, name='one')
+
+        resource_1 = factories.Resource(dataset=dataset)
+        helpers.call_action('resource_schema_field_create',
+            resource_id=resource_1['id'], index=0, name='zero_id')
+        helpers.call_action('resource_schema_field_create',
+            resource_id=resource_1['id'], index=1, name='one_id')
+
+        schema = helpers.call_action('resource_schema_fkey_create',
+            resource_id=resource_0['id'],
+            field='zero',
+            referenced_resource_id=resource_1['id'],
+            referenced_field='zero_id',
+        )
+        return resource_0['id'], resource_1['id'], schema
 
     def test_resource_schema_fkey_update(self):
-        api = ckanapi.TestAppCKAN(self.app, apikey=factories.User()['apikey'])
+        resource_0, resource_1, schema_ = self._create_resource()
 
-        dataset = factories.Dataset()
-        resource_0 = factories.Resource(dataset=dataset, name='resource_0')
-        api.action.resource_schema_field_create(resource_id=resource_0['id'],
-            index=0, name='foo')
-        api.action.resource_schema_field_create(resource_id=resource_0['id'],
-            index=1, name='bar')
+        helpers.call_action(
+            'resource_schema_fkey_update',
+            resource_id=resource_0,
+            fkey_uid=schema_['foreignKeys'][0]['fkey_uid'],
+            field='zero',
+            referenced_resource_id=resource_1,
+            referenced_field='one_id'
+        )
 
-        resource_1 = factories.Resource(dataset=dataset, name='resource_1')
-        api.action.resource_schema_field_create(resource_id=resource_1['id'],
-            index=0, name='foo_id')
+        schema = helpers.call_action('resource_schema_fkey_show',
+            resource_id=resource_0)
 
-        api.action.resource_schema_fkey_update(resource_id=resource_0['id'],
-            fkeys=[{
-                'field': 'foo',
-                'referenced_resource_id': resource_1['id'],
-                'referenced_field': 'foo_id'
-            }]
+        nose.tools.assert_equals('zero', schema[0]['fields'])
+        nose.tools.assert_equals('one_id', schema[0]['reference']['fields'])
+
+    def test_resource_schema_fkey_does_not_exist_update(self):
+        resource_0, resource_1, schema_ = self._create_resource()
+
+        nose.tools.assert_raises(
+            toolkit.ValidationError,
+            helpers.call_action,
+            'resource_schema_fkey_update',
+            resource_id=resource_0,
+            fkey_uid='does-not-exist',
+            field='zero',
+            referenced_resource_id=resource_1,
+            referenced_field='one_id'
         )

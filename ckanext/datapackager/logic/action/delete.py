@@ -83,9 +83,8 @@ def resource_schema_fkey_delete(context, data_dict):
     :param resource_id: the ID of the resource
     :type resource_id: string
 
-    :param fields: the fields which are foreign keys that will be deleted
-    :type fields: list of string
-
+    :param fkey_uid: the fkey_uid of the foreign key to delete
+    :type fields: string
     '''
     try:
         data_dict, errors = dictization_functions.validate(data_dict,
@@ -100,13 +99,9 @@ def resource_schema_fkey_delete(context, data_dict):
     schema_ = toolkit.get_action('resource_schema_show')(context,
         {'resource_id': resource_id})
 
-    # replace the foreignKey in the schema with a dict containing
-    # all the keys except the ones in the fields parameters
-    if 'foreignKeys' in schema_:
-        fkeys = [i['field'] for i in data_dict['fkeys']]
-        foreignKeys = schema_['foreignKeys']
-        foreignKey = [i for i in foreignKeys if i['fields'] not in fkeys]
-        schema_['foreignKeys'] = foreignKey
+    current = schema_.get('foreignKeys', [])
+    fkeys = [i for i in current if i['fkey_uid'] != data_dict['fkey_uid']]
+    schema_['foreignKeys'] = fkeys
     schema_ = json.dumps(schema_)
 
     resource_dict = toolkit.get_action('resource_show')(context,
