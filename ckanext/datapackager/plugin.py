@@ -9,7 +9,7 @@ import ckan.lib.navl.validators as navl_validators
 import ckan.lib.uploader as uploader
 
 import ckanext.datapackager.lib.helpers as custom_helpers
-import ckanext.datapackager.lib.csv as lib_csv
+import ckanext.datapackager.lib.csv_utils as csv_utils
 import ckanext.datapackager.lib.util as util
 import ckanext.datapackager.logic.action.create
 import ckanext.datapackager.logic.action.update
@@ -28,7 +28,7 @@ def _infer_schema_for_resource(resource):
     # we assume the resource does have an uploaded file and this line will not
     # raise an exception.
     path = util.get_path_to_resource_file(resource)
-    schema = lib_csv.infer_schema_from_csv_file(path)
+    schema = csv_utils.infer_schema_from_csv_file(path)
     return schema
 
 

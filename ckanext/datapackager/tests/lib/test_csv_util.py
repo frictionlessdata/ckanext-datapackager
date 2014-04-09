@@ -1,4 +1,4 @@
-'''Unit tests for lib/csv.py.
+'''Unit tests for lib/csv_utils.py.
 
 '''
 import os.path
@@ -6,7 +6,7 @@ import StringIO
 
 import nose.tools
 
-import ckanext.datapackager.lib.csv as lib_csv
+import ckanext.datapackager.lib.csv_utils as csv_utils
 
 
 def test_infer_schema_from_csv_file():
@@ -22,7 +22,7 @@ def test_infer_schema_from_csv_file():
     path = os.path.join(os.path.split(__file__)[0], path)
     abspath = os.path.abspath(path)
 
-    schema = lib_csv.infer_schema_from_csv_file(abspath)
+    schema = csv_utils.infer_schema_from_csv_file(abspath)
 
     assert schema == {
         'fields': [
@@ -84,7 +84,7 @@ def test_infer_schema_from_another_csv_file():
     path = os.path.join(os.path.split(__file__)[0], path)
     abspath = os.path.abspath(path)
 
-    schema = lib_csv.infer_schema_from_csv_file(abspath)
+    schema = csv_utils.infer_schema_from_csv_file(abspath)
 
     fields = schema['fields']
     assert len(fields) == 7
@@ -107,7 +107,7 @@ def test_temporal_extent_MM_DD_YY():
                 '2,012-13-23')
     csv_file = StringIO.StringIO(csv_text)
 
-    extent = lib_csv.temporal_extent(csv_file, column_num=1)
+    extent = csv_utils.temporal_extent(csv_file, column_num=1)
 
     assert extent == '2017-06-23T00:00:00/2023-12-13T00:00:00'
 
@@ -122,7 +122,7 @@ def test_temporal_extent_YYYY():
                 '2,2016')
     csv_file = StringIO.StringIO(csv_text)
 
-    extent = lib_csv.temporal_extent(csv_file, column_num=1)
+    extent = csv_utils.temporal_extent(csv_file, column_num=1)
 
     assert extent == '1933-01-01T00:00:00/2016-01-01T00:00:00'
 
@@ -138,7 +138,7 @@ def test_temporal_extent_with_all_non_date_values():
                 '2,gar')
     csv_file = StringIO.StringIO(csv_text)
 
-    nose.tools.assert_raises(ValueError, lib_csv.temporal_extent, csv_file,
+    nose.tools.assert_raises(ValueError, csv_utils.temporal_extent, csv_file,
                              column_num=1)
 
 
@@ -153,7 +153,7 @@ def test_temporal_extent_with_some_date_values():
                 '2,2007')
     csv_file = StringIO.StringIO(csv_text)
 
-    nose.tools.assert_raises(ValueError, lib_csv.temporal_extent, csv_file,
+    nose.tools.assert_raises(ValueError, csv_utils.temporal_extent, csv_file,
                              column_num=1)
 
 
@@ -168,7 +168,7 @@ def test_temporal_extent_with_timezone():
                 '0,Thu Sep 25 10:36:28 CET 2007\n')
     csv_file = StringIO.StringIO(csv_text)
 
-    extent = lib_csv.temporal_extent(csv_file, column_num=1)
+    extent = csv_utils.temporal_extent(csv_file, column_num=1)
 
     assert extent == '2007-09-25T10:36:28+02:00/2007-09-28T09:11:45+02:00'
 
@@ -184,7 +184,7 @@ def test_temporal_extent_with_mixed_naive_and_aware_dates():
                 '0,Thu Sep 25 10:36:28 CKT 2007\n')
     csv_file = StringIO.StringIO(csv_text)
 
-    nose.tools.assert_raises(TypeError, lib_csv.temporal_extent, csv_file,
+    nose.tools.assert_raises(TypeError, csv_utils.temporal_extent, csv_file,
                              column_num=1)
 
 
@@ -196,25 +196,25 @@ def test_temporal_extent_with_mixed_timezones():
                 '0,Thu Sep 25 10:36:28 CET 2007\n')
     csv_file = StringIO.StringIO(csv_text)
 
-    extent = lib_csv.temporal_extent(csv_file, column_num=1)
+    extent = csv_utils.temporal_extent(csv_file, column_num=1)
     assert extent == '2007-09-25T10:36:28+02:00/2007-09-28T09:11:45+00:00'
 
 
 def test_temporal_extent_with_nonexistent_path():
 
-    nose.tools.assert_raises(IOError, lib_csv.temporal_extent,
+    nose.tools.assert_raises(IOError, csv_utils.temporal_extent,
                              '/foo/bar/fsdfs/fdsfsd', column_num=1)
 
 
 def test_temporal_extent_with_noncsv_file():
 
-    nose.tools.assert_raises(IOError, lib_csv.temporal_extent,
+    nose.tools.assert_raises(IOError, csv_utils.temporal_extent,
                              '../test-data/not-a-csv.png', column_num=1)
 
 
 def test_temporal_extent_with_invalid_path():
 
-    nose.tools.assert_raises(IOError, lib_csv.temporal_extent,
+    nose.tools.assert_raises(IOError, csv_utils.temporal_extent,
                              path={'foo': 'bar'}, column_num=1)
 
 
@@ -226,7 +226,7 @@ def test_temporal_extent_with_nonexistent_index():
                 '0,Thu Sep 25 10:36:28 CET 2007\n')
     csv_file = StringIO.StringIO(csv_text)
 
-    nose.tools.assert_raises(IndexError, lib_csv.temporal_extent, csv_file,
+    nose.tools.assert_raises(IndexError, csv_utils.temporal_extent, csv_file,
                              column_num=6)
 
 
@@ -238,5 +238,5 @@ def test_temporal_extent_with_invalid_index():
                 '0,Thu Sep 25 10:36:28 CET 2007\n')
     csv_file = StringIO.StringIO(csv_text)
 
-    nose.tools.assert_raises(ValueError, lib_csv.temporal_extent, csv_file,
+    nose.tools.assert_raises(ValueError, csv_utils.temporal_extent, csv_file,
                              column_num={'foo': 'bar'})
