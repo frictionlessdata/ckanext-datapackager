@@ -5,7 +5,7 @@
     <li>{% link_for _('Edit'), controller='package', action='resource_edit', id=pkg.name, resource_id=res.id, class_='btn', icon='edit' %}</li>
   {% endif %}
   {% if  res.schema %}
-    <li>{% link_for _('View Schema'), controller='ckanext.datapackager.controllers.package:DataPackagerPackageController', action='view_metadata', package_id=pkg.name, resource_id=res.id, class_='btn', icon='eye-open' %}</li>
+    <li>{% link_for _('Edit Schema'), controller='ckanext.datapackager.controllers.package:DataPackagerPackageController', action='edit_metadata_field', package_id=pkg.name, resource_id=res.id, index=0, class_='btn', icon='eye-open' %}</li>
   {% endif %}
   {% if res.url %}
     <li>
@@ -43,6 +43,11 @@
     {# We also removed the "From the dataset abstract" section here
        (if the resource itself doesn't have a description, CKAN shows the notes
        from the dataset). #}
+{% endblock %}
+
+{% block data_preview %}
+  {% set selected_row = request.urlvars.get('index', 0)|int %}
+  {% snippet 'snippets/datapackager_csv.html', selected_row=selected_row, resource=c.resource, package_id=c.id %}
 {% endblock %}
 
 {% block resource_additional_information %}

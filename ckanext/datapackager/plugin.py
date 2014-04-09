@@ -42,73 +42,6 @@ def _infer_schema_for_resource(resource):
     return schema
 
 
-class SimpleCsvPreviewPlugin(plugins.SingletonPlugin):
-    plugins.implements(plugins.IConfigurable)
-    plugins.implements(plugins.IConfigurer)
-    plugins.implements(plugins.IResourcePreview)
-
-    DEFAULT_COLUMN_LIMIT = 10
-
-    def configure(self, config):
-        toolkit.requires_ckan_version('2.2')
-        preview_limit = config.get('ckan.simple_csv_preview.column_limit',
-                                   SimpleCsvPreviewPlugin.DEFAULT_COLUMN_LIMIT)
-        try:
-            self.preview_limit = int(preview_limit)
-        except (ValueError, TypeError):
-            raise toolkit.ValidationError(
-                {'ckan.simple_csv_preview.column_limit': 'Invalid Integer'}
-            )
-
-    def update_config(self, config):
-        plugins.toolkit.add_template_directory(config,
-                                               'templates/simplecsvpreview')
-
-    def can_preview(self, data_dict):
-        resource = data_dict['resource']
-
-        # should probably check out the details of mime/format
-        # in https://github.com/ckan/ckan/pull/1350 and have this match
-        # the pr there
-        format = resource['format'].lower() if resource.get('format') else None
-        mimetype = resource['mimetype'].lower() if resource.get('mimetype') else None
-        types = ('csv', 'text/csv')
-        is_csv = (format or mimetype) in types
-
-        if resource.get('on_same_domain') and is_csv:
-            return {'can_preview': True, 'quality': 1, }
-
-        return {'can_preview': False}
-
-    def setup_template_variables(self, context, data_dict):
-        '''Adds csv_preview_data to the c variable.
-
-        Will add the number of lines defined in
-        ckan.simple_csv_preview.column_limit to csv_preview data, the preview
-        data is transposed so the csv headers run down the left and each row
-        of the csv file will appear as a column in the preview
-        '''
-        assert self.can_preview(data_dict)
-        upload = uploader.ResourceUpload(data_dict['resource'])
-
-        try:
-            resource_id = data_dict['resource']['id']
-            with open(upload.get_path(resource_id)) as csv_file:
-                try:
-                    dialect = unicodecsv.Sniffer().sniff(csv_file.read(1024))
-                    csv_file.seek(0)
-                    csv_reader = unicodecsv.reader(csv_file, dialect)
-                    csv_data = itertools.islice(csv_reader, self.preview_limit)
-                    plugins.toolkit.c.csv_preview_data = zip(*csv_data)
-                except unicodecsv.Error, e:
-                    plugins.toolkit.c.csv_error = e.message
-        except IOError as e:
-            plugins.toolkit.c.csv_error = e.message
-
-    def preview_template(self, context, data_dict):
-        return 'csv.html'
-
-
 class DownloadTabularDataFormatPlugin(plugins.SingletonPlugin):
     '''Plugin that adds downloading packages in Tabular Data Format.
 
@@ -415,15 +348,8 @@ class DataPackagerPlugin(plugins.SingletonPlugin, toolkit.DefaultDatasetForm):
         )
 
         map_.connect(
-            '/package/{package_id}/file/{resource_id}/schema/{index}',
-            controller='ckanext.datapackager.controllers.package:DataPackagerPackageController',
-            action='view_metadata_field',
-        )
-
-        map_.connect(
-            '/package/{package_id}/file/{resource_id}/schema',
-            controller='ckanext.datapackager.controllers.package:DataPackagerPackageController',
-            action='view_metadata',
+            '/package/{id}/file/{resource_id}/schema/{index}',
+            controller='package', action='resource_read',
         )
 
         # Add in just the CKAN default routes that we're using.
@@ -446,9 +372,10 @@ class DataPackagerPlugin(plugins.SingletonPlugin, toolkit.DefaultDatasetForm):
         '''
         return {
             'resource_display_name': custom_helpers.resource_display_name,
-            'get_resource_schema_field': custom_helpers.get_resource_schema_field,
             'get_resource_schema': custom_helpers.get_resource_schema,
+            'resource_schema_field_show': custom_helpers.resource_schema_field_show,
             'get_resource_by_id': custom_helpers.get_resource,
+            'datapackager_csv_data': custom_helpers.csv_data,
         }
 
     def after_upload(self, context, resource):
