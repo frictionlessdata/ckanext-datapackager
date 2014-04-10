@@ -28,7 +28,29 @@
 {% endblock %}
 
 {% block resource_content %}
-  {% block resource_read_title %}<h1 class="page-heading">{{ h.resource_display_name(res) | truncate(50) }}</h1>{% endblock %}
+
+  <h1 class="page-heading dropdown">
+    {% set show_list = c.pkg_dict.resources|length > 1 %}
+    <a class="dropdown-toggle" data-toggle="dropdown">
+      {{ h.resource_display_name(res) | truncate(50) }}
+      {% if show_list %}
+          <b class="caret"></b>
+      {% endif %}
+    </a>
+    {% if show_list %}
+        <ul class="dropdown-menu" role="menu" aria-labelledby="dLabel">
+            {% for resource in c.pkg_dict.resources %}
+                {% if resource.id != res.id %}
+                    <li>
+                        <a href="{{ h.url_for(controller='package', action='resource_read', id=pkg.id, resource_id=resource.id) }}">
+                            <span>{{ h.resource_display_name(resource) | truncate(50) }}</span>
+                        </a>
+                    </li>
+                {% endif %}
+            {% endfor %}
+        </ul>
+    {% endif %}
+  </h1>
 
   {# Hide the resource URL, it's not necessary we already have a download
      button. #}
