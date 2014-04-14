@@ -23,6 +23,7 @@
            header for quickly switching between resource pages. #}
         {% if show_list %}
           <ul class="dropdown-menu" role="menu" aria-labelledby="dLabel">
+            <li class="dropdown-heading">{{ _("Other files in this package") }}</li>
             {% for resource in c.pkg_dict.resources %}
               {% if resource.id != res.id %}
                 <li>
@@ -97,6 +98,7 @@
     </a>
     <ul class="dropdown-menu" role="menu" aria-labelledby="dLabel">
         {% set current_url = h.full_current_url() %}
+        <li class="dropdown-heading">{{ _("Share this page") }}</li>
         <li><a href="https://plus.google.com/share?url={{ current_url }}" target="_blank"><i class="icon-google-plus-sign"></i> Google+</a></li>
         <li><a href="https://twitter.com/share?url={{ current_url }}" target="_blank"><i class="icon-twitter-sign"></i> Twitter</a></li>
         <li><a href="https://www.facebook.com/sharer.php?u={{ current_url }}" target="_blank"><i class="icon-facebook-sign"></i> Facebook</a></li>
