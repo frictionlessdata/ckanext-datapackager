@@ -123,3 +123,7 @@
 .js .tab-content {
   display: block;
 }
+ul.dropdown-menu li {
+  display: inline;
+  margin: 0;
+}
