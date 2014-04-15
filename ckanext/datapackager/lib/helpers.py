@@ -54,6 +54,7 @@ def get_resource(resource_id):
     resource_show = toolkit.get_action('resource_show')
     return resource_show(context,{'id': resource_id})
 
+
 def csv_data(resource):
     '''Return the CSV data for the given resource.
 
@@ -67,14 +68,11 @@ def csv_data(resource):
 
     try:
         with open(upload.get_path(resource['id'])) as csv_file:
-            try:
-                dialect = csv.Sniffer().sniff(csv_file.read(1024))
-                csv_file.seek(0)
-                csv_reader = csv.reader(csv_file, dialect)
-                csv_values = itertools.islice(csv_reader, preview_limit)
-                csv_values = zip(*csv_values)
-            except csv.Error, e:
-                raise
-    except IOError as e:
-        raise
-    return csv_values
+            dialect = csv.Sniffer().sniff(csv_file.read(1024))
+            csv_file.seek(0)
+            csv_reader = csv.reader(csv_file, dialect)
+            csv_values = itertools.islice(csv_reader, preview_limit)
+            csv_values = zip(*csv_values)
+            return {'success': True, 'data': csv_values}
+    except (csv.Error, IOError) as exc:
+        return {'success': False, 'error': exc.strerror}

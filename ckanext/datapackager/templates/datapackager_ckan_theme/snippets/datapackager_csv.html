@@ -7,36 +7,41 @@ resource - the resource that the CSV file belongs to
 package_id - the ID of the package that the CSV file belongs to
 
 #}
-{% set data = h.datapackager_csv_data(resource) %}
-{% set metadata = h.resource_schema_field_show(resource.id, selected_row) %}
 <div class="module-content ckanext-datapreview">
-  <div class="data panel active">
-    <div class="meta tab-content">
-        <div class="tab-pane active">
-          <h2 class="module-heading"><i class="icon-copy"></i>Metadata for {{ data[selected_row][0] }}</h2>
-            <dl class="dl-horizontal">
-                {% for key in metadata %}
-                    <dt>{{ key }}</dt>
-                    <dd> {{ metadata[key] }}</dd>
-                {% endfor %}
-            </dl>
-        </div>
+  {% set csv_data = h.datapackager_csv_data(resource) %}
+  {% if csv_data.success == true %}
+    {% set data = csv_data.data %}
+    {% set metadata = h.resource_schema_field_show(resource.id, selected_row) %}
+    <div class="data panel active">
+      <div class="meta tab-content">
+          <div class="tab-pane active">
+            <h2 class="module-heading"><i class="icon-copy"></i>Metadata for {{ data[selected_row][0] }}</h2>
+              <dl class="dl-horizontal">
+                  {% for key in metadata %}
+                      <dt>{{ key }}</dt>
+                      <dd> {{ metadata[key] }}</dd>
+                  {% endfor %}
+              </dl>
+          </div>
+      </div>
+      <table class="table">
+          <tbody id="dataTable">
+              {% for row in data %}
+              <tr {% if selected_row == loop.index0 %}class="active"{% endif %}>
+                      {% set link = h.url_for(controller='package', id=package_id, action='resource_read', resource_id=resource.id, index=loop.index0) %}
+                      {% for col in row %}
+                          {% if loop.first %}
+                              <th><a href="{{ link }}">{{ col }}</a></th>
+                          {% else %}
+                              <td>{{ col }}</td>
+                          {% endif %}
+                      {% endfor %}
+                  </tr>
+              {% endfor %}
+          </tbody>
+      </table>
     </div>
-    <table class="table">
-        <tbody id="dataTable">
-            {% for row in data %}
-            <tr {% if selected_row == loop.index0 %}class="active"{% endif %}>
-                    {% set link = h.url_for(controller='package', id=package_id, action='resource_read', resource_id=resource.id, index=loop.index0) %}
-                    {% for col in row %}
-                        {% if loop.first %}
-                            <th><a href="{{ link }}">{{ col }}</a></th>
-                        {% else %}
-                            <td>{{ col }}</td>
-                        {% endif %}
-                    {% endfor %}
-                </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-  </div>
+  {% else %}
+    {{ _('Error:') }} {{ csv_data.error }}
+  {% endif %}
 </div>
