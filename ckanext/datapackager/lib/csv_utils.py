@@ -39,14 +39,23 @@ def infer_schema_from_csv_file(path):
 
     '''
     dataframe = pandas.read_csv(path, sep=None)
+
+    # check if we can strictly parse and of the object columns as dates
+    is_datetime = []
     for col, type in zip(dataframe.columns, dataframe.dtypes):
         if type.name == 'object':
             try:
-                dataframe[col] = pandas.to_datetime(dataframe[col],
-                                                    errors='raise',
-                                                    infer_datetime_format=True)
-            except ValueError:
+                pandas.to_datetime(dataframe[col],
+                                   errors='raise',
+                                   infer_datetime_format=True)
+                is_datetime.append(col)
+            except (ValueError, TypeError):
                 pass
+
+    # reparse the dataframe with those columns as dates
+    if is_datetime:
+        dataframe = pandas.read_csv(path, sep=None, parse_dates=is_datetime,
+                                    date_parser=_parse)
 
     description = dataframe.describe()  # Summary stats about the columns.
 
@@ -72,6 +81,10 @@ def infer_schema_from_csv_file(path):
                     field[key] = True
                 else:
                     field[key] = False
+
+        if field['type'] == 'datetime':
+            field['temporal_extent'] = _calculate_temporal_extent(dataframe, index)
+
 
         fields.append(field)
 
@@ -135,6 +148,11 @@ def temporal_extent(path, column_num):
     '''
     dataframe = pandas.read_csv(path, parse_dates=[column_num],
                                 date_parser=_parse)
+
+    return _calculate_temporal_extent(dataframe, column_num)
+
+
+def _calculate_temporal_extent(dataframe, column_num):
     column_title = dataframe.columns[column_num]
     time_series = dataframe[column_title]
     extent = '{min}/{max}'.format(min=time_series.min().isoformat(),

@@ -88,7 +88,15 @@ def test_infer_schema_from_another_csv_file():
 
     fields = schema['fields']
     assert len(fields) == 7
-    assert fields[0] == {'index': 0, 'name': 'datetime', 'type': 'string'}
+    nose.tools.assert_equals(
+        fields[0],
+        {
+            'index': 0,
+            'name': 'datetime',
+            'temporal_extent': '2011-12-30T00:00:00/2011-12-30T00:00:00',
+            'type': 'datetime',
+        }
+    )
     assert fields[1]['index'] == 1
     assert fields[1]['name'] == 'timedelta'
     assert fields[1]['type'] == 'string'
@@ -104,7 +112,7 @@ def test_infer_dates_in_schema_from_csv_file():
     abspath = os.path.abspath(path)
 
     schema = csv_utils.infer_schema_from_csv_file(abspath)
-    nose.tools.assert_equals('datetime', schema['fields'][0]['type'])
+    nose.tools.assert_equals(schema['fields'][0]['type'], 'datetime')
 
 
 def test_temporal_extent_MM_DD_YY():
