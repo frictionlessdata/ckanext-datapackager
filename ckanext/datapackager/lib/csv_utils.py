@@ -43,7 +43,8 @@ def infer_schema_from_csv_file(path):
         if type.name == 'object':
             try:
                 dataframe[col] = pandas.to_datetime(dataframe[col],
-                                                    errors='raise')
+                                                    errors='raise',
+                                                    infer_datetime_format=True)
             except ValueError:
                 pass
 
