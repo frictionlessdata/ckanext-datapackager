@@ -25,6 +25,8 @@ def _dtype_to_json_table_schema_type(dtype):
         return 'number'
     elif dtype == numpy.bool:
         return 'boolean'
+    elif dtype.type == numpy.datetime64:
+        return 'datetime'
     else:
         return 'string'
 
@@ -37,6 +39,15 @@ def infer_schema_from_csv_file(path):
 
     '''
     dataframe = pandas.read_csv(path, sep=None)
+    dataframe = dataframe.convert_objects(convert_dates='coerce')
+    for col, type in zip(dataframe.columns, dataframe.dtypes):
+        if type.name == 'object':
+            try:
+                dataframe[col] = pandas.to_datetime(dataframe[col],
+                                                    errors='raise')
+            except ValueError:
+                pass
+
     description = dataframe.describe()  # Summary stats about the columns.
 
     fields = []

@@ -97,6 +97,16 @@ def test_infer_schema_from_another_csv_file():
     assert fields[2]['type'] == 'integer'
 
 
+def test_infer_dates_in_schema_from_csv_file():
+    # Get the absolute path to the test data file.
+    path = '../test-data/data.csv'
+    path = os.path.join(os.path.split(__file__)[0], path)
+    abspath = os.path.abspath(path)
+
+    schema = csv_utils.infer_schema_from_csv_file(abspath)
+    nose.tools.assert_equals('datetime', schema['fields'][0]['type'])
+
+
 def test_temporal_extent_MM_DD_YY():
     '''Test temporal_extent() with MM-DD-YY-formatted date strings.
 
