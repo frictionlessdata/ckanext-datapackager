@@ -43,11 +43,12 @@ def infer_schema_from_csv_file(path):
     dataframe = pandas.read_csv(cStringIO.StringIO(buffer), sep=None)
 
     objects = [col for col, type in
-                zip(dataframe.columns, dataframe.dtypes) if type.name == 'object']
+               zip(dataframe.columns, dataframe.dtypes)
+               if type.name == 'object']
 
     # reparse the dataframe with those columns as dates
     dataframe = pandas.read_csv(cStringIO.StringIO(buffer), sep=None,
-                                parse_dates=objects, date_parser=_parse)
+                                parse_dates=objects)
 
     description = dataframe.describe()  # Summary stats about the columns.
 
@@ -75,7 +76,8 @@ def infer_schema_from_csv_file(path):
                     field[key] = False
 
         if field['type'] == 'datetime':
-            field['temporal_extent'] = _calculate_temporal_extent(dataframe, index)
+            field['temporal_extent'] = temporal_extent(
+                cStringIO.StringIO(buffer), index)
 
 
         fields.append(field)
