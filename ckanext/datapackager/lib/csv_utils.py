@@ -5,6 +5,7 @@ shouldn't know anything about CKAN.
 
 '''
 import datetime
+import cStringIO
 
 import pandas
 import numpy
@@ -38,24 +39,15 @@ def infer_schema_from_csv_file(path):
     guess the types of the columns.
 
     '''
-    dataframe = pandas.read_csv(path, sep=None)
+    buffer = open(path).read()
+    dataframe = pandas.read_csv(cStringIO.StringIO(buffer), sep=None)
 
-    # check if we can strictly parse and of the object columns as dates
-    is_datetime = []
-    for col, type in zip(dataframe.columns, dataframe.dtypes):
-        if type.name == 'object':
-            try:
-                pandas.to_datetime(dataframe[col],
-                                   errors='raise',
-                                   infer_datetime_format=True)
-                is_datetime.append(col)
-            except (ValueError, TypeError):
-                pass
+    objects = [col for col, type in
+                zip(dataframe.columns, dataframe.dtypes) if type.name == 'object']
 
     # reparse the dataframe with those columns as dates
-    if is_datetime:
-        dataframe = pandas.read_csv(path, sep=None, parse_dates=is_datetime,
-                                    date_parser=_parse)
+    dataframe = pandas.read_csv(cStringIO.StringIO(buffer), sep=None,
+                                parse_dates=objects, date_parser=_parse)
 
     description = dataframe.describe()  # Summary stats about the columns.
 
