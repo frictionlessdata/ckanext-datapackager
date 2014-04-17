@@ -76,8 +76,11 @@ def infer_schema_from_csv_file(path):
                     field[key] = False
 
         if field['type'] == 'datetime':
-            field['temporal_extent'] = temporal_extent(
-                cStringIO.StringIO(buffer), index)
+            try:
+                field['temporal_extent'] = temporal_extent(
+                    cStringIO.StringIO(buffer), index)
+            except (ValueError, TypeError):
+                pass
 
 
         fields.append(field)
