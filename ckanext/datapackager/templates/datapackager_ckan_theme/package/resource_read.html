@@ -114,6 +114,8 @@
 
 {% block resource_additional_information %}
   {% if res %}
+      {% snippet 'package/snippets/keys.html', pkg=pkg, res=res %}
+
       <div class="module-content">
 
         {# Change the title from 'Additional Information'. #}

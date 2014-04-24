@@ -76,3 +76,11 @@ def csv_data(resource):
             return {'success': True, 'data': csv_values}
     except (csv.Error, IOError) as exc:
         return {'success': False, 'error': exc.strerror}
+
+
+def group_by_name(schema):
+    try:
+        by_name = dict((i['name'], i['index']) for i in schema['fields'])
+        return by_name
+    except KeyError:
+        return None

@@ -637,3 +637,148 @@ class TestMetadataViewer(custom_helpers.FunctionalTestBaseClass):
         assert len(divs) == 1
         div = divs[0]
         assert div.text.strip() == 'Error: No such file or directory'
+
+    def test_primary_key_is_on_page_string(self):
+        dataset, resource, schema = self._create_resource()
+        helpers.call_action(
+            'resource_schema_pkey_create',
+            resource_id=resource['id'],
+            pkey="playerID"
+        )
+
+        response = self.app.get(
+            toolkit.url_for(controller='package', action='resource_read',
+                            id=dataset['id'], resource_id=resource['id']))
+
+        soup = response.html
+        nose.tools.assert_true(soup.find(text='Primary Key'))
+        pkey = soup.find(id='primary-key')
+        nose.tools.assert_true(
+            pkey.li.a.attrs['href'],
+            '/package/{0}/file/{1}/schema/0'.format(
+                dataset['id'], resource['id'])
+        )
+
+        nose.tools.assert_true(pkey.li.a.text, 'playerID')
+
+    def test_primary_key_is_on_page_list(self):
+        dataset, resource, schema = self._create_resource()
+        helpers.call_action(
+            'resource_schema_pkey_create',
+            resource_id=resource['id'],
+            pkey=["playerID", "teamID"]
+        )
+
+        response = self.app.get(
+            toolkit.url_for(controller='package', action='resource_read',
+                            id=dataset['id'], resource_id=resource['id']))
+
+        soup = response.html
+        nose.tools.assert_true(soup.find(text='Primary Key'))
+        pkey = soup.find(id='primary-key')
+
+        pkeys = pkey.find_all('li')
+        nose.tools.assert_true(
+            pkeys[0].a.attrs['href'],
+            '/package/{0}/file/{1}/schema/0'.format(
+                dataset['id'], resource['id'])
+        )
+        nose.tools.assert_true(pkeys[0].a.text, 'playerID')
+        
+        nose.tools.assert_true(
+            pkeys[1].a.attrs['href'],
+            '/package/{0}/file/{1}/schema/0'.format(
+                dataset['id'], resource['id'])
+        )
+        nose.tools.assert_true(pkeys[1].a.text, 'teamID')
+
+    def test_foreign_key_is_on_page_string(self):
+        dataset = factories.Dataset()
+        csv_file0 = custom_helpers.get_csv_file(
+            'test-data/lahmans-baseball-database/Master.csv')
+        user = factories.User()
+        api = ckanapi.TestAppCKAN(self.app, apikey=user['apikey'])
+        resource0 = api.action.resource_create(package_id=dataset['id'],
+                                              upload=csv_file0)
+        schema0 = api.action.resource_schema_show(resource_id=resource0['id'])
+
+
+        csv_file1 = custom_helpers.get_csv_file(
+            'test-data/lahmans-baseball-database/ManagersHalf.csv')
+        api = ckanapi.TestAppCKAN(self.app, apikey=user['apikey'])
+        resource1 = api.action.resource_create(package_id=dataset['id'],
+                                              upload=csv_file1)
+        schema1 = api.action.resource_schema_show(resource_id=resource1['id'])
+
+        helpers.call_action(
+            'resource_schema_fkey_create',
+            field="playerID",
+            resource_id=resource1['id'],
+            referenced_resource_id=resource0['id'],
+            referenced_field="playerID",
+        )
+
+        response = self.app.get(
+            toolkit.url_for(controller='package', action='resource_read',
+                            id=dataset['id'], resource_id=resource1['id']))
+
+        soup = response.html
+        nose.tools.assert_true(soup.find(text='Foreign Keys'))
+        pkey = soup.find(id='foreign-key')
+        nose.tools.assert_true(
+            pkey.li.a.attrs['href'],
+            '/package/{0}/file/{1}/schema/0'.format(
+                dataset['id'], resource0['id'])
+        )
+
+        nose.tools.assert_true(pkey.li.a.text, 'playerID')
+
+    def test_foreign_key_is_on_page_list(self):
+        dataset = factories.Dataset()
+        csv_file0 = custom_helpers.get_csv_file(
+            'test-data/lahmans-baseball-database/BattingPost.csv')
+        user = factories.User()
+        api = ckanapi.TestAppCKAN(self.app, apikey=user['apikey'])
+        resource0 = api.action.resource_create(package_id=dataset['id'],
+                                              upload=csv_file0)
+        schema0 = api.action.resource_schema_show(resource_id=resource0['id'])
+
+
+        csv_file1 = custom_helpers.get_csv_file(
+            'test-data/lahmans-baseball-database/AllstarFull.csv')
+        api = ckanapi.TestAppCKAN(self.app, apikey=user['apikey'])
+        resource1 = api.action.resource_create(package_id=dataset['id'],
+                                              upload=csv_file1)
+        schema1 = api.action.resource_schema_show(resource_id=resource1['id'])
+
+        helpers.call_action(
+            'resource_schema_fkey_create',
+            field=["playerID", "yearID"],
+            resource_id=resource1['id'],
+            referenced_resource_id=resource0['id'],
+            referenced_field=["playerID", "yearID"],
+        )
+
+        response = self.app.get(
+            toolkit.url_for(controller='package', action='resource_read',
+                            id=dataset['id'], resource_id=resource1['id']))
+
+        soup = response.html
+        nose.tools.assert_true(soup.find(text='Foreign Keys'))
+
+        fkey = soup.find(id='foreign-key')
+
+        fkeys = fkey.find_all('li')
+        nose.tools.assert_true(
+            fkeys[0].a.attrs['href'],
+            '/package/{0}/file/{1}/schema/0'.format(
+                dataset['id'], resource0['id'])
+        )
+        nose.tools.assert_true(fkeys[0].a.text, 'playerID')
+        
+        nose.tools.assert_true(
+            fkeys[1].a.attrs['href'],
+            '/package/{0}/file/{1}/schema/0'.format(
+                dataset['id'], resource0['id'])
+        )
+        nose.tools.assert_true(fkeys[1].a.text, 'yearID')

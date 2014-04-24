@@ -1,0 +1,48 @@
+{% set schema = h.get_resource_schema(res.id) %}
+{% set by_name = h.group_by_name(schema) %}
+
+
+{% if schema.primaryKey %}
+<div class="module-content" id="primary-key">
+  <h2>{{ _('Primary Key') }}</h2>
+  <ul class="tag-list well">
+  {% if schema.primaryKey is string %}
+    {% set field_index = by_name.get(schema.primaryKey) %}
+    {% set link = h.url_for(controller='package', id=pkg.id, action='resource_read', resource_id=res.id, index=field_index) %}
+  <li><a class="tag" href="{{ link }}">{{ schema.primaryKey }}</a></li>
+  {% else %}
+    {% for field in schema.primaryKey %}
+      {% set field_index = by_name.get(field) %}
+      {% set link = h.url_for(controller='package', id=pkg.id, action='resource_read', resource_id=res.id, index=field_index) %}
+      <li><a class="tag" href="{{ link }}">{{ field }}</a></li>
+    {% endfor %}
+  {% endif %}
+  </ul>
+</div>
+{% endif %}
+
+
+{% if schema.foreignKeys %}
+<div class="module-content" id="foreign-key">
+  <h2>{{ _('Foreign Keys') }}</h2>
+  <ul class="tag-list well">
+  {% for fkey in schema.foreignKeys %}
+    {% set f_schema = h.get_resource_schema(fkey.reference._resource_id) %} 
+    {% set f_by_name = h.group_by_name(f_schema) %}
+    <ul class="tag-list well">
+    {% if fkey.fields is string %}
+      {% set field_index = f_by_name.get(fkey.fields) %}
+      {% set link = h.url_for(controller='package', id=pkg.id, action='resource_read', resource_id=fkey.reference._resource_id, index=field_index) %}
+      <li><a class="tag" href="{{ link }}">{{ fkey.reference.resource }} - {{ fkey.fields }}</a></li>
+    {% else %}
+      {% for field in fkey.fields %}
+        {% set field_index = f_by_name.get(field) %}
+        {% set link = h.url_for(controller='package', id=pkg.id, action='resource_read', resource_id=fkey.reference._resource_id, index=field_index) %}
+        <li><a class="tag" href="{{ link }}">{{ fkey.reference.resource }} - {{ field }}</a></li>
+      {% endfor %}
+    {% endif %}
+    </ul>
+  {% endfor %}
+  </ul>
+</div>
+{% endif %}

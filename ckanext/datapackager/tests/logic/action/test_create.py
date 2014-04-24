@@ -953,6 +953,6 @@ class TestResourceSchemaFKeyCreate(custom_helpers.FunctionalTestBaseClass):
             'resource_schema_fkey_create',
             resource_id=resource_0['id'],
             field='zero',
-            referenced_resource_id=resource_1,
+            referenced_resource_id=resource_1['id'],
             referenced_field='zero_id',
         )
