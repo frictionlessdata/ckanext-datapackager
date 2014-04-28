@@ -10,9 +10,11 @@ import pandas
 import numpy
 import dateutil
 import magic
-import ckanext.datapackager.lib.tzinfos as tzinfos
 
 import ckan.lib.helpers as helpers
+
+import ckanext.datapackager.lib.tzinfos as tzinfos
+import ckanext.datapackager.exceptions as exceptions
 
 
 def _dtype_to_json_table_schema_type(dtype):
@@ -35,8 +37,18 @@ def infer_schema_from_csv_file(path):
     This will guess the column titles (e.g. from the file's header row) and
     guess the types of the columns.
 
+    :raises ckanext.datapackager.exceptions.CouldNotReadCSVException:
+        if pandas fails to read the CSV file
+
     '''
-    dataframe = pandas.read_csv(path, sep=None)
+    try:
+        dataframe = pandas.read_csv(path, sep=None)
+    except Exception:
+        import sys
+        type_, value, traceback = sys.exc_info()
+        raise exceptions.CouldNotReadCSVException, (
+            "Pandas couldn't read the CSV file", type_, value), traceback
+
     description = dataframe.describe()  # Summary stats about the columns.
 
     fields = []

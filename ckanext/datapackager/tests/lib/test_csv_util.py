@@ -7,6 +7,7 @@ import StringIO
 import nose.tools
 
 import ckanext.datapackager.lib.csv_utils as csv_utils
+import ckanext.datapackager.exceptions as exceptions
 
 
 def test_infer_schema_from_csv_file():
@@ -95,6 +96,19 @@ def test_infer_schema_from_another_csv_file():
     assert fields[2]['index'] == 2
     assert fields[2]['name'] == 'integer'
     assert fields[2]['type'] == 'integer'
+
+
+def test_infer_schema_from_non_csv_file():
+    '''infer_schema_from_csv_file() should raise CouldNotReadCSVException if
+    called with a non-CSV file.
+
+    '''
+    path = '../test-data/not-a-csv.png'
+    path = os.path.join(os.path.split(__file__)[0], path)
+    abspath = os.path.abspath(path)
+
+    nose.tools.assert_raises(exceptions.CouldNotReadCSVException,
+                             csv_utils.infer_schema_from_csv_file, abspath)
 
 
 def test_temporal_extent_MM_DD_YY():
