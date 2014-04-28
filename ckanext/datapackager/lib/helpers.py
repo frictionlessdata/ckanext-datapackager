@@ -71,7 +71,7 @@ def _csv_data_from_file(csv_file, preview_limit=10):
         csv_values = zip(*csv_values)
         return {'success': True, 'data': csv_values}
     except csv.Error as exc:
-        return {'success': False, 'error': exc.strerror}
+        return {'success': False, 'error': exc.message}
 
 
 def csv_data(resource):

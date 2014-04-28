@@ -639,6 +639,28 @@ class TestMetadataViewer(custom_helpers.FunctionalTestBaseClass):
         assert div.text.strip() == ("Error: There's no uploaded file for this "
                                     "resource")
 
+    def test_non_csv_file(self):
+        '''When viewing the page of a resource whose file is not a CSV file,
+        an error should be shown instead of the CSV preview.
+
+        '''
+        dataset = factories.Dataset()
+        non_csv_file = custom_helpers.get_csv_file('test-data/not-a-csv.png')
+        user = factories.User()
+        api = ckanapi.TestAppCKAN(self.app, apikey=user['apikey'])
+        resource = api.action.resource_create(package_id=dataset['id'],
+                                              upload=non_csv_file)
+
+        response = self.app.get(
+            toolkit.url_for(controller='package', action='resource_read',
+                            id=dataset['id'], resource_id=resource['id']))
+
+        soup = response.html
+        divs = soup('div', class_='ckanext-datapreview')
+        assert len(divs) == 1
+        div = divs[0]
+        assert div.text.strip().startswith('Error: ')
+
     def test_file_switcher(self):
         '''Simple test that the contents of the file switcher dropdown are
         correct.
