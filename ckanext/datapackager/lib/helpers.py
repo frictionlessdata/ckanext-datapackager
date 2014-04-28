@@ -1,9 +1,15 @@
 '''Some custom template helper functions.
 
 '''
+import csv
+import itertools
+
 import ckan.lib.helpers as helpers
 import ckan.model as model
 import ckan.plugins.toolkit as toolkit
+
+import ckanext.datapackager.lib.util as util
+import ckanext.datapackager.exceptions as exceptions
 
 
 def resource_display_name(*args, **kwargs):
@@ -55,24 +61,27 @@ def get_resource(resource_id):
     return resource_show(context,{'id': resource_id})
 
 
+def _csv_data_from_file(csv_file, preview_limit=10):
+
+    try:
+        dialect = csv.Sniffer().sniff(csv_file.read(1024))
+        csv_file.seek(0)
+        csv_reader = csv.reader(csv_file, dialect)
+        csv_values = itertools.islice(csv_reader, preview_limit)
+        csv_values = zip(*csv_values)
+        return {'success': True, 'data': csv_values}
+    except csv.Error as exc:
+        return {'success': False, 'error': exc.strerror}
+
+
 def csv_data(resource):
     '''Return the CSV data for the given resource.
 
     '''
-    import csv
-    import itertools
-    import ckan.lib.uploader as uploader
-
-    preview_limit = 10
-    upload = uploader.ResourceUpload(resource)
-
     try:
-        with open(upload.get_path(resource['id'])) as csv_file:
-            dialect = csv.Sniffer().sniff(csv_file.read(1024))
-            csv_file.seek(0)
-            csv_reader = csv.reader(csv_file, dialect)
-            csv_values = itertools.islice(csv_reader, preview_limit)
-            csv_values = zip(*csv_values)
-            return {'success': True, 'data': csv_values}
-    except (csv.Error, IOError) as exc:
-        return {'success': False, 'error': exc.strerror}
+        path = util.get_path_to_resource_file(resource)
+    except exceptions.ResourceFileDoesNotExistException:
+        return {'success': False,
+                'error': toolkit._("There's no uploaded file for this "
+                                   "resource")}
+    return _csv_data_from_file(open(path))
