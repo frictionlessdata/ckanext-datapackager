@@ -767,40 +767,39 @@ class TestMetadataViewer(custom_helpers.FunctionalTestBaseClass):
         nose.tools.assert_true(soup.find(text='Foreign Keys'))
 
         fkey = soup.find(id='foreign-key')
+        #check that the name of the referned csv file appears
+        nose.tools.assert_true('BattingPost.csv' in fkey.text)
 
         fkeys = fkey.find_all('li')
-        links = fkeys[0].find_all('a')
 
         #check the source link
         nose.tools.assert_equals(
-            links[0].attrs['href'],
+            fkeys[0].a.attrs['href'],
             '/package/{0}/file/{1}/schema/0'.format(
                 dataset['id'], resource1['id'])
         )
-        nose.tools.assert_equals(links[0].text, 'playerID')
+        nose.tools.assert_equals(fkeys[0].a.text, 'playerID')
 
-        #check the destination link
         nose.tools.assert_equals(
-            links[1].attrs['href'],
-            '/package/{0}/file/{1}/schema/2'.format(
-                dataset['id'], resource0['id'])
-        )
-        nose.tools.assert_equals(links[1].text, 'BattingPost.csv: playerID')
-        
-        #check the source link
-        links = fkeys[1].find_all('a')
-        nose.tools.assert_equals(
-            links[0].attrs['href'],
+            fkeys[1].a.attrs['href'],
             '/package/{0}/file/{1}/schema/1'.format(
                 dataset['id'], resource1['id'])
         )
-        nose.tools.assert_equals(links[0].text, 'yearID')
+        nose.tools.assert_equals(fkeys[1].a.text, 'yearID')
 
         #check the destination link
-        links = fkeys[1].find_all('a')
         nose.tools.assert_equals(
-            links[1].attrs['href'],
+            fkeys[2].a.attrs['href'],
+            '/package/{0}/file/{1}/schema/2'.format(
+                dataset['id'], resource0['id'])
+        )
+        nose.tools.assert_equals(fkeys[2].a.text, 'playerID')
+        
+
+        #check the destination link
+        nose.tools.assert_equals(
+            fkeys[3].a.attrs['href'],
             '/package/{0}/file/{1}/schema/0'.format(
                 dataset['id'], resource0['id'])
         )
-        nose.tools.assert_equals(links[1].text, 'BattingPost.csv: yearID')
+        nose.tools.assert_equals(fkeys[3].a.text, 'yearID')
