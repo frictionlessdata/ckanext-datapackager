@@ -96,7 +96,6 @@ def infer_schema_from_csv_file(path):
 
     schema = {
         "fields": fields,
-        # "primaryKey': TODO,
     }
 
     return schema
