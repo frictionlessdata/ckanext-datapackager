@@ -4,6 +4,7 @@ These are meant to be reusable library functions not tied to CKAN, so they
 shouldn't know anything about CKAN.
 
 '''
+import unicodecsv
 import datetime
 
 import pandas
@@ -12,7 +13,7 @@ import dateutil
 import magic
 import ckanext.datapackager.lib.tzinfos as tzinfos
 
-import ckan.lib.helpers as helpers
+import ckanext.datapackager.lib.helpers as helpers
 
 
 def _dtype_to_json_table_schema_type(dtype):
@@ -132,8 +133,14 @@ def temporal_extent(path, column_num):
     return extent
 
 
-def resource_is_csv_file(path):
+def resource_is_csv_or_text_file(path):
     csv_types = ['text/plain','text/csv','text/tsv',
                  'text/comma-seperated-values']
+
     file_type = magic.from_file(path)
-    return file_type in csv_types
+    if file_type in csv_types:
+        return True
+    if 'text' in file_type:
+        return True
+    else:
+        return False
