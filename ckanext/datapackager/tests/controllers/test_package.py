@@ -769,16 +769,38 @@ class TestMetadataViewer(custom_helpers.FunctionalTestBaseClass):
         fkey = soup.find(id='foreign-key')
 
         fkeys = fkey.find_all('li')
-        nose.tools.assert_true(
-            fkeys[0].a.attrs['href'],
+        links = fkeys[0].find_all('a')
+
+        #check the source link
+        nose.tools.assert_equals(
+            links[0].attrs['href'],
             '/package/{0}/file/{1}/schema/0'.format(
+                dataset['id'], resource1['id'])
+        )
+        nose.tools.assert_equals(links[0].text, 'playerID')
+
+        #check the destination link
+        nose.tools.assert_equals(
+            links[1].attrs['href'],
+            '/package/{0}/file/{1}/schema/2'.format(
                 dataset['id'], resource0['id'])
         )
-        nose.tools.assert_true(fkeys[0].a.text, 'playerID')
+        nose.tools.assert_equals(links[1].text, 'BattingPost.csv: playerID')
         
-        nose.tools.assert_true(
-            fkeys[1].a.attrs['href'],
+        #check the source link
+        links = fkeys[1].find_all('a')
+        nose.tools.assert_equals(
+            links[0].attrs['href'],
+            '/package/{0}/file/{1}/schema/1'.format(
+                dataset['id'], resource1['id'])
+        )
+        nose.tools.assert_equals(links[0].text, 'yearID')
+
+        #check the destination link
+        links = fkeys[1].find_all('a')
+        nose.tools.assert_equals(
+            links[1].attrs['href'],
             '/package/{0}/file/{1}/schema/0'.format(
                 dataset['id'], resource0['id'])
         )
-        nose.tools.assert_true(fkeys[1].a.text, 'yearID')
+        nose.tools.assert_equals(links[1].text, 'BattingPost.csv: yearID')

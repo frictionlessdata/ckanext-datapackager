@@ -79,8 +79,21 @@ def csv_data(resource):
 
 
 def group_by_name(schema):
+    '''Return a schema dict regrouped by name
+
+    regroups a schema into a dict where the key is the name of the schema
+    field and value is the index of the schema field
+    '''
     try:
         by_name = dict((i['name'], i['index']) for i in schema['fields'])
         return by_name
     except KeyError:
         return None
+
+
+def get_fkey_with_reference(fkey):
+    '''iterates over foreign keys and their reference fields together'''
+    try:
+        return zip(fkey['fields'], fkey['reference']['fields'])
+    except KeyError:
+        return []

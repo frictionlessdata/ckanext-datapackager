@@ -31,14 +31,26 @@
     {% set f_by_name = h.group_by_name(f_schema) %}
     <ul class="tag-list well">
     {% if fkey.fields is string %}
-      {% set field_index = f_by_name.get(fkey.fields) %}
-      {% set link = h.url_for(controller='package', id=pkg.id, action='resource_read', resource_id=fkey.reference._resource_id, index=field_index) %}
-      <li><a class="tag" href="{{ link }}">{{ fkey.reference.resource }} - {{ fkey.fields }}</a></li>
+
+      <li>
+        {% set field_index = by_name.get(fkey.fields) %}
+        {% set link = h.url_for(controller='package', id=pkg.id, action='resource_read', resource_id=res.id, index=field_index) %}
+        <a class="tag" href="{{ link }}">{{ fkey.fields }}</a>
+        {% set ref_field_index = f_by_name.get(fkey.fields) %}
+        {% set ref_link = h.url_for(controller='package', id=pkg.id, action='resource_read', resource_id=fkey.reference._resource_id, index=field_index) %}
+        <a class="tag" href="{{ ref_link }}">{{ fkey.reference.resource }} - {{ fkey.reference.fields }}</a>
+      </li>
     {% else %}
-      {% for field in fkey.fields %}
-        {% set field_index = f_by_name.get(field) %}
-        {% set link = h.url_for(controller='package', id=pkg.id, action='resource_read', resource_id=fkey.reference._resource_id, index=field_index) %}
-        <li><a class="tag" href="{{ link }}">{{ fkey.reference.resource }} - {{ field }}</a></li>
+      {% for field, ref_field in h.get_fkey_with_reference(fkey) %}
+        <li>
+          {% set field_index = by_name.get(field) %}
+          {% set link = h.url_for(controller='package', id=pkg.id, action='resource_read', resource_id=res.id, index=field_index) %}
+          <a class="tag" href="{{ link }}">{{ field }}</a>
+          <i class="icon-arrow-right"></i>
+          {% set ref_field_index = f_by_name.get(ref_field) %}
+          {% set ref_link = h.url_for(controller='package', id=pkg.id, action='resource_read', resource_id=fkey.reference._resource_id, index=ref_field_index) %}
+          <a class="tag" href="{{ ref_link }}">{{ fkey.reference.resource }}: {{ ref_field }}</a>
+        </li>
       {% endfor %}
     {% endif %}
     </ul>

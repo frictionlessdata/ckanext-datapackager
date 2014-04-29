@@ -288,8 +288,8 @@ def foreign_key_reference_validator(key, data, errors, context):
     try:
         referenced_resource = toolkit.get_action('resource_show')(context,
             {'id': referenced_resource_id})
-        schema_ = referenced_resource.get('schema', json.dumps({'fields': []}))
-        referenced_schema = json.loads(schema_)
+        referenced_schema = toolkit.get_action('resource_schema_show')(context,
+            {'resource_id': referenced_resource_id})
     except toolkit.ValidationError:
         raise toolkit.Invalid(toolkit._("referenced resource id invalid"))
 
