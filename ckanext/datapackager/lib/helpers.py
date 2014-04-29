@@ -26,7 +26,10 @@ def get_resource_schema(resource_id):
         'user': toolkit.c.user,
     }
     schema_show = toolkit.get_action('resource_schema_show')
-    return schema_show(context, {'resource_id': resource_id})
+    try:
+        return schema_show(context, {'resource_id': resource_id})
+    except toolkit.ValidationError:
+        return {}
 
 
 def resource_schema_field_show(resource_id, index):
@@ -42,7 +45,10 @@ def resource_schema_field_show(resource_id, index):
     }
     schema_field_show = toolkit.get_action('resource_schema_field_show')
     data_dict = {'resource_id': resource_id, 'index': index}
-    return schema_field_show(context, data_dict)
+    try:
+        return schema_field_show(context, data_dict)
+    except toolkit.ValidationError:
+        return {}
 
 def get_resource(resource_id):
 
