@@ -8,6 +8,7 @@ import StringIO
 import nose.tools
 
 import ckanext.datapackager.lib.csv_utils as csv_utils
+import ckanext.datapackager.exceptions as exceptions
 
 
 def test_infer_schema_from_csv_file():
@@ -133,6 +134,20 @@ def test_infer_schema_temporal_extent_raises_error(m):
     for i in range(4):
         schema = csv_utils.infer_schema_from_csv_file(abspath)
         nose.tools.assert_equals(schema['fields'][0]['type'], 'datetime')
+
+
+def test_infer_schema_from_non_csv_file():
+    '''infer_schema_from_csv_file() should raise CouldNotReadCSVException if
+    called with a non-CSV file.
+
+    '''
+    path = '../test-data/not-a-csv.png'
+    path = os.path.join(os.path.split(__file__)[0], path)
+    abspath = os.path.abspath(path)
+
+    nose.tools.assert_raises(exceptions.CouldNotReadCSVException,
+                             csv_utils.infer_schema_from_csv_file, abspath)
+
 
 def test_temporal_extent_MM_DD_YY():
     '''Test temporal_extent() with MM-DD-YY-formatted date strings.
@@ -283,4 +298,3 @@ def test_temporal_extent_with_invalid_index():
 
     nose.tools.assert_raises(ValueError, csv_utils.temporal_extent, csv_file,
                              column_num={'foo': 'bar'})
-

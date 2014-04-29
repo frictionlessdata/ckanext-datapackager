@@ -6,6 +6,7 @@ import json
 
 import nose.tools
 import bs4
+import ckanapi
 
 from ckan.common import OrderedDict
 import ckan.model as model
@@ -209,79 +210,6 @@ class TestDataPackagerPackageController(
             controller='ckanext.datapackager.controllers.package:DataPackagerPackageController',
             action='download_tabular_data_format',
             package_id=dataset['name'])
-
-    def test_resource_schema_field(self):
-        #create test package and resource
-        usr = toolkit.get_action('get_site_user')({'model':model,'ignore_auth': True},{})
-        upload = custom_helpers.get_csv_file(
-            'test-data/lahmans-baseball-database/AllstarFull.csv')
-        package = helpers.call_action('package_create', name='test-package')
-        api = ckanapi.TestAppCKAN(self.app, apikey=usr['apikey'])
-        resource = api.action.resource_create(
-            package_id=package['id'],
-            upload=upload,
-            format='csv',
-            can_be_previewed=True,
-        )
-
-        #render page
-        response = self.app.get('/package/{0}/file/{1}/schema/0'.format(package['id'], resource['id']))
-
-        #test that our snippet is rendered
-        start = response.body.index('Snippet package/snippets/resource_schema_field.html start')
-        end = response.body.index('Snippet package/snippets/resource_schema_field.html end')
-        snippet = response.body[start:end]
-        nose.tools.assert_in('index', snippet)
-        nose.tools.assert_in('0', snippet)
-        nose.tools.assert_in('type', snippet)
-        nose.tools.assert_in('string', snippet)
-        nose.tools.assert_in('name', snippet)
-        nose.tools.assert_in('playerID', snippet)
-
-        #check the list of links to other fields are in the secondary content
-        start = response.body.index('Snippet package/snippets/resource_schema_list.html start')
-        end = response.body.index('Snippet package/snippets/resource_schema_list.html end')
-        snippet = response.body[start:end]
-        nose.tools.assert_in('playerID', snippet)
-        nose.tools.assert_in('yearID', snippet)
-        nose.tools.assert_in('gameNum', snippet)
-        nose.tools.assert_in('gameID', snippet)
-        nose.tools.assert_in('teamID', snippet)
-        nose.tools.assert_in('lgID', snippet)
-        nose.tools.assert_in('GP', snippet)
-        nose.tools.assert_in('startingPos', snippet)
-
-    def test_resource_schema(self):
-        #create test package and resource
-        usr = toolkit.get_action('get_site_user')({'model':model,'ignore_auth': True},{})
-        upload = custom_helpers.get_csv_file(
-            'test-data/lahmans-baseball-database/AllstarFull.csv')
-        package = helpers.call_action('package_create', name='test-package')
-        api = ckanapi.TestAppCKAN(self.app, apikey=usr['apikey'])
-        resource = api.action.resource_create(
-            package_id=package['id'],
-            upload=upload,
-            format='csv',
-            can_be_previewed=True,
-        )
-
-        #render page
-        response = self.app.get('/package/{0}/file/{1}/schema'.format(package['id'], resource['id']))
-
-        #test that our snippet is rendered
-        start = response.body.index('Snippet package/snippets/resource_schema.html start')
-        end = response.body.index('Snippet package/snippets/resource_schema.html end')
-        snippet = response.body[start:end]
-
-        # check that the list of schema fields have been rendered into our template
-        nose.tools.assert_in('playerID', snippet)
-        nose.tools.assert_in('yearID', snippet)
-        nose.tools.assert_in('gameNum', snippet)
-        nose.tools.assert_in('gameID', snippet)
-        nose.tools.assert_in('teamID', snippet)
-        nose.tools.assert_in('lgID', snippet)
-        nose.tools.assert_in('GP', snippet)
-        nose.tools.assert_in('startingPos', snippet)
 
     def test_view_edit_metadata(self):
         user = factories.User()
@@ -513,3 +441,267 @@ class TestRegroupFields(object):
             sorted(package_controller._regroup_fields(input_dict, deleted='name-field-c').items()),
             sorted(expected_output.items()),
         )
+
+
+class TestMetadataViewer(custom_helpers.FunctionalTestBaseClass):
+    '''Tests for the custom CSV preview and metadata viewer on the resource
+    read page.
+
+    '''
+    def _create_resource(self):
+        '''Return a test dataset, resource and resource schema.'''
+
+        dataset = factories.Dataset()
+        csv_file = custom_helpers.get_csv_file(
+            'test-data/lahmans-baseball-database/ManagersHalf.csv')
+        user = factories.User()
+        api = ckanapi.TestAppCKAN(self.app, apikey=user['apikey'])
+        resource = api.action.resource_create(package_id=dataset['id'],
+                                              upload=csv_file)
+        schema = api.action.resource_schema_show(resource_id=resource['id'])
+
+        return dataset, resource, schema
+
+    def test_csv_preview(self):
+        '''Simple test of the custom CSV preview on the resource read page.
+
+        '''
+        dataset, resource, _ = self._create_resource()
+
+        response = self.app.get(
+            toolkit.url_for(controller='package', action='resource_read',
+                            id=dataset['id'], resource_id=resource['id']))
+
+        soup = response.html
+
+        table = soup.table  # This assumes the CSV preview is the first table
+                            # on the page.
+
+        # Test that the table has the right headers texts.
+        headers = table.find_all('th')
+        assert len(headers) == 10
+        assert [h.text for h in headers] == ['playerID', 'yearID', 'teamID',
+                                             'lgID', 'inseason', 'half', 'G',
+                                             'W', 'L', 'rank']
+
+        # Test that the headers are linked to the right pages.
+        for number, header in enumerate(headers):
+            links = header.find_all('a')
+            assert len(links) == 1
+            link = links[0]
+            assert link['href'] == toolkit.url_for(controller='package',
+                                                   action='resource_read',
+                                                   id=dataset['id'],
+                                                   resource_id=resource['id'],
+                                                   index=number)
+
+        # Test that a few of the table row values are correct.
+        rows = table.find_all('tr')
+        definitions = rows[0].find_all('td')
+        assert [d.text for d in definitions[:3]] == ['hanlone01', 'hanlone01',
+                                                     'vanhage01']
+        definitions = rows[3].find_all('td')
+        assert [d.text for d in definitions[:3]] == ['NL', 'NL', 'NL']
+
+    def test_csv_preview_active_row(self):
+        '''Test the selected row in the CSV preview has CSS class "active".'''
+
+        dataset, resource, _ = self._create_resource()
+
+        # Try a few different row numbers, including the first and the last.
+        for row_number in(0, 3, 7, 9):
+
+            response = self.app.get(
+                toolkit.url_for(controller='package', action='resource_read',
+                                id=dataset['id'], resource_id=resource['id'],
+                                index=row_number))
+
+            soup = response.html
+
+            table = soup.table  # This assumes the CSV preview is the first
+                                # table on the page.
+
+            active_rows = table.find_all('tr', class_='active')
+            assert len(active_rows) == 1, ("There should be one row in the "
+                                           "table with the CSS class 'active'")
+            active_row = active_rows[0]
+            assert active_row == table.find_all('tr')[row_number], (
+                "The active row should be the row named in the URL")
+
+    def test_csv_preview_default_active_row(self):
+        '''Test that visiting /package/{id}/file/{resource_id} (without a
+        /schema/{index} on the end) selects the first row in the CSV preview as
+        "active" by default.
+
+        '''
+        dataset, resource, _ = self._create_resource()
+
+        response = self.app.get(
+            toolkit.url_for(controller='package', action='resource_read',
+                            id=dataset['id'], resource_id=resource['id']))
+
+        soup = response.html
+
+        table = soup.table  # This assumes the CSV preview is the first
+                            # table on the page.
+
+        active_rows = table.find_all('tr', class_='active')
+        assert len(active_rows) == 1, ("There should be one row in the "
+                                       "table with the CSS class 'active'")
+        active_row = active_rows[0]
+        assert active_row == table.find_all('tr')[0], (
+            "The active row should be the first row")
+
+    def _test_metadata_viewer_contents(self, soup, field):
+        '''Test that the given soup contains a metadata viewer div with the
+        correct contents for the given resource schema field.
+
+        '''
+        # Find the metadata viewer div.
+        matches = soup.find_all('div', class_='meta tab-content')
+        assert len(matches) == 1
+        metadata_viewer = matches[0]
+
+        # Test that the heading has the right text.
+        headings = metadata_viewer('h2')
+        assert len(headings) == 1
+        heading = headings[0]
+        assert heading.text == 'Metadata for {field}'.format(
+            field=field['name'])
+
+        # Test that the definition list has the right contents.
+        dlists = metadata_viewer('dl')
+        assert len(dlists) == 1
+        dlist = dlists[0]
+
+        dterms = dlist('dt')
+        assert [dterm.text for dterm in dterms] == field.keys()
+
+        ddefinitions = dlist('dd')
+        assert [dd.text.strip() for dd in ddefinitions] == [
+            str(value) for value in field.values()]
+
+    def test_metadata_viewer_with_default_active_row(self):
+        '''Test the metadata viewer when visiting
+        /package/{id}/file/{resource_id} (without a /schema/{index} on the
+        end.
+
+        '''
+        dataset, resource, schema = self._create_resource()
+
+        response = self.app.get(
+            toolkit.url_for(controller='package', action='resource_read',
+                            id=dataset['id'], resource_id=resource['id']))
+
+        soup = response.html
+
+        # The metadata viewer should be showing the metadata for the first
+        # field.
+        self._test_metadata_viewer_contents(soup, schema['fields'][0])
+
+    def test_metadata_viewer_with_different_active_rows(self):
+        '''Test that the metadata viewer shows the right metadata when
+        different columns are selected.
+
+        '''
+        dataset, resource, schema = self._create_resource()
+
+        for index in (0, 3, 7, 9):
+
+            response = self.app.get(
+                toolkit.url_for(controller='package', action='resource_read',
+                                id=dataset['id'], resource_id=resource['id'],
+                                index=index))
+
+            soup = response.html
+
+            # The metadata viewer should be showing the metadata for the right
+            # field.
+            self._test_metadata_viewer_contents(soup, schema['fields'][index])
+
+    def test_resource_with_no_file(self):
+        '''When viewing the page of a resource that has a remote URL instead of
+        an uploaded file, a 'No such file or directory' error should be shown
+        instead of the CSV preview.
+
+        '''
+        dataset = factories.Dataset()
+        resource = factories.Resource(dataset=dataset)
+
+        response = self.app.get(
+            toolkit.url_for(controller='package', action='resource_read',
+                            id=dataset['id'], resource_id=resource['id']))
+
+        soup = response.html
+        divs = soup('div', class_='ckanext-datapreview')
+        assert len(divs) == 1
+        div = divs[0]
+        assert div.text.strip() == ("Error: There's no uploaded file for this "
+                                    "resource")
+
+    def test_non_csv_file(self):
+        '''When viewing the page of a resource whose file is not a CSV file,
+        an error should be shown instead of the CSV preview.
+
+        '''
+        dataset = factories.Dataset()
+        non_csv_file = custom_helpers.get_csv_file('test-data/not-a-csv.png')
+        user = factories.User()
+        api = ckanapi.TestAppCKAN(self.app, apikey=user['apikey'])
+        resource = api.action.resource_create(package_id=dataset['id'],
+                                              upload=non_csv_file)
+
+        response = self.app.get(
+            toolkit.url_for(controller='package', action='resource_read',
+                            id=dataset['id'], resource_id=resource['id']))
+
+        soup = response.html
+        divs = soup('div', class_='ckanext-datapreview')
+        assert len(divs) == 1
+        div = divs[0]
+        assert div.text.strip().startswith('Error: ')
+
+    def test_file_switcher(self):
+        '''Simple test that the contents of the file switcher dropdown are
+        correct.
+
+        '''
+        dataset = factories.Dataset()
+        resource_1 = factories.Resource(dataset=dataset)
+        resource_2 = factories.Resource(dataset=dataset)
+        resource_3 = factories.Resource(dataset=dataset)
+
+        response = self.app.get(
+            toolkit.url_for(controller='package', action='resource_read',
+                            id=dataset['id'], resource_id=resource_1['id']))
+
+        # The dropdown should contain links to the two other files in the
+        # package.
+        soup = response.html
+        links = soup.find('h1', class_='dropdown').find('ul').find_all('a')
+        assert len(links) == 2
+        assert len([link for link in links if link['href'] ==
+                   toolkit.url_for(controller='package', action='resource_read',
+                                   id=dataset['id'],
+                                   resource_id=resource_2['id'])]) == 1
+        assert len([link for link in links if link['href'] ==
+                   toolkit.url_for(controller='package', action='resource_read',
+                                   id=dataset['id'],
+                                   resource_id=resource_3['id'])]) == 1
+
+    def test_file_switcher_only_one_resource(self):
+        '''Test that the file switcher dropdown is not shown when the package
+        only has one resource.
+
+        '''
+        dataset = factories.Dataset()
+        resource = factories.Resource(dataset=dataset)
+
+        response = self.app.get(
+            toolkit.url_for(controller='package', action='resource_read',
+                            id=dataset['id'], resource_id=resource['id']))
+
+        soup = response.html
+        assert soup.find('h1', class_='dropdown').find('ul') is None, (
+            "The file switcher dropdown should not be shown when the file "
+            "only has one resource")

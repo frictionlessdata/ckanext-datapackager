@@ -17,3 +17,11 @@ class ResourceFileDoesNotExistException(Exception):
 
     '''
     pass
+
+
+class CouldNotReadCSVException(Exception):
+    '''The exception that's raised when trying to read a CSV file fails for
+    some reason (e.g. it's a corrupt file, not a CSV file, etc).
+
+    '''
+    pass

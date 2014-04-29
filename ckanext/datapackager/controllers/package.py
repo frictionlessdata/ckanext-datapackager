@@ -87,12 +87,6 @@ class DataPackagerPackageController(toolkit.BaseController):
 
         return pkg_zipstream
 
-    def view_metadata(self, package_id, resource_id):
-        return toolkit.render('package/resource_schema.html')
-
-    def view_metadata_field(self, package_id, resource_id, index):
-        return toolkit.render('package/resource_schema_field.html')
-
     def _posted_metadata(self, context, resource_id, index, request_dict):
         #check if we pushed a delete button
         deleted = request_dict.get('delete')
