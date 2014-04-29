@@ -44,9 +44,9 @@ def infer_schema_from_csv_file(path):
         if pandas fails to read the CSV file
 
     '''
-    buffer = open(path).read()
+    csv_contents = open(path).read()
     try:
-        dataframe = pandas.read_csv(cStringIO.StringIO(buffer), sep=None)
+        dataframe = pandas.read_csv(cStringIO.StringIO(csv_contents), sep=None)
     except Exception:
         import sys
         type_, value, traceback = sys.exc_info()
@@ -54,10 +54,10 @@ def infer_schema_from_csv_file(path):
             "Pandas couldn't read the CSV file", type_, value), traceback
 
     # reparse the dataframe with columns as dates if their type is a json object
-    objects = [col for col, type in
+    objects = [col for col, type_ in
                zip(dataframe.columns, dataframe.dtypes)
-               if type.name == 'object']
-    dataframe = pandas.read_csv(cStringIO.StringIO(buffer), sep=None,
+               if type_.name == 'object']
+    dataframe = pandas.read_csv(cStringIO.StringIO(csv_contents), sep=None,
                                 parse_dates=objects)
 
     description = dataframe.describe()  # Summary stats about the columns.
@@ -88,7 +88,7 @@ def infer_schema_from_csv_file(path):
         if field['type'] == 'datetime':
             try:
                 field['temporal_extent'] = temporal_extent(
-                    cStringIO.StringIO(buffer), index)
+                    cStringIO.StringIO(csv_contents), index)
             except (ValueError, TypeError, IOError, IndexError):
                 pass
 
