@@ -381,6 +381,7 @@ class DataPackagerPlugin(plugins.SingletonPlugin, toolkit.DefaultDatasetForm):
             'resource_schema_field_show': custom_helpers.resource_schema_field_show,
             'get_resource_by_id': custom_helpers.get_resource,
             'datapackager_csv_data': custom_helpers.csv_data,
+            'get_user_package_count': custom_helpers.get_user_package_count,
         }
 
     def after_upload(self, context, resource):
