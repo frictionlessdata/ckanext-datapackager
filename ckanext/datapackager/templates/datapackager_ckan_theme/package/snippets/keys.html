@@ -25,7 +25,6 @@
 {% if schema.foreignKeys %}
 <div class="module-content" id="foreign-key">
   <h2>{{ _('Foreign Keys') }}</h2>
-  {{ schema.foreignKeys }}
   <ul class="tag-list well">
   {% for fkey in schema.foreignKeys %}
     {% set f_schema = h.get_resource_schema(fkey.reference._resource_id) %} 
