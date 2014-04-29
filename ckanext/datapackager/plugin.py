@@ -19,6 +19,7 @@ import ckanext.datapackager.logic.action.update
 import ckanext.datapackager.logic.action.get
 import ckanext.datapackager.logic.action.delete
 import ckanext.datapackager.logic.validators as custom_validators
+import ckanext.datapackager.exceptions as exceptions
 
 
 def _infer_schema_for_resource(resource):
@@ -38,7 +39,11 @@ def _infer_schema_for_resource(resource):
             'You could try validating this file at http://csvlint.io'
         )
 
-    schema = csv_utils.infer_schema_from_csv_file(path)
+    try:
+        schema = csv_utils.infer_schema_from_csv_file(path)
+    except exceptions.CouldNotReadCSVException:
+        schema = {'fields': []}
+
     return schema
 
 

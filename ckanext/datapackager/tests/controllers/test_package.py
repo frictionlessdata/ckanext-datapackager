@@ -636,4 +636,72 @@ class TestMetadataViewer(custom_helpers.FunctionalTestBaseClass):
         divs = soup('div', class_='ckanext-datapreview')
         assert len(divs) == 1
         div = divs[0]
-        assert div.text.strip() == 'Error: No such file or directory'
+        assert div.text.strip() == ("Error: There's no uploaded file for this "
+                                    "resource")
+
+    def test_non_csv_file(self):
+        '''When viewing the page of a resource whose file is not a CSV file,
+        an error should be shown instead of the CSV preview.
+
+        '''
+        dataset = factories.Dataset()
+        non_csv_file = custom_helpers.get_csv_file('test-data/not-a-csv.png')
+        user = factories.User()
+        api = ckanapi.TestAppCKAN(self.app, apikey=user['apikey'])
+        resource = api.action.resource_create(package_id=dataset['id'],
+                                              upload=non_csv_file)
+
+        response = self.app.get(
+            toolkit.url_for(controller='package', action='resource_read',
+                            id=dataset['id'], resource_id=resource['id']))
+
+        soup = response.html
+        divs = soup('div', class_='ckanext-datapreview')
+        assert len(divs) == 1
+        div = divs[0]
+        assert div.text.strip().startswith('Error: ')
+
+    def test_file_switcher(self):
+        '''Simple test that the contents of the file switcher dropdown are
+        correct.
+
+        '''
+        dataset = factories.Dataset()
+        resource_1 = factories.Resource(dataset=dataset)
+        resource_2 = factories.Resource(dataset=dataset)
+        resource_3 = factories.Resource(dataset=dataset)
+
+        response = self.app.get(
+            toolkit.url_for(controller='package', action='resource_read',
+                            id=dataset['id'], resource_id=resource_1['id']))
+
+        # The dropdown should contain links to the two other files in the
+        # package.
+        soup = response.html
+        links = soup.find('h1', class_='dropdown').find('ul').find_all('a')
+        assert len(links) == 2
+        assert len([link for link in links if link['href'] ==
+                   toolkit.url_for(controller='package', action='resource_read',
+                                   id=dataset['id'],
+                                   resource_id=resource_2['id'])]) == 1
+        assert len([link for link in links if link['href'] ==
+                   toolkit.url_for(controller='package', action='resource_read',
+                                   id=dataset['id'],
+                                   resource_id=resource_3['id'])]) == 1
+
+    def test_file_switcher_only_one_resource(self):
+        '''Test that the file switcher dropdown is not shown when the package
+        only has one resource.
+
+        '''
+        dataset = factories.Dataset()
+        resource = factories.Resource(dataset=dataset)
+
+        response = self.app.get(
+            toolkit.url_for(controller='package', action='resource_read',
+                            id=dataset['id'], resource_id=resource['id']))
+
+        soup = response.html
+        assert soup.find('h1', class_='dropdown').find('ul') is None, (
+            "The file switcher dropdown should not be shown when the file "
+            "only has one resource")
