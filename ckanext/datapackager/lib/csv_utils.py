@@ -5,6 +5,7 @@ shouldn't know anything about CKAN.
 
 '''
 import datetime
+import cStringIO
 
 import pandas
 import numpy
@@ -27,6 +28,8 @@ def _dtype_to_json_table_schema_type(dtype):
         return 'number'
     elif dtype == numpy.bool:
         return 'boolean'
+    elif dtype.type == numpy.datetime64:
+        return 'datetime'
     else:
         return 'string'
 
@@ -41,13 +44,21 @@ def infer_schema_from_csv_file(path):
         if pandas fails to read the CSV file
 
     '''
+    csv_contents = open(path).read()
     try:
-        dataframe = pandas.read_csv(path, sep=None)
+        dataframe = pandas.read_csv(cStringIO.StringIO(csv_contents), sep=None)
     except Exception:
         import sys
         type_, value, traceback = sys.exc_info()
         raise exceptions.CouldNotReadCSVException, (
             "Pandas couldn't read the CSV file", type_, value), traceback
+
+    # reparse the dataframe with columns as dates if their type is a json object
+    objects = [col for col, type_ in
+               zip(dataframe.columns, dataframe.dtypes)
+               if type_.name == 'object']
+    dataframe = pandas.read_csv(cStringIO.StringIO(csv_contents), sep=None,
+                                parse_dates=objects)
 
     description = dataframe.describe()  # Summary stats about the columns.
 
@@ -74,11 +85,17 @@ def infer_schema_from_csv_file(path):
                 else:
                     field[key] = False
 
+        if field['type'] == 'datetime':
+            try:
+                field['temporal_extent'] = temporal_extent(
+                    cStringIO.StringIO(csv_contents), index)
+            except (ValueError, TypeError, IOError, IndexError):
+                pass
+
         fields.append(field)
 
     schema = {
         "fields": fields,
-        # "primaryKey': TODO,
     }
 
     return schema
@@ -136,6 +153,11 @@ def temporal_extent(path, column_num):
     '''
     dataframe = pandas.read_csv(path, parse_dates=[column_num],
                                 date_parser=_parse)
+
+    return _calculate_temporal_extent(dataframe, column_num)
+
+
+def _calculate_temporal_extent(dataframe, column_num):
     column_title = dataframe.columns[column_num]
     time_series = dataframe[column_title]
     extent = '{min}/{max}'.format(min=time_series.min().isoformat(),
