@@ -2,6 +2,7 @@
 
 '''
 import os.path
+import mock
 import StringIO
 
 import nose.tools
@@ -106,7 +107,7 @@ def test_infer_schema_from_another_csv_file():
 
 
 def test_infer_dates_in_schema_from_csv_file():
-    # Get the absolute path to the test data file.
+    # get the absolute path to the test data file.
     path = '../test-data/data.csv'
     path = os.path.join(os.path.split(__file__)[0], path)
     abspath = os.path.abspath(path)
@@ -114,6 +115,24 @@ def test_infer_dates_in_schema_from_csv_file():
     schema = csv_utils.infer_schema_from_csv_file(abspath)
     nose.tools.assert_equals(schema['fields'][0]['type'], 'datetime')
 
+
+@mock.patch('ckanext.datapackager.lib.csv_utils.temporal_extent')
+def test_infer_schema_temporal_extent_raises_error(m):
+    '''infer dates from a temporal extent, but raise an exception
+
+    Test that infer_schema_from_csv_file handles exceptions well
+    '''
+    m.side_effect = [ValueError(), TypeError, IOError, IndexError()]
+    # get the absolute path to the test data file.
+    path = '../test-data/data.csv'
+    path = os.path.join(os.path.split(__file__)[0], path)
+    abspath = os.path.abspath(path)
+
+    #run the test 4 time for each of our possible exceptions raised
+    #by temporal_extent
+    for i in range(4):
+        schema = csv_utils.infer_schema_from_csv_file(abspath)
+        nose.tools.assert_equals(schema['fields'][0]['type'], 'datetime')
 
 def test_temporal_extent_MM_DD_YY():
     '''Test temporal_extent() with MM-DD-YY-formatted date strings.
@@ -264,3 +283,4 @@ def test_temporal_extent_with_invalid_index():
 
     nose.tools.assert_raises(ValueError, csv_utils.temporal_extent, csv_file,
                              column_num={'foo': 'bar'})
+

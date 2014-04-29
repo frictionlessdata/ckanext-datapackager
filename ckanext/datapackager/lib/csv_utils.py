@@ -42,11 +42,10 @@ def infer_schema_from_csv_file(path):
     buffer = open(path).read()
     dataframe = pandas.read_csv(cStringIO.StringIO(buffer), sep=None)
 
+    # reparse the dataframe with columns as dates if their type is a json object
     objects = [col for col, type in
                zip(dataframe.columns, dataframe.dtypes)
                if type.name == 'object']
-
-    # reparse the dataframe with those columns as dates
     dataframe = pandas.read_csv(cStringIO.StringIO(buffer), sep=None,
                                 parse_dates=objects)
 
@@ -79,9 +78,8 @@ def infer_schema_from_csv_file(path):
             try:
                 field['temporal_extent'] = temporal_extent(
                     cStringIO.StringIO(buffer), index)
-            except (ValueError, TypeError):
+            except (ValueError, TypeError, IOError, IndexError):
                 pass
-
 
         fields.append(field)
 
