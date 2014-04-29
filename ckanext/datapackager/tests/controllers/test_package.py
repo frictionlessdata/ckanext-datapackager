@@ -448,12 +448,11 @@ class TestMetadataViewer(custom_helpers.FunctionalTestBaseClass):
     read page.
 
     '''
-    def _create_resource(self):
+    def _create_resource(self, file='test-data/lahmans-baseball-database/ManagersHalf.csv'):
         '''Return a test dataset, resource and resource schema.'''
 
         dataset = factories.Dataset()
-        csv_file = custom_helpers.get_csv_file(
-            'test-data/lahmans-baseball-database/ManagersHalf.csv')
+        csv_file = custom_helpers.get_csv_file(file)
         user = factories.User()
         api = ckanapi.TestAppCKAN(self.app, apikey=user['apikey'])
         resource = api.action.resource_create(package_id=dataset['id'],
@@ -705,3 +704,13 @@ class TestMetadataViewer(custom_helpers.FunctionalTestBaseClass):
         assert soup.find('h1', class_='dropdown').find('ul') is None, (
             "The file switcher dropdown should not be shown when the file "
             "only has one resource")
+
+    def test_csv_preview_unicode(self):
+        '''Upload a unicode csv file, test that it handles unicode '''
+        dataset, resource, _ = self._create_resource('test-data/unicode.csv')
+
+        response = self.app.get(
+            toolkit.url_for(controller='package', action='resource_read',
+                            id=dataset['id'], resource_id=resource['id']))
+
+        nose.tools.assert_equals(200, response.status_int)

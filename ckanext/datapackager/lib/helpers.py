@@ -1,7 +1,7 @@
 '''Some custom template helper functions.
 
 '''
-import csv
+import unicodecsv
 import itertools
 
 import ckan.lib.helpers as helpers
@@ -70,13 +70,13 @@ def get_resource(resource_id):
 def _csv_data_from_file(csv_file, preview_limit=10):
 
     try:
-        dialect = csv.Sniffer().sniff(csv_file.read(1024))
+        dialect = unicodecsv.Sniffer().sniff(csv_file.read(1024))
         csv_file.seek(0)
-        csv_reader = csv.reader(csv_file, dialect)
+        csv_reader = unicodecsv.reader(csv_file, dialect)
         csv_values = itertools.islice(csv_reader, preview_limit)
         csv_values = zip(*csv_values)
         return {'success': True, 'data': csv_values}
-    except csv.Error as exc:
+    except unicodecsv.Error as exc:
         return {'success': False, 'error': exc.message}
 
 
