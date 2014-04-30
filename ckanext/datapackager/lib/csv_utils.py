@@ -113,8 +113,14 @@ def _parse(datestring):
     strings.
 
     '''
-    return dateutil.parser.parse(datestring, ignoretz=False, tzinfos=tzinfos.tzinfos,
-                                 default=datetime.datetime(1, 1, 1, 0, 0, 0))
+    default = datetime.datetime(1, 1, 1, 0, 0, 0)
+    try:
+        date = dateutil.parser.parse(datestring, ignoretz=False,
+                                     tzinfos=tzinfos.tzinfos, default=default)
+    except AttributeError:
+        date = default
+
+    return date
 
 
 def temporal_extent(path, column_num):

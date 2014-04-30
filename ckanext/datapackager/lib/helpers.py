@@ -78,6 +78,8 @@ def _csv_data_from_file(csv_file, preview_limit=10):
         return {'success': True, 'data': csv_values}
     except unicodecsv.Error as exc:
         return {'success': False, 'error': exc.message}
+    except UnicodeDecodeError as exc:
+        return {'success': False, 'error': exc}
 
 
 def csv_data(resource):
