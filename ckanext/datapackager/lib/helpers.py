@@ -93,3 +93,16 @@ def csv_data(resource):
                 'error': toolkit._("There's no uploaded file for this "
                                    "resource")}
     return _csv_data_from_file(open(path))
+
+
+def get_user_package_count(user):
+    context = {
+        'model': model,
+        'session': model.Session,
+        'user': toolkit.c.user,
+    }
+    try:
+        user_dict = toolkit.get_action('user_show')(context, {'id': user})
+        return len(user_dict['datasets'])
+    except (toolkit.ValidationError, toolkit.NotAuthorized, toolkit.NotFound):
+        return 0

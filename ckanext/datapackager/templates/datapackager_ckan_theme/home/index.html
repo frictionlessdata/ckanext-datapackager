@@ -17,9 +17,17 @@
             </p>
 
             <p class="lead">
+            {% if c.user %}
+              <a class="btn btn-success" href="{% url_for controller='package', action='new' %}">Add new package</a>
+              {% if h.get_user_package_count(c.user) > 0 %}
+                or
+                <a class="btn btn-success" href="{% url_for controller='user', action='dashboard' %}">See your packages</a>
+              {% endif %}
+            {% else %}
               <a class="btn btn-success" href="{% url_for controller='user', action='login' %}">Login</a>
               or <a class="btn btn-success" href="{% url_for controller='user', action='register' %}">Register</a>
               to start creating data packages.
+            {% endif %}
             </p>
 
             <p>For features and documentation, see the
