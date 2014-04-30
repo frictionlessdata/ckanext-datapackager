@@ -19,6 +19,7 @@ import ckanext.datapackager.logic.action.update
 import ckanext.datapackager.logic.action.get
 import ckanext.datapackager.logic.action.delete
 import ckanext.datapackager.logic.validators as custom_validators
+import ckanext.datapackager.exceptions as exceptions
 
 
 def _infer_schema_for_resource(resource):
@@ -32,13 +33,17 @@ def _infer_schema_for_resource(resource):
     # raise an exception.
     path = util.get_path_to_resource_file(resource)
 
-    if not csv_utils.resource_is_csv_file(path):
+    if not csv_utils.resource_is_csv_or_text_file(path):
         helpers.flash_notice(
-            'This file does not seem to be a csv file. '
+            'This file does not seem to be a csv or text file. '
             'You could try validating this file at http://csvlint.io'
         )
 
-    schema = csv_utils.infer_schema_from_csv_file(path)
+    try:
+        schema = csv_utils.infer_schema_from_csv_file(path)
+    except exceptions.CouldNotReadCSVException:
+        schema = {'fields': []}
+
     return schema
 
 
@@ -386,9 +391,10 @@ class DataPackagerPlugin(plugins.SingletonPlugin, toolkit.DefaultDatasetForm):
             schema = common.json.dumps(schema)
             resource['schema'] = schema
             toolkit.get_action('resource_update')(context, resource)
-        except (pandas.parser.CParserError, UnicodeDecodeError):
+        except (pandas.parser.CParserError, UnicodeDecodeError, ValueError,
+                unicodecsv.Error):
             helpers.flash_error(
-                'Failed to calculate summary statistics for uploaded csv file. '
+                'Failed to calculate summary statistics for uploaded file. '
                 'No schema has been saved for this file.'
             )
 

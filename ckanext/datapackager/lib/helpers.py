@@ -1,9 +1,15 @@
 '''Some custom template helper functions.
 
 '''
+import unicodecsv
+import itertools
+
 import ckan.lib.helpers as helpers
 import ckan.model as model
 import ckan.plugins.toolkit as toolkit
+
+import ckanext.datapackager.lib.util as util
+import ckanext.datapackager.exceptions as exceptions
 
 
 def resource_display_name(*args, **kwargs):
@@ -26,7 +32,10 @@ def get_resource_schema(resource_id):
         'user': toolkit.c.user,
     }
     schema_show = toolkit.get_action('resource_schema_show')
-    return schema_show(context, {'resource_id': resource_id})
+    try:
+        return schema_show(context, {'resource_id': resource_id})
+    except toolkit.ValidationError:
+        return {}
 
 
 def resource_schema_field_show(resource_id, index):
@@ -42,7 +51,10 @@ def resource_schema_field_show(resource_id, index):
     }
     schema_field_show = toolkit.get_action('resource_schema_field_show')
     data_dict = {'resource_id': resource_id, 'index': index}
-    return schema_field_show(context, data_dict)
+    try:
+        return schema_field_show(context, data_dict)
+    except toolkit.ValidationError:
+        return {}
 
 def get_resource(resource_id):
 
@@ -55,27 +67,30 @@ def get_resource(resource_id):
     return resource_show(context,{'id': resource_id})
 
 
+def _csv_data_from_file(csv_file, preview_limit=10):
+
+    try:
+        dialect = unicodecsv.Sniffer().sniff(csv_file.read(1024))
+        csv_file.seek(0)
+        csv_reader = unicodecsv.reader(csv_file, dialect)
+        csv_values = itertools.islice(csv_reader, preview_limit)
+        csv_values = zip(*csv_values)
+        return {'success': True, 'data': csv_values}
+    except unicodecsv.Error as exc:
+        return {'success': False, 'error': exc.message}
+
+
 def csv_data(resource):
     '''Return the CSV data for the given resource.
 
     '''
-    import csv
-    import itertools
-    import ckan.lib.uploader as uploader
-
-    preview_limit = 10
-    upload = uploader.ResourceUpload(resource)
-
     try:
-        with open(upload.get_path(resource['id'])) as csv_file:
-            dialect = csv.Sniffer().sniff(csv_file.read(1024))
-            csv_file.seek(0)
-            csv_reader = csv.reader(csv_file, dialect)
-            csv_values = itertools.islice(csv_reader, preview_limit)
-            csv_values = zip(*csv_values)
-            return {'success': True, 'data': csv_values}
-    except (csv.Error, IOError) as exc:
-        return {'success': False, 'error': exc.strerror}
+        path = util.get_path_to_resource_file(resource)
+    except exceptions.ResourceFileDoesNotExistException:
+        return {'success': False,
+                'error': toolkit._("There's no uploaded file for this "
+                                   "resource")}
+    return _csv_data_from_file(open(path))
 
 
 def group_by_name(schema):
@@ -97,3 +112,9 @@ def get_fkey_with_reference(fkey):
         return zip(fkey['fields'], fkey['reference']['fields'])
     except KeyError:
         return []
+        path = util.get_path_to_resource_file(resource)
+    except exceptions.ResourceFileDoesNotExistException:
+        return {'success': False,
+                'error': toolkit._("There's no uploaded file for this "
+                                   "resource")}
+    return _csv_data_from_file(open(path))
