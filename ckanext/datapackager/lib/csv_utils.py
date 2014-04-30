@@ -114,7 +114,8 @@ def _parse(datestring):
 
     '''
     return dateutil.parser.parse(datestring, ignoretz=False,
-                                 tzinfos=tzinfos.tzinfos)
+                                 tzinfos=tzinfos.tzinfos,
+                                 default=datetime.datetime(1, 1, 1, 0, 0))
 
 
 def temporal_extent(path, column_num):
