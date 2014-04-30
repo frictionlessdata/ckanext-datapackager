@@ -90,7 +90,7 @@ def infer_schema_from_csv_file(path):
             try:
                 field['temporal_extent'] = temporal_extent(
                     cStringIO.StringIO(csv_contents), index)
-            except (ValueError, TypeError, IOError, IndexError):
+            except (ValueError, TypeError, IOError, IndexError, AttributeError):
                 pass
 
         fields.append(field)
@@ -113,8 +113,9 @@ def _parse(datestring):
     strings.
 
     '''
-    return dateutil.parser.parse(datestring, ignoretz=False, tzinfos=tzinfos.tzinfos,
-                                 default=datetime.datetime(1, 1, 1, 0, 0, 0))
+    return dateutil.parser.parse(datestring, ignoretz=False,
+                                 tzinfos=tzinfos.tzinfos,
+                                 default=datetime.datetime(1, 1, 1, 0, 0))
 
 
 def temporal_extent(path, column_num):
@@ -151,6 +152,8 @@ def temporal_extent(path, column_num):
     :raises IndexError: if the given column is invalid or does not exist in
                         the CSV file
 
+    :raises AttributeError: if the given column contains columns interpreted
+                            as NaN
     '''
     dataframe = pandas.read_csv(path, parse_dates=[column_num],
                                 date_parser=_parse)

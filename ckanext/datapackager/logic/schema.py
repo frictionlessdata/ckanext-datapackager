@@ -93,7 +93,7 @@ def resource_schema_fkey_show_schema():
 
 def resource_schema_fkey_delete_schema():
     return {
-        'resource_id': [navl_validators.not_missing, custom_validators.resource_id_validator],
+        'resource_id': [navl_validators.not_missing, unicode, custom_validators.resource_id_validator],
         'fkey_uid': [navl_validators.not_missing, custom_validators.foreign_key_identifier_exists],
     }
 
@@ -109,9 +109,9 @@ def resource_schema_fkey_update_schema():
 
 def resource_schema_fkey_create_schema():
     return {
-        'resource_id': [navl_validators.not_missing, custom_validators.resource_id_validator],
+        'resource_id': [navl_validators.not_missing, unicode, custom_validators.resource_id_validator],
         'field': [navl_validators.not_missing, custom_validators.foreign_key_field_validator],
         'fkey_uid': [custom_validators.foreign_key_identifier],
-        'referenced_resource_id': [navl_validators.not_missing, custom_validators.resource_id_validator],
+        'referenced_resource_id': [navl_validators.not_missing, unicode, custom_validators.resource_id_validator],
         'referenced_field': [navl_validators.not_missing, custom_validators.foreign_key_reference_validator],
     }

@@ -168,6 +168,7 @@ def resource_schema_fkey_create(context, data_dict):
         'fkey_uid': data_dict['fkey_uid'],
         'reference': {
             'resource': data_dict['referenced_resource'],
+            '_resource_id': data_dict['referenced_resource_id'],
             'fields': data_dict['referenced_field'],
         }
     })

@@ -79,7 +79,7 @@ def _csv_data_from_file(csv_file, preview_limit=10):
     except unicodecsv.Error as exc:
         return {'success': False, 'error': exc.message}
     except UnicodeDecodeError as exc:
-        return {'success': False, 'error': exc.reason}
+        return {'success': False, 'error': exc}
 
 
 def csv_data(resource):
@@ -93,3 +93,24 @@ def csv_data(resource):
                 'error': toolkit._("There's no uploaded file for this "
                                    "resource")}
     return _csv_data_from_file(open(path))
+
+
+def group_by_name(schema):
+    '''Return a schema dict regrouped by name
+
+    regroups a schema into a dict where the key is the name of the schema
+    field and value is the index of the schema field
+    '''
+    try:
+        by_name = dict((i['name'], i['index']) for i in schema['fields'])
+        return by_name
+    except KeyError:
+        return None
+
+
+def get_fkey_with_reference(fkey):
+    '''iterates over foreign keys and their reference fields together'''
+    try:
+        return zip(fkey['fields'], fkey['reference']['fields'])
+    except KeyError:
+        return []
