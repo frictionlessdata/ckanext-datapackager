@@ -1,0 +1,63 @@
+{% set schema = h.get_resource_schema(res.id) %}
+{% set by_name = h.group_by_name(schema) %}
+
+
+{% if schema.primaryKey %}
+<div class="module-content" id="primary-key">
+  <h2>{{ _('Primary key') }}</h2>
+  <ul class="tag-list">
+  {% if schema.primaryKey is string %}
+    {% set field_index = by_name.get(schema.primaryKey) %}
+    {% set link = h.url_for(controller='package', id=pkg.id, action='resource_read', resource_id=res.id, index=field_index) %}
+  <li><a class="tag" href="{{ link }}">{{ schema.primaryKey }}</a></li>
+  {% else %}
+    {% for field in schema.primaryKey %}
+      {% set field_index = by_name.get(field) %}
+      {% set link = h.url_for(controller='package', id=pkg.id, action='resource_read', resource_id=res.id, index=field_index) %}
+      <li><a class="tag" href="{{ link }}">{{ field }}</a></li>
+    {% endfor %}
+  {% endif %}
+  </ul>
+</div>
+{% endif %}
+
+
+{% if schema.foreignKeys %}
+<div class="module-content" id="foreign-key">
+  <h2>{{ _('Foreign keys') }}</h2>
+  {% for fkey in schema.foreignKeys %}
+    {% set f_schema = h.get_resource_schema(fkey.reference._resource_id) %} 
+    {% set f_by_name = h.group_by_name(f_schema) %}
+    <ul class="tag-list">
+      {% if fkey.fields is string %}
+        <li>
+          {% set field_index = by_name.get(fkey.fields) %}
+          {% set link = h.url_for(controller='package', id=pkg.id, action='resource_read', resource_id=res.id, index=field_index) %}
+          <a class="tag" href="{{ link }}">{{ fkey.fields }}</a>
+          {% set ref_field_index = f_by_name.get(fkey.fields) %}
+          {% set ref_link = h.url_for(controller='package', id=pkg.id, action='resource_read', resource_id=fkey.reference._resource_id, index=field_index) %}
+          <a class="tag" href="{{ ref_link }}">{{ fkey.reference.resource }} - {{ fkey.reference.fields }}</a>
+        </li>
+      {% else %}
+        {% for field in fkey.fields %}
+          <li>
+            {% set field_index = by_name.get(field) %}
+            {% set link = h.url_for(controller='package', id=pkg.id, action='resource_read', resource_id=res.id, index=field_index) %}
+            <a class="tag" href="{{ link }}">{{ field }}</a>
+          </li>
+        {% endfor %}
+        <i class="icon-arrow-right"></i>
+        {% set res_link = h.url_for(controller='package', id=pkg.id, action='resource_read', resource_id=fkey.reference._resource_id) %}
+        <a href="{{ res_link }}">{{ fkey.reference.resource }}</a>:
+        {% for ref_field in fkey.reference.fields %}
+          <li>
+            {% set ref_field_index = f_by_name.get(ref_field) %}
+            {% set ref_link = h.url_for(controller='package', id=pkg.id, action='resource_read', resource_id=fkey.reference._resource_id, index=ref_field_index) %}
+            <a class="tag" href="{{ ref_link }}">{{ ref_field }}</a>
+          </li>
+        {% endfor %}
+      {% endif %}
+    </ul>
+  {% endfor %}
+</div>
+{% endif %}

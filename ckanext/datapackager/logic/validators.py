@@ -2,6 +2,7 @@
 
 '''
 import os.path
+import json
 import uuid
 
 import ckan.plugins.toolkit as toolkit
@@ -285,8 +286,10 @@ def foreign_key_reference_validator(key, data, errors, context):
     referenced_resource_id = data[('referenced_resource_id', )]
 
     try:
-        referenced_schema = toolkit.get_action('resource_schema_show')(
-            context, {'resource_id': referenced_resource_id})
+        referenced_resource = toolkit.get_action('resource_show')(context,
+            {'id': referenced_resource_id})
+        referenced_schema = toolkit.get_action('resource_schema_show')(context,
+            {'resource_id': referenced_resource_id})
     except toolkit.ValidationError:
         raise toolkit.Invalid(toolkit._("referenced resource id invalid"))
 
@@ -325,8 +328,5 @@ def foreign_key_reference_validator(key, data, errors, context):
             raise toolkit.Invalid(toolkit._("No field with that name"))
 
     # add the resource name to the data dict
-    referenced_resource = context['resource']
-    if referenced_resource.name:
-        data[('referenced_resource', )] = referenced_resource.name
-    else:
-        data[('referenced_resource', )] = referenced_resource.id
+    data[('referenced_resource', )] = referenced_resource['name']
+    data[('referenced_resource_id', )] = referenced_resource['id']
