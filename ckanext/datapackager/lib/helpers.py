@@ -114,9 +114,3 @@ def get_fkey_with_reference(fkey):
         return zip(fkey['fields'], fkey['reference']['fields'])
     except KeyError:
         return []
-        path = util.get_path_to_resource_file(resource)
-    except exceptions.ResourceFileDoesNotExistException:
-        return {'success': False,
-                'error': toolkit._("There's no uploaded file for this "
-                                   "resource")}
-    return _csv_data_from_file(open(path))
