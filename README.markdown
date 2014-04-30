@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/ckan/ckanext-datapackager.png?branch=travis)](https://travis-ci.org/ckan/ckanext-datapackager) [![Coverage Status](https://coveralls.io/repos/ckan/ckanext-datapackager/badge.png?branch=master)](https://coveralls.io/r/ckan/ckanext-datapackager?branch=master)
+[![Build Status](https://travis-ci.org/ckan/ckanext-datapackager.png)](https://travis-ci.org/ckan/ckanext-datapackager) [![Coverage Status](https://coveralls.io/repos/ckan/ckanext-datapackager/badge.png?branch=master)](https://coveralls.io/r/ckan/ckanext-datapackager?branch=master)
 
 This is a CKAN extension that contains the CKAN theme and plugins for the
 Open Knowledge Data Packager.
