@@ -4,15 +4,19 @@ These are meant to be reusable library functions not tied to CKAN, so they
 shouldn't know anything about CKAN.
 
 '''
+import unicodecsv
 import datetime
+import cStringIO
 
 import pandas
 import numpy
 import dateutil
 import magic
-import ckanext.datapackager.lib.tzinfos as tzinfos
 
-import ckan.lib.helpers as helpers
+import ckanext.datapackager.lib.helpers as helpers
+
+import ckanext.datapackager.lib.tzinfos as tzinfos
+import ckanext.datapackager.exceptions as exceptions
 
 
 def _dtype_to_json_table_schema_type(dtype):
@@ -25,6 +29,8 @@ def _dtype_to_json_table_schema_type(dtype):
         return 'number'
     elif dtype == numpy.bool:
         return 'boolean'
+    elif dtype.type == numpy.datetime64:
+        return 'datetime'
     else:
         return 'string'
 
@@ -35,8 +41,26 @@ def infer_schema_from_csv_file(path):
     This will guess the column titles (e.g. from the file's header row) and
     guess the types of the columns.
 
+    :raises ckanext.datapackager.exceptions.CouldNotReadCSVException:
+        if pandas fails to read the CSV file
+
     '''
-    dataframe = pandas.read_csv(path, sep=None)
+    csv_contents = open(path).read()
+    try:
+        dataframe = pandas.read_csv(cStringIO.StringIO(csv_contents), sep=None)
+    except Exception:
+        import sys
+        type_, value, traceback = sys.exc_info()
+        raise exceptions.CouldNotReadCSVException, (
+            "Pandas couldn't read the CSV file", type_, value), traceback
+
+    # reparse the dataframe with columns as dates if their type is a json object
+    objects = [col for col, type_ in
+               zip(dataframe.columns, dataframe.dtypes)
+               if type_.name == 'object']
+    dataframe = pandas.read_csv(cStringIO.StringIO(csv_contents), sep=None,
+                                parse_dates=objects)
+
     description = dataframe.describe()  # Summary stats about the columns.
 
     fields = []
@@ -62,11 +86,17 @@ def infer_schema_from_csv_file(path):
                 else:
                     field[key] = False
 
+        if field['type'] == 'datetime':
+            try:
+                field['temporal_extent'] = temporal_extent(
+                    cStringIO.StringIO(csv_contents), index)
+            except (ValueError, TypeError, IOError, IndexError, AttributeError):
+                pass
+
         fields.append(field)
 
     schema = {
         "fields": fields,
-        # "primaryKey': TODO,
     }
 
     return schema
@@ -83,8 +113,7 @@ def _parse(datestring):
     strings.
 
     '''
-    return dateutil.parser.parse(datestring, ignoretz=False, tzinfos=tzinfos.tzinfos,
-                                 default=datetime.datetime(1, 1, 1, 0, 0, 0))
+    return dateutil.parser.parse(datestring, ignoretz=False, tzinfos=tzinfos.tzinfos)
 
 
 def temporal_extent(path, column_num):
@@ -121,9 +150,16 @@ def temporal_extent(path, column_num):
     :raises IndexError: if the given column is invalid or does not exist in
                         the CSV file
 
+    :raises AttributeError: if the given column contains columns interpreted
+                            as NaN
     '''
     dataframe = pandas.read_csv(path, parse_dates=[column_num],
                                 date_parser=_parse)
+
+    return _calculate_temporal_extent(dataframe, column_num)
+
+
+def _calculate_temporal_extent(dataframe, column_num):
     column_title = dataframe.columns[column_num]
     time_series = dataframe[column_title]
     extent = '{min}/{max}'.format(min=time_series.min().isoformat(),
@@ -132,8 +168,14 @@ def temporal_extent(path, column_num):
     return extent
 
 
-def resource_is_csv_file(path):
+def resource_is_csv_or_text_file(path):
     csv_types = ['text/plain','text/csv','text/tsv',
                  'text/comma-seperated-values']
+
     file_type = magic.from_file(path)
-    return file_type in csv_types
+    if file_type in csv_types:
+        return True
+    if 'text' in file_type:
+        return True
+    else:
+        return False

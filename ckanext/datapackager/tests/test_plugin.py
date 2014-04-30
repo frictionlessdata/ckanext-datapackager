@@ -132,15 +132,17 @@ class TestPlugin(custom_helpers.FunctionalTestBaseClass):
         assert response.status_int == 200
 
         # Get the CSV file to upload.
-        path = '../test-data/spacer.gif'
+        path = './test-data/spacer.gif'
         path = os.path.join(os.path.split(__file__)[0], path)
+        
         abspath = os.path.abspath(path)
 
         # Fill out the form and submit it.
         form = response.forms[0]
-        form['upload'] = ('upload', abspath)
+        form['upload'] = ('upload', open(abspath).read())
         form['name'] = 'My test CSV file'
         response = form.submit('save', extra_environ=extra_environ)
+
 
         # Follow the redirect to the third form.
         assert response.status_int == 302
@@ -152,5 +154,5 @@ class TestPlugin(custom_helpers.FunctionalTestBaseClass):
         assert '/package/my-test-package' in response.location
         response = response.follow(extra_environ=extra_environ)
 
-        nose.tools.assert_in('does not seem to be a csv', response.body)
+        nose.tools.assert_in('does not seem to be a csv or text', response.body)
         nose.tools.assert_in('Failed to calculate', response.body)
