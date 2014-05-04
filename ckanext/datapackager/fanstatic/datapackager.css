@@ -142,3 +142,32 @@ ul.dropdown-menu li {
   display: inline-block;
   min-width: 160px;
 }
+.ckanext-datapreview legend {
+  margin-bottom: 0;
+}
+.ckanext-datapreview .editor-row {
+  padding: 5px 0 5px 25px;
+  width: 100%;
+}
+.ckanext-datapreview label, .ckanext-datapreview input {
+  margin-top: 5px;
+  margin-bottom: 5px;
+  padding-top: 5px;
+}
+.ckanext-datapreview label {
+  float: left;
+  width: 30%;
+  padding-left: 25px;
+  padding-right: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ckanext-datapreview input {
+  width: 50%;
+}
+.ckanext-datapreview hr {
+  margin: 0;
+  border: none;
+  border-bottom: 1px solid #ddd;
+  clear: both;
+}

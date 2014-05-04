@@ -167,9 +167,6 @@ class DataPackagerPlugin(plugins.SingletonPlugin, toolkit.DefaultDatasetForm):
                     action='resource_read')
             m.connect('/package/{id}/file_delete/{resource_id}',
                     action='resource_delete')
-            m.connect('resource_edit',
-                      '/package/{id}/file_edit/{resource_id}',
-                      action='resource_edit', ckan_icon='edit')
             m.connect('/package/{id}/file/{resource_id}/download',
                     action='resource_download')
             m.connect(
@@ -355,6 +352,21 @@ class DataPackagerPlugin(plugins.SingletonPlugin, toolkit.DefaultDatasetForm):
         map_.connect(
             '/package/{id}/file/{resource_id}/schema/{index}',
             controller='package', action='resource_read',
+        )
+
+        # We redirect the resource_edit URL. First, we've renamed it to
+        # file_edit. Second, we've redirected it to our own controller so we
+        # can add custom functionality to the resource form.
+        map_.connect(
+            '/package/{id}/file_edit/{resource_id}',
+            controller='ckanext.datapackager.controllers.package:DataPackagerPackageController',
+            action='resource_edit',
+        )
+
+        map_.connect(
+            '/package/{id}/file_edit/{resource_id}/schema/{index}',
+            controller='ckanext.datapackager.controllers.package:DataPackagerPackageController',
+            action='resource_edit',
         )
 
         # Add in just the CKAN default routes that we're using.

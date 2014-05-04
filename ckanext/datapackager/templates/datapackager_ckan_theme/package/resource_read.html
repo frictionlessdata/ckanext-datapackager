@@ -66,7 +66,7 @@
 
   {# Edit button. #}
   {% if h.check_access('package_update', {'id':pkg.id }) %}
-    <li>{% link_for _('Edit'), controller='package', action='resource_edit', id=pkg.name, resource_id=res.id, class_='btn', icon='edit' %}</li>
+    <li>{% link_for _('Edit'), controller='ckanext.datapackager.controllers.package:DataPackagerPackageController', action='resource_edit', id=pkg.name, resource_id=res.id, class_='btn', icon='edit' %}</li>
   {% endif %}
 
   {# Edit schema button. #}

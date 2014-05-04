@@ -565,7 +565,7 @@ class TestMetadataViewer(custom_helpers.FunctionalTestBaseClass):
         headings = metadata_viewer('h2')
         assert len(headings) == 1
         heading = headings[0]
-        assert heading.text == 'Metadata for {field}'.format(
+        assert heading.text.strip() == 'Metadata for {field}'.format(
             field=field['name'])
 
         # Test that the definition list has the right contents.
