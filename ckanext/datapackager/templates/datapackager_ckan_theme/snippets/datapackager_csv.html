@@ -30,7 +30,13 @@ for_edit - should be true if this snippet is being used on the resource edit
                       Metadata for {{ data[row_number][0] }}
                     </h2>
                   </legend>
-                  {% for key in metadata %}
+
+                  {# Index isn't meant to be editable by the user (it's an
+                     internal implementation detail) so it's a hidden field. #}
+                  <input type="hidden" name="schema-{{ row_number }}-index"
+                         value="{{ metadata['index'] }}" />
+
+                  {% for key in metadata if key != 'index' %}
                     <label for="schema-{{ row_number }}-{{ key }}">{{ key }}</label>
                     <input id="schema-{{ row_number }}-{{ key }}"
                            name="schema-{{ row_number }}-{{ key }}"
