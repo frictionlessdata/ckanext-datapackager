@@ -37,11 +37,32 @@ for_edit - should be true if this snippet is being used on the resource edit
                          value="{{ metadata['index'] }}" />
 
                   {% for key in metadata if key != 'index' %}
+
                     <label for="schema-{{ row_number }}-{{ key }}">{{ key }}</label>
-                    <input id="schema-{{ row_number }}-{{ key }}"
-                           name="schema-{{ row_number }}-{{ key }}"
-                           type=text
-                           value="{{ metadata[key] }}"/>
+
+                    {% if key == 'type' %}
+                      <select id="schema-{{ row_number }}-{{ key }}"
+                              name="schema-{{ row_number }}-{{ key }}">
+                        <option value="string">string</option>
+                        <option value="number">number</option>
+                        <option value="integer">integer</option>
+                        <option value="date">date</option>
+                        <option value="time">time</option>
+                        <option value="datetime">datetime</option>
+                        <option value="boolean">boolean</option>
+                        <option value="binary">binary</option>
+                        <option value="object">object</option>
+                        <option value="geopoint">geopoint</option>
+                        <option value="geojson">geojson</option>
+                        <option value="array">array</option>
+                        <option value="any">any</option>
+                      </select>
+                    {% else %}
+                      <input id="schema-{{ row_number }}-{{ key }}"
+                             name="schema-{{ row_number }}-{{ key }}"
+                             type=text
+                             value="{{ metadata[key] }}"/>
+                    {% endif %}
                     <hr/>
                   {% endfor %}
                 </fieldset>

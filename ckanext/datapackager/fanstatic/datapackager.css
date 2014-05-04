@@ -149,7 +149,9 @@ ul.dropdown-menu li {
   padding: 5px 0 5px 25px;
   width: 100%;
 }
-.ckanext-datapreview label, .ckanext-datapreview input {
+.ckanext-datapreview label,
+.ckanext-datapreview input,
+.ckanext-datapreview select {
   margin-top: 5px;
   margin-bottom: 5px;
   padding-top: 5px;
@@ -162,7 +164,7 @@ ul.dropdown-menu li {
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.ckanext-datapreview input {
+.ckanext-datapreview input, .ckanext-datapreview select {
   width: 50%;
 }
 .ckanext-datapreview hr {
