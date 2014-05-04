@@ -879,3 +879,109 @@ class TestMetadataViewer(custom_helpers.FunctionalTestBaseClass):
                 dataset['id'], resource0['id'])
         )
         nose.tools.assert_equals(fkeys[3].a.text, 'yearID')
+
+
+class TestMetadataEditor(custom_helpers.FunctionalTestBaseClass):
+    '''Tests for the custom resource edit form.'''
+
+
+    # TODO: Insert tests that the metadata editor shows the right fields with
+    # the right values in them, and with the right column shown, both when
+    # looking at the default column and at another column. Test that the
+    # column links are right.
+
+    def test_rename_resource(self):
+        '''Test that renaming a resource works and doesn't break anything.
+
+        (For example, renaming a resource should not delete its schema!)
+
+        '''
+        dataset = factories.Dataset()
+        user = factories.User()
+        api = ckanapi.TestAppCKAN(self.app, apikey=user['apikey'])
+        csv_file = _get_csv_file(
+            '../test-data/lahmans-baseball-database/PitchingPost.csv')
+        resource = api.action.resource_create(package_id=dataset['id'],
+                                              upload=csv_file)
+
+        # Get the resource edit page.
+        extra_environ = {'REMOTE_USER': str(user['name'])}
+        response = self.app.get(toolkit.url_for(controller='ckanext.datapackager.controllers.package:DataPackagerPackageController',
+                                                action='resource_edit',
+                                                id=dataset['id'],
+                                                resource_id=resource['id']),
+                                extra_environ=extra_environ)
+        form = response.forms[0]
+        form['name'] = 'changed'
+        form.submit('save', extra_environ=extra_environ)
+
+        resource = api.action.resource_show(id=resource['id'])
+        assert resource['name'] == 'changed'
+
+    def test_edit_one_field(self):
+        '''Load the metadata editor, edit one schema field, save it.'''
+
+        dataset = factories.Dataset()
+        user = factories.User()
+        api = ckanapi.TestAppCKAN(self.app, apikey=user['apikey'])
+        csv_file = _get_csv_file(
+            '../test-data/lahmans-baseball-database/PitchingPost.csv')
+        resource = api.action.resource_create(package_id=dataset['id'],
+                                              upload=csv_file)
+
+        # Get the resource edit page.
+        extra_environ = {'REMOTE_USER': str(user['name'])}
+        response = self.app.get(toolkit.url_for(controller='ckanext.datapackager.controllers.package:DataPackagerPackageController',
+                                                action='resource_edit',
+                                                id=dataset['id'],
+                                                resource_id=resource['id']),
+                                extra_environ=extra_environ)
+        form = response.forms[0]
+        # Change the name of the first column.
+        form['schema-0-name'] = 'changed'
+        form.submit('save', extra_environ=extra_environ)
+
+        field = api.action.resource_schema_field_show(
+            resource_id=resource['id'], index=0)
+        assert field['name'] == 'changed'
+
+    def test_edit_another_column(self):
+        '''Load the metadata editor, click on one of the columns, edit some of
+        its fields, save it.'''
+
+        dataset = factories.Dataset()
+        user = factories.User()
+        api = ckanapi.TestAppCKAN(self.app, apikey=user['apikey'])
+        csv_file = _get_csv_file(
+            '../test-data/lahmans-baseball-database/PitchingPost.csv')
+        resource = api.action.resource_create(package_id=dataset['id'],
+                                              upload=csv_file)
+
+        # Get the resource edit page.
+        extra_environ = {'REMOTE_USER': str(user['name'])}
+        response = self.app.get(toolkit.url_for(controller='ckanext.datapackager.controllers.package:DataPackagerPackageController',
+                                                action='resource_edit',
+                                                id=dataset['id'],
+                                                resource_id=resource['id']),
+                                extra_environ=extra_environ)
+
+        # Find and click the link for the "IPouts" column.
+        soup = response.html
+        links = soup('a', text='IPouts')
+        assert len(links) == 1
+        link = links[0]
+        response = self.app.get(link['href'], extra_environ=extra_environ)
+
+        # Change a couple of the IPouts column's fieldsm and save.
+        form = response.forms[0]
+        form['schema-12-min'] = '50'
+        form['schema-12-mean'] = '50'
+        form.submit('save', extra_environ=extra_environ)
+
+        field = api.action.resource_schema_field_show(
+            resource_id=resource['id'], index=12)
+        assert field['name'] == 'IPouts'
+        # FIXME: The values have been turned into strings here, they should
+        # sill be ints, this is a bug.
+        assert field['min'] == '50'
+        assert field['mean'] == '50'
