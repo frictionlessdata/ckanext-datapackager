@@ -56,16 +56,6 @@ def resource_schema_field_show(resource_id, index):
     except toolkit.ValidationError:
         return {}
 
-def get_resource(resource_id):
-
-    context = {
-        'model': model,
-        'session': model.Session,
-        'user': toolkit.c.user,
-    }
-    resource_show = toolkit.get_action('resource_show')
-    return resource_show(context,{'id': resource_id})
-
 
 def _csv_data_from_file(csv_file, preview_limit=10):
 

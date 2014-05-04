@@ -69,11 +69,6 @@
     <li>{% link_for _('Edit'), controller='ckanext.datapackager.controllers.package:DataPackagerPackageController', action='resource_edit', id=pkg.name, resource_id=res.id, class_='btn', icon='edit' %}</li>
   {% endif %}
 
-  {# Edit schema button. #}
-  {% if  res.schema %}
-    <li>{% link_for _('Edit Schema'), controller='ckanext.datapackager.controllers.package:DataPackagerPackageController', action='edit_metadata_field', package_id=pkg.name, resource_id=res.id, index=0, class_='btn', icon='eye-open' %}</li>
-  {% endif %}
-
   {# The Download button. #}
   {% if res.url %}
     <li>
