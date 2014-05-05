@@ -116,9 +116,16 @@
 .data.panel.active tr.active th {
   background-color: #00617f;
 }
-.data.panel.active tr.active th a {
+.data.panel.active tr.active th a,
+.data.panel.active tr.active th button {
   color: #fff;
   text-decoration: none;
+}
+.data.panel tr th button {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  font-weight: bold;
 }
 .js .tab-content {
   display: block;
