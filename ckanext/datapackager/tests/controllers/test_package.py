@@ -248,9 +248,9 @@ class TestMetadataViewer(custom_helpers.FunctionalTestBaseClass):
         # Test that the table has the right headers texts.
         headers = table.find_all('th')
         assert len(headers) == 10
-        assert [h.text for h in headers] == ['playerID', 'yearID', 'teamID',
-                                             'lgID', 'inseason', 'half', 'G',
-                                             'W', 'L', 'rank']
+        assert [h.text.strip() for h in headers] == [
+            'playerID', 'yearID', 'teamID', 'lgID', 'inseason', 'half', 'G',
+            'W', 'L', 'rank']
 
         # Test that the headers are linked to the right pages.
         for number, header in enumerate(headers):
@@ -737,14 +737,10 @@ class TestMetadataEditor(custom_helpers.FunctionalTestBaseClass):
                                                 resource_id=resource['id']),
                                 extra_environ=extra_environ)
 
-        # Find and click the link for the "IPouts" column.
-        soup = response.html
-        links = soup('a', text='IPouts')
-        assert len(links) == 1
-        link = links[0]
-        response = self.app.get(link['href'], extra_environ=extra_environ)
+        # Find and click the button for the "IPouts" column.
+        response.forms[0].submit('go-to-column-12')
 
-        # Change a couple of the IPouts column's fieldsm and save.
+        # Change a couple of the IPouts column's fields and save.
         form = response.forms[0]
         form['schema-12-min'] = '50'
         form['schema-12-mean'] = '50'

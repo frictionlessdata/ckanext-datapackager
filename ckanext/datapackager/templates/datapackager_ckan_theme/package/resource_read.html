@@ -57,8 +57,8 @@
     {# Override CKAN's default data preview, replace it with our own snippet.
     #}
     {% block data_preview %}
-      {% set selected_row = request.urlvars.get('index', 0)|int %}
-      {% snippet 'snippets/datapackager_csv.html', selected_row=selected_row, resource=c.resource, package_id=c.id %}
+      {% set selected_column = request.urlvars.get('index', 0)|int %}
+      {% snippet 'snippets/datapackager_csv.html', selected_column=selected_column, resource=c.resource, package_id=c.id %}
     {% endblock %}
 {% endblock %}
 

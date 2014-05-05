@@ -24,9 +24,13 @@
 
 
     {% block basic_fields_url %}
-      {% set selected_row = request.urlvars.get('index', 0)|int %}
       {% if resource %}
-        {% snippet 'snippets/datapackager_csv.html', selected_row=selected_row, resource=resource, package_id=package_id, for_edit=true %}
+        {% snippet 'snippets/datapackager_csv.html',
+                   schema_fields=schema_fields,
+                   selected_column=selected_column,
+                   resource=resource,
+                   package_id=package_id,
+                   for_edit=true %}
       {% endif %}
 
       {% set is_upload = (data.url_type == 'upload') %}

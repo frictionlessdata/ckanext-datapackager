@@ -29,5 +29,15 @@
 
 {# Pass some extra variables to the resource_edit_form.html snippet. #}
 {% block form %}
-  {% snippet 'package/snippets/resource_edit_form.html', resource=c.resource, package_id=c.id, data=data, errors=errors, error_summary=error_summary, pkg_name=pkg.name, form_action=c.form_action, allow_upload=g.ofs_impl and logged_in %}
+  {% snippet 'package/snippets/resource_edit_form.html',
+             schema_fields=schema_fields,
+             selected_column=selected_column,
+             resource=c.resource,
+             package_id=c.id,
+             data=data,
+             errors=errors,
+             error_summary=error_summary,
+             pkg_name=pkg.name,
+             form_action=c.form_action,
+             allow_upload=g.ofs_impl and logged_in %}
 {% endblock %}
