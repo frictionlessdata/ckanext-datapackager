@@ -192,3 +192,6 @@ ul.dropdown-menu li {
   border-bottom: 1px solid #ddd;
   clear: both;
 }
+.warning-block {
+  color: #B55457 !important;
+}
