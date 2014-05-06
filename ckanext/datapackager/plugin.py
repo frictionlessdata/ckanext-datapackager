@@ -167,9 +167,6 @@ class DataPackagerPlugin(plugins.SingletonPlugin, toolkit.DefaultDatasetForm):
                     action='resource_read')
             m.connect('/package/{id}/file_delete/{resource_id}',
                     action='resource_delete')
-            m.connect('resource_edit',
-                      '/package/{id}/file_edit/{resource_id}',
-                      action='resource_edit', ckan_icon='edit')
             m.connect('/package/{id}/file/{resource_id}/download',
                     action='resource_download')
             m.connect(
@@ -357,6 +354,21 @@ class DataPackagerPlugin(plugins.SingletonPlugin, toolkit.DefaultDatasetForm):
             controller='package', action='resource_read',
         )
 
+        # We redirect the resource_edit URL. First, we've renamed it to
+        # file_edit. Second, we've redirected it to our own controller so we
+        # can add custom functionality to the resource form.
+        map_.connect(
+            '/package/{id}/file_edit/{resource_id}',
+            controller='ckanext.datapackager.controllers.package:DataPackagerPackageController',
+            action='resource_edit',
+        )
+
+        map_.connect(
+            '/package/{id}/file_edit/{resource_id}/schema/{index}',
+            controller='ckanext.datapackager.controllers.package:DataPackagerPackageController',
+            action='resource_edit',
+        )
+
         # Add in just the CKAN default routes that we're using.
         map_ = self._default_routes(map_)
 
@@ -379,7 +391,6 @@ class DataPackagerPlugin(plugins.SingletonPlugin, toolkit.DefaultDatasetForm):
             'resource_display_name': custom_helpers.resource_display_name,
             'get_resource_schema': custom_helpers.get_resource_schema,
             'resource_schema_field_show': custom_helpers.resource_schema_field_show,
-            'get_resource_by_id': custom_helpers.get_resource,
             'datapackager_csv_data': custom_helpers.csv_data,
             'group_by_name': custom_helpers.group_by_name,
             'get_fkey_with_reference': custom_helpers.get_fkey_with_reference,

@@ -1,15 +1,4 @@
 {% ckan_extends %}
 
-{% block basic_fields_url %}
-   <span class="warning-block info-block info-inline">
-   <i class="icon-warning-sign"></i>
-   Reuploading a file will overwrite the current file's schema!
-   </span>
-  {% set is_upload = (data.url_type == 'upload') %}
-  {{ form.image_upload(data, errors, field_url='url', field_upload='upload', field_clear='clear_upload',
-     is_upload_enabled=h.uploads_enabled(), is_url=data.url and not is_upload, is_upload=is_upload,
-     upload_label=_('File'), url_label=_('URL')) }}
-{% endblock %}
-
 {# Change 'Update Resource' to 'Save' #}
 {% block save_button_text %}{{ _('Save') }}{% endblock %}

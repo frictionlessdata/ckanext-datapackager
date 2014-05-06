@@ -2,36 +2,134 @@
 
 Parameters:
 
-selected_row - index of the row to be rendered as selected
+selected_column - index of the row to be rendered as selected
 resource - the resource that the CSV file belongs to
 package_id - the ID of the package that the CSV file belongs to
+for_edit - should be true if this snippet is being used on the resource edit
+    form, false otherwise (optional, default: false)
+schema_fields - the resource's current schema fields, to be pre-filled in the
+    form fields
+schema_errors -
 
 #}
 <div class="module-content ckanext-datapreview">
   {% set csv_data = h.datapackager_csv_data(resource) %}
   {% if csv_data.success == true %}
     {% set data = csv_data.data %}
-    {% set metadata = h.resource_schema_field_show(resource.id, selected_row) %}
     <div class="data panel active">
       <div class="meta tab-content">
           <div class="tab-pane active">
-            <h2 class="module-heading"><i class="icon-copy"></i>Metadata for {{ data[selected_row][0] }}</h2>
+
+            {% if for_edit %}
+              {# This is the metadata editor, shown on the resource edit
+                 form.#}
+              {% for row in data %}
+                {% set row_number = loop.index0 %}
+                {% set schema_field = schema_fields[row_number] %}
+                {% set field_errors = schema_errors[row_number] %}
+                <fieldset name="Metadata for {{ data[row_number][0] }}" {% if selected_column != loop.index0 %}style="display:none;"{% endif %}>
+                  <legend name="Metadata for {{ data[row_number][0] }}">
+                    <h2 class="module-heading">
+                      <i class="icon-copy"></i>
+                      Metadata for {{ data[row_number][0] }}
+                    </h2>
+                  </legend>
+
+                  {# Index isn't meant to be editable by the user (it's an
+                     internal implementation detail) so it's a hidden field. #}
+                  <input type="hidden" name="schema-{{ row_number }}-index"
+                         value="{{ schema_field['index'] }}" />
+
+                  {% for key in schema_field if key != 'index' %}
+
+                    <label for="schema-{{ row_number }}-{{ key }}">{{ key }}</label>
+
+                    <div class="controls">
+                      {% if key == 'type' %}
+                        <select id="schema-{{ row_number }}-{{ key }}"
+                          name="schema-{{ row_number }}-{{ key }}">
+                          <option value="string">string</option>
+                          <option value="number">number</option>
+                          <option value="integer">integer</option>
+                          <option value="date">date</option>
+                          <option value="time">time</option>
+                          <option value="datetime">datetime</option>
+                          <option value="boolean">boolean</option>
+                          <option value="binary">binary</option>
+                          <option value="object">object</option>
+                          <option value="geopoint">geopoint</option>
+                          <option value="geojson">geojson</option>
+                          <option value="array">array</option>
+                          <option value="any">any</option>
+                        </select>
+                      {% else %}
+                        <input id="schema-{{ row_number }}-{{ key }}"
+                              name="schema-{{ row_number }}-{{ key }}"
+                              type=text
+                              value="{{ schema_field[key] }}"/>
+                      {% endif %}
+                      {% if field_errors[key] %}
+                        <span class="error-block">
+                          {{ field_errors[key] }}
+                        </span>
+                      {% endif %}
+                    </div>
+                    <hr/>
+                  {% endfor %}
+                </fieldset>
+              {% endfor %}
+
+            {% else %}
+
+              {# This is the metadata viewer, shown on the resource read page.
+              #}
+              {% set metadata = h.resource_schema_field_show(resource.id, selected_column) %}
+              <h2 class="module-heading">
+                <i class="icon-copy"></i>
+                Metadata for {{ data[selected_column][0] }}
+              </h2>
               <dl class="dl-horizontal">
                   {% for key in metadata %}
                       <dt>{{ key }}</dt>
-                      <dd> {{ metadata[key] }}</dd>
+                      <dd>{{ metadata[key] }}</dd>
                   {% endfor %}
               </dl>
+
+            {% endif %}
           </div>
       </div>
       <table class="table">
           <tbody id="dataTable">
               {% for row in data %}
-              <tr {% if selected_row == loop.index0 %}class="active"{% endif %}>
-                      {% set link = h.url_for(controller='package', id=package_id, action='resource_read', resource_id=resource.id, index=loop.index0) %}
+              <tr {% if selected_column == loop.index0 %}class="active"{% endif %}>
+                      {% if for_edit %}
+                        {% set controller = 'ckanext.datapackager.controllers.package:DataPackagerPackageController' %}
+                        {% set action = 'resource_edit' %}
+                      {% else %}
+                        {% set controller = 'package' %}
+                        {% set action = 'resource_read' %}
+                      {% endif %}
+                      {% set index = loop.index0 %}
+                      {% set link = h.url_for(controller=controller,
+                                              id=package_id,
+                                              action=action,
+                                              resource_id=resource.id,
+                                              index=index) %}
+
                       {% for col in row %}
                           {% if loop.first %}
-                              <th><a href="{{ link }}">{{ col }}</a></th>
+                              <th>
+                                {% if for_edit %}
+                                  <button type="submit" href="{{ link }}"
+                                          class="btn-link"
+                                          name="go-to-column-{{ index }}"
+                                          value="{{ index }}">
+                                    {{ col }}
+                                  </button>
+                                {% else %}
+                                  <a href="{{ link }}">{{ col }}</a>
+                                {% endif %}
+                              </th>
                           {% else %}
                               <td>{{ col }}</td>
                           {% endif %}

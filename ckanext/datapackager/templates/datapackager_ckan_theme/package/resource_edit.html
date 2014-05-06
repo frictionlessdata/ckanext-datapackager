@@ -1,0 +1,44 @@
+{% ckan_extends %}
+
+{# We override block primary from page.html because we don't want the
+   <div class="primary"> on this page (it causes the "File metadata" section
+   to get pushed along to the right, which looks wrong because we don't have
+   the sidebar on the left on this page. #}
+{% block primary %}
+ {# We override block primary_content from page.html because we don't want the
+    <article class="module"> or <div class="module-content"> tags, they mess
+    up our layout by adding-in too much padding. #}
+  {% block primary_content %}
+    {% block page_header %}
+      {{ super() }}
+    {% endblock %}
+    {% if self.page_primary_action() | trim %}
+      <div class="page_primary_action">
+        {% block page_primary_action %}{% endblock %}
+      </div>
+    {% endif %}
+    {% block primary_content_inner %}
+      {{ super() }}
+    {% endblock %}
+  {% endblock %}
+{% endblock %}
+
+{# Get rid of the page sidebar. #}
+{% block secondary %}
+{% endblock %}
+
+{# Pass some extra variables to the resource_edit_form.html snippet. #}
+{% block form %}
+  {% snippet 'package/snippets/resource_edit_form.html',
+             schema_fields=schema_fields,
+             schema_errors=schema_errors,
+             selected_column=selected_column,
+             resource=c.resource,
+             package_id=c.id,
+             data=data,
+             errors=errors,
+             error_summary=error_summary,
+             pkg_name=pkg.name,
+             form_action=c.form_action,
+             allow_upload=g.ofs_impl and logged_in %}
+{% endblock %}
