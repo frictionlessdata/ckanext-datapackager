@@ -159,8 +159,6 @@ ul.dropdown-menu li {
 .ckanext-datapreview label,
 .ckanext-datapreview input,
 .ckanext-datapreview select {
-  margin-top: 5px;
-  margin-bottom: 5px;
   padding-top: 5px;
 }
 .ckanext-datapreview label {
@@ -171,8 +169,22 @@ ul.dropdown-menu li {
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.ckanext-datapreview input, .ckanext-datapreview select {
-  width: 50%;
+.ckanext-datapreview .controls {
+  float: left;
+  margin-left: 0px;
+  margin-top: 5px;
+  margin-bottom: 5px;
+}
+.ckanext-datapreview input,
+.ckanext-datapreview select,
+.ckanext-datapreview .error-block {
+  width: 130px;
+}
+.ckanext-datapreview select {
+  width: 124px;
+}
+.ckanext-datapreview .error-block {
+  padding-right: 6px;
 }
 .ckanext-datapreview hr {
   margin: 0;

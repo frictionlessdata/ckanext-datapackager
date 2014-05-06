@@ -31,6 +31,7 @@
 {% block form %}
   {% snippet 'package/snippets/resource_edit_form.html',
              schema_fields=schema_fields,
+             schema_errors=schema_errors,
              selected_column=selected_column,
              resource=c.resource,
              package_id=c.id,

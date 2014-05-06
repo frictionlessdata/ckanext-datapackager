@@ -6,9 +6,10 @@ selected_column - index of the row to be rendered as selected
 resource - the resource that the CSV file belongs to
 package_id - the ID of the package that the CSV file belongs to
 for_edit - should be true if this snippet is being used on the resource edit
-           form, false otherwise (optional, default: false)
+    form, false otherwise (optional, default: false)
 schema_fields - the resource's current schema fields, to be pre-filled in the
-           form fields
+    form fields
+schema_errors -
 
 #}
 <div class="module-content ckanext-datapreview">
@@ -25,6 +26,7 @@ schema_fields - the resource's current schema fields, to be pre-filled in the
               {% for row in data %}
                 {% set row_number = loop.index0 %}
                 {% set schema_field = schema_fields[row_number] %}
+                {% set field_errors = schema_errors[row_number] %}
                 <fieldset name="Metadata for {{ data[row_number][0] }}" {% if selected_column != loop.index0 %}style="display:none;"{% endif %}>
                   <legend name="Metadata for {{ data[row_number][0] }}">
                     <h2 class="module-heading">
@@ -42,29 +44,36 @@ schema_fields - the resource's current schema fields, to be pre-filled in the
 
                     <label for="schema-{{ row_number }}-{{ key }}">{{ key }}</label>
 
-                    {% if key == 'type' %}
-                      <select id="schema-{{ row_number }}-{{ key }}"
-                        name="schema-{{ row_number }}-{{ key }}">
-                        <option value="string">string</option>
-                        <option value="number">number</option>
-                        <option value="integer">integer</option>
-                        <option value="date">date</option>
-                        <option value="time">time</option>
-                        <option value="datetime">datetime</option>
-                        <option value="boolean">boolean</option>
-                        <option value="binary">binary</option>
-                        <option value="object">object</option>
-                        <option value="geopoint">geopoint</option>
-                        <option value="geojson">geojson</option>
-                        <option value="array">array</option>
-                        <option value="any">any</option>
-                      </select>
-                    {% else %}
-                      <input id="schema-{{ row_number }}-{{ key }}"
-                             name="schema-{{ row_number }}-{{ key }}"
-                             type=text
-                             value="{{ schema_field[key] }}"/>
-                    {% endif %}
+                    <div class="controls">
+                      {% if key == 'type' %}
+                        <select id="schema-{{ row_number }}-{{ key }}"
+                          name="schema-{{ row_number }}-{{ key }}">
+                          <option value="string">string</option>
+                          <option value="number">number</option>
+                          <option value="integer">integer</option>
+                          <option value="date">date</option>
+                          <option value="time">time</option>
+                          <option value="datetime">datetime</option>
+                          <option value="boolean">boolean</option>
+                          <option value="binary">binary</option>
+                          <option value="object">object</option>
+                          <option value="geopoint">geopoint</option>
+                          <option value="geojson">geojson</option>
+                          <option value="array">array</option>
+                          <option value="any">any</option>
+                        </select>
+                      {% else %}
+                        <input id="schema-{{ row_number }}-{{ key }}"
+                              name="schema-{{ row_number }}-{{ key }}"
+                              type=text
+                              value="{{ schema_field[key] }}"/>
+                      {% endif %}
+                      {% if field_errors[key] %}
+                        <span class="error-block">
+                          {{ field_errors[key] }}
+                        </span>
+                      {% endif %}
+                    </div>
                     <hr/>
                   {% endfor %}
                 </fieldset>

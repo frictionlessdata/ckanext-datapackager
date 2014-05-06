@@ -10,7 +10,7 @@ import ckanext.datapackager.lib.csv_utils as csv_utils
 import ckanext.datapackager.lib.util as util
 
 
-def resource_schema_field_update(context, data_dict):
+def resource_schema_field_update(context, data_dict, validate_only=False):
     '''Update a new field in a resource's schema.
 
     The schema is stored as a JSON string in the resource's ``schema`` field.
@@ -62,6 +62,9 @@ def resource_schema_field_update(context, data_dict):
         raise toolkit.ValidationError(e)
     if errors:
         raise toolkit.ValidationError(errors)
+
+    if validate_only:
+        return data_dict, errors
 
     resource_id = data_dict.pop('resource_id')
     index = data_dict['index']

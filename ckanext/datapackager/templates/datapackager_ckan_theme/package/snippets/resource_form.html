@@ -27,6 +27,7 @@
       {% if resource %}
         {% snippet 'snippets/datapackager_csv.html',
                   schema_fields=schema_fields,
+                  schema_errors=schema_errors,
                   selected_column=selected_column,
                   resource=resource,
                   package_id=package_id,

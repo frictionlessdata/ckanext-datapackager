@@ -11,12 +11,22 @@ import ckan.lib.navl.dictization_functions as dict_fns
 import ckan.lib.base as base
 
 
+def _get_data():
+    '''Return the data posted by the resource edit form.'''
+
+    return logic.clean_dict(
+        dict_fns.unflatten(
+            logic.tuplize_dict(
+                logic.parse_params(request.POST))))
+
+
 def _extract_fields_from_data(data):
-    '''Return the submitted form data in JSON Table Schema fields format.
+    '''Transform data submitted by the resource edit form into
+    JSON Table Schema fields format.
 
     Takes data submitted by ckanext-datapackager's custom resource edit form
     and returns the same data as a list of dictionaries suitable for passing
-    to resource_schema_field_create/delete.
+    to resource_schema_field_create() or _update().
 
     Expected input format:
 
@@ -73,6 +83,200 @@ def _extract_fields_from_data(data):
     new_fields.sort(key=lambda x: x['index'])
 
     return new_fields
+
+
+def _group_submitted_fields(new_fields, resource_id):
+    '''Return the resource schema fields that need to be created, updated or
+    deleted.
+
+    Compares the given fields to those in the db and returns three lists:
+    the fields that need to be created, those that need to be updated and those
+    that need to be deleted from the db.
+
+    Fields that are the same as those already in the db, are not in any of the
+    three lists returned.
+
+    :param new_fields: the new schema fields submitted by the resource edit
+        form
+    :type new_fields: list of dictionaries
+
+    :returns: a tuple of three lists: the fields that need to be created,
+        those that need to be updated, and those that need to be deleted from
+        the db
+    :rtype: tuple
+
+    '''
+    current_fields = toolkit.get_action('resource_schema_show')(
+        data_dict={'resource_id': resource_id}).get('fields', [])
+
+    def get_field(index):
+        '''
+        Return the field with the given index from current_fields.
+        '''
+        matching_fields = [field for field in current_fields
+                           if field.get('index') == index]
+        assert len(matching_fields) == 1, len(matching_fields)
+        return matching_fields[0]
+
+    # Compare new_fields and current_fields to figure out which resource
+    # schema fields need to be created, updated and deleted.
+    fields_to_ignore = []
+    fields_to_create = []
+    fields_to_update = []
+    fields_to_delete = []
+    for field in new_fields:
+        current_field = get_field(field['index'])
+        if current_field != field:
+            fields_to_update.append(field)
+        else:
+            fields_to_ignore.append(field)
+
+        # TODO: Deal with fields to create. Catch exception above.
+
+    # Find the fields that need to be deleted.
+    for current_field in current_fields:
+        if not [new_field for new_field in new_fields
+                if new_field['index'] == current_field['index']]:
+            fields_to_delete.append(current_field)
+
+    # A sanity check.
+    assert (len(fields_to_create) + len(fields_to_update) +
+            len(fields_to_delete) + len(fields_to_ignore)
+            == len(current_fields))
+
+    return fields_to_create, fields_to_update, fields_to_delete
+
+
+def _call_actions(schema_fields, resource_id, validate_only=False):
+    '''Call the resource_schema_field_create(), _update() and _delete()
+    action functions to create, update and delete the given resource
+    schema fields.
+
+    Compare the given resource fields to the fields currently in the database
+    and figure out which of the given fields are unchanged, changed or new,
+    and which of the fields in the db are missing from the given fields, then
+    call the _create(), _update() and _delete() APIs as necessary to update any
+    new, changed or deleted fields.
+
+    For fields where the given field is the same as what's already in the
+    database, no action function will be called.
+
+    :param schema_fields: the new schema fields submitted by the resource
+        edit form
+    :type schema_fields: list of dicts
+
+    :param resource_id: the ID of the resource being edited
+    :type resource_id: string
+
+    :param validate_only: this will be passed to the action functions, if True
+        it causes them to validate the given data only and not actually update
+        the database (optional, default: False)
+
+    :returns: a list of dicts containing the validation errors that the
+        actions gave for each field (or empty dicts, where the action was
+        successful).
+    :rtype: list of dicts
+
+    '''
+    fields_to_create, fields_to_update, fields_to_delete = (
+        _group_submitted_fields(schema_fields, resource_id))
+
+    schema_errors = [{} for field in schema_fields]
+
+    data_dict = {'resource_id': resource_id}
+    errors_found = False
+    for field in fields_to_update:
+        data_dict.update(field)
+        try:
+            toolkit.get_action('resource_schema_field_update')(
+                data_dict=data_dict, validate_only=validate_only)
+        except toolkit.ValidationError as exc:
+            index = schema_fields.index(field)
+            schema_errors[index] = exc.error_dict
+            errors_found = True
+
+    for field in fields_to_create:
+        data_dict.update(field)
+        toolkit.get_action('resource_schema_field_create')(
+            data_dict=data_dict)
+
+    for field in fields_to_delete:
+        data_dict['index'] = field['index']
+        toolkit.get_action('resource_schema_field_update')(
+            data_dict=data_dict)
+
+    # The validation exceptions contain lists of strings for each attribute
+    # that has validation errors. Concatenate those lists into single strings.
+    if errors_found:
+        for field_error_dict in schema_errors:
+            for key in field_error_dict:
+                field_error_dict[key] = '\n'.join(
+                    field_error_dict[key])
+
+    return schema_errors
+
+
+def _delete_form_logic_keys(data):
+    '''Return a copy of the given data dict with certain keys filtered out.
+
+    The data dict should be one submitted by the resource edit form.
+
+    The filtered keys are part of the form/controller logic and not
+    user-submitted data. They shouldn't be passed to action functions for
+    saving in the db, for example.
+
+    '''
+    new_data = {}
+    for key in data.keys():
+        if not (key.startswith('schema-') or
+            key.startswith('go-to-column-') or
+            key in ('schema_errors', 'save')):
+            new_data[key] = data[key]
+    return new_data
+
+
+def _selected_column():
+    '''Return the index number of the column that the user clicked on.
+
+    When the user clicks on a column in the CSV preview on the resource
+    edit form, the index number of the column is submitted with a
+    "go-to-column-*" key as part of the form data.
+
+    Find the value of that key in the form data, convert it to an int, and
+    return it.
+
+    Returns 0 if there's no go-to-column-* key, or if the key has an invalid
+    value.
+
+    '''
+    matching_keys = [key for key in request.params.keys()
+                     if key.startswith("go-to-column-")]
+    assert len(matching_keys) in (0, 1), ("There should never be more than "
+                                          "one 'go-to-column-*' key submitted")
+    if matching_keys:
+        matching_key = matching_keys[0]
+        try:
+            selected_column = int(request.params[matching_key])
+        except ValueError:
+            selected_column = 0
+    else:
+        selected_column = 0
+
+    return selected_column
+
+
+def _first_column_with_errors(schema_errors):
+    '''Return the index of the first column in the given schema_errors list
+    that has an error.
+
+    Returns None if there are no columns with errors.
+
+    '''
+    for index, errors_dict in enumerate(schema_errors):
+        if errors_dict:
+            return index
+    return None
+
 
 class DataPackagerPackageController(toolkit.BaseController):
 
@@ -165,21 +369,25 @@ class DataPackagerPackageController(toolkit.BaseController):
                                                 id=package_id)
 
         # Setup template extra_vars.
+        schema_fields = toolkit.get_action('resource_schema_show')(
+            data_dict={'resource_id': resource_id})['fields']
+        schema_errors = [{} for field in schema_fields]
         extra_vars = {
             'action': 'new',
             'selected_column': 0,
             'data': data or resource_dict,
             'errors': errors or {},
             'error_summary': error_summary or {},
-            'schema_fields': toolkit.get_action('resource_schema_show')(
-                data_dict={'resource_id': resource_id})['fields'],
+            'schema_fields': schema_fields,
+            'schema_errors': schema_errors,
         }
 
         return toolkit.render('package/resource_edit.html',
                               extra_vars=extra_vars)
 
     def _re_render_resource_edit_page(self, package_id, resource_id, data=None,
-                                      errors=None, error_summary=None):
+                                      errors=None, error_summary=None,
+                                      schema_errors=None):
         '''Re-render the resource edit page, sending back the form data that
         the user submitted.
 
@@ -189,52 +397,39 @@ class DataPackagerPackageController(toolkit.BaseController):
         values that the user had entered intact.
 
         '''
-        # Find the "go-to-column-*" key. This key is set when the user clicks
-        # on one of the columns in the CSV preview, it tells us which column
-        # the user clicked on so we know which column to render as selected.
-        matches = [key for key in request.params.keys()
-                   if key.startswith("go-to-column-")]
-        assert len(matches) == 1
-        match = matches[0]
-        selected_column = int(request.params[match])
-
         # Get the form data that the user submitted.
-        data = data or logic.clean_dict(
-            dict_fns.unflatten(
-                logic.tuplize_dict(
-                    logic.parse_params(request.POST))))
-
+        data = data or _get_data()
         schema_fields = _extract_fields_from_data(data)
-
-        # Delete 'schema-*' and 'go-to-column-*' keys from the data.
-        # These are part of the form/controller logic, not part of the user
-        # data.
-        for key in data.keys():
-            if key.startswith('schema-'):
-                del data[key]
-            elif key.startswith('go-to-column-'):
-                del data[key]
+        # FIXME: This actually validates the data in all of the resource schema
+        # fields, when we only really need to validate the field for the
+        # currently selected column.
+        schema_errors = schema_errors or _call_actions(schema_fields,
+                                                       resource_id,
+                                                       validate_only=True)
 
         # Setup template context variables.
-        context = {'api_version': 3, 'for_edit': True,
-                   'user': toolkit.c.user or toolkit.c.author,
-                   'auth_user_obj': toolkit.c.userobj}
         toolkit.c.pkg_dict = toolkit.get_action('package_show')(
-            context, {'id': package_id})
-        resource_dict = toolkit.get_action('resource_show')(
-            context, {'id': resource_id})
-        toolkit.c.resource = resource_dict
-        # set the form action
+                {'for_edit': True}, {'id': package_id})
+        toolkit.c.resource = toolkit.get_action('resource_show')(
+                {'for_edit': True}, {'id': resource_id})
         toolkit.c.form_action = helpers.url_for(controller='package',
                                                 action='resource_edit',
                                                 resource_id=resource_id,
                                                 id=package_id)
 
+        # We show the first column whose schema fields have any validation
+        # errors, or if no columns have validation errors then we show the
+        # column that the user clicked on.
+        selected_column = _first_column_with_errors(schema_errors)
+        if selected_column is None:
+            selected_column = _selected_column()
+
         # Setup template extra_vars.
         extra_vars = {
             'schema_fields': schema_fields,
+            'schema_errors': schema_errors,
             'selected_column': selected_column,
-            'data': data or resource_dict,
+            'data': _delete_form_logic_keys(data) or toolkit.c.resource,
             'errors': errors or {},
             'error_summary': error_summary or {},
             'action': 'new',
@@ -250,73 +445,47 @@ class DataPackagerPackageController(toolkit.BaseController):
         page. The form values they submit are saved to the database and they're
         sent to the resource_read page.
 
+        If there are any validation errors when trying to save the submitted
+        values, then the edit form is re-rendered with the error messages
+        instead of redirectin to the read page.
+
         '''
         # Get the form data that the user submitted.
-        data = data or logic.clean_dict(
-            dict_fns.unflatten(
-                logic.tuplize_dict(
-                    logic.parse_params(request.POST))))
-
-        # Delete 'save' from the data because it's part of the form/controller
-        # logic not part of the user data.
-        del data['save']
-
+        data = data or _get_data()
         new_fields = _extract_fields_from_data(data)
 
-        current_fields = toolkit.get_action('resource_schema_show')(
-            data_dict={'resource_id': resource_id}).get('fields', [])
+        data = _delete_form_logic_keys(data)
 
-        def get_field(index):
-            '''
-            Return the field with the given index from current_fields.
-            '''
-            matching_fields = [field for field in current_fields
-                               if field.get('index') == index]
-            assert len(matching_fields) == 1, len(matching_fields)
-            return matching_fields[0]
+        # Try to create, update and delete all the resource schema fields in
+        # db as necessary.
+        schema_errors = _call_actions(new_fields, resource_id)
 
-        # Compae new_fields and current_fields to figure out which resource
-        # schema fields need to be created, updated and deleted.
-        fields_to_ignore = []
-        fields_to_update = []
-        fields_to_create = []
-        fields_to_delete = []
-        for field in new_fields:
-            data_dict = {'resource_id': resource_id, 'index': field['index']}
-            current_field = get_field(field['index'])
-            if current_field != field:
-                fields_to_update.append(field)
-            else:
-                fields_to_ignore.append(field)
+        # If there were errors, re-render the resoure edit form with the error
+        # messages.
+        for error_dict in schema_errors:
+            if error_dict:
+                # Setup the template context and extra_vars that the form needs
+                # and render the form.
+                toolkit.c.pkg_dict = toolkit.get_action('package_show')(
+                    {'for_edit': True}, {'id': package_id})
+                toolkit.c.resource = toolkit.get_action('resource_show')(
+                    {'for_edit': True}, {'id': resource_id})
+                toolkit.c.form_action = helpers.url_for(
+                    controller='package', action='resource_edit',
+                    resource_id=resource_id, id=package_id)
+                extra_vars = {
+                    'schema_fields': new_fields,
+                    'schema_errors': schema_errors,
+                    'selected_column':
+                        _first_column_with_errors(schema_errors),
+                    'data': data or toolkit.c.resource,
+                    'errors': {},
+                    'error_summary': {},
+                    'action': 'new',
+                }
+                return toolkit.render('package/resource_edit.html',
+                                      extra_vars=extra_vars)
 
-            # TODO: Deal with fields to create. Catch exception above.
-
-        # Find the fields that need to be deleted.
-        for current_field in current_fields:
-            if not [new_field for new_field in new_fields
-                    if new_field['index'] == current_field['index']]:
-                fields_to_delete.append(current_field)
-
-        # A sanity check.
-        assert (len(fields_to_create) + len(fields_to_update) +
-                len(fields_to_delete) + len(fields_to_ignore)
-                == len(current_fields))
-
-        # Create, update and delete the resource schema fields as necessary.
-        # TODO: Deal with exceptions here.
-        data_dict = {'resource_id': resource_id}
-        for field in fields_to_update:
-            data_dict.update(field)
-            toolkit.get_action('resource_schema_field_update')(
-                data_dict=data_dict)
-        for field in fields_to_create:
-            data_dict.update(field)
-            toolkit.get_action('resource_schema_field_create')(
-                data_dict=data_dict)
-        for field in fields_to_delete:
-            data_dict['index'] = field['index']
-            toolkit.get_action('resource_schema_field_update')(
-                data_dict=data_dict)
 
         # Add the current resource schema into the data dict, so that
         # resource_update doesn't delete it.
