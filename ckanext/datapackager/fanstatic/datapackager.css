@@ -116,9 +116,16 @@
 .data.panel.active tr.active th {
   background-color: #00617f;
 }
-.data.panel.active tr.active th a {
+.data.panel.active tr.active th a,
+.data.panel.active tr.active th button {
   color: #fff;
   text-decoration: none;
+}
+.data.panel tr th button {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  font-weight: bold;
 }
 .js .tab-content {
   display: block;
@@ -142,7 +149,55 @@ ul.dropdown-menu li {
   display: inline-block;
   min-width: 160px;
 }
-
+.ckanext-datapreview legend {
+  margin-bottom: 0;
+}
+.ckanext-datapreview .editor-row {
+  padding: 5px 0 5px 25px;
+  width: 100%;
+}
+.ckanext-datapreview label,
+.ckanext-datapreview input,
+.ckanext-datapreview select {
+  padding-top: 5px;
+}
+.ckanext-datapreview label {
+  float: left;
+  width: 30%;
+  padding-left: 10px;
+  padding-right: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ckanext-datapreview .controls {
+  float: left;
+  margin-left: 0px;
+  margin-top: 5px;
+  margin-bottom: 5px;
+}
+.ckanext-datapreview input,
+.ckanext-datapreview select,
+.ckanext-datapreview .error-block {
+  width: 110px;
+}
+.ckanext-datapreview select {
+  width: 124px;
+}
+.ckanext-datapreview .error-block {
+  padding-right: 6px;
+}
+.ckanext-datapreview hr {
+  margin: 0;
+  border: none;
+  border-bottom: 1px solid #ddd;
+  clear: both;
+}
+.ckanext-datapreview .new_attr {
+  padding: 5px;
+}
+.ckanext-datapreview .new_attr input {
+  width: 80px;
+}
 .warning-block {
   color: #B55457 !important;
 }

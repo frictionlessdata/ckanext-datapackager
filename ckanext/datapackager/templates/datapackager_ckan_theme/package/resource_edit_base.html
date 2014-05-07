@@ -12,7 +12,11 @@
 
 {# Change 'Edit resource' to 'Edit file', could be done in translation. #}
 {% block content_primary_nav %}
-  {{ h.build_nav_icon('resource_edit', _('Edit file'), id=pkg.name, resource_id=res.id) }}
+  <li class="active">
+  <a href="{{ h.url_for(controller='ckanext.datapackager.controllers.package.DataPackagerPackageController', action='resource_edit', id=res.id) }}">
+      <i class="icon-edit"></i> {{ _('Edit file') }}
+    </a>
+  </li>
   {% if 'datapusher' in g.plugins %}
     {{ h.build_nav_icon('resource_data', _('DataStore'), id=pkg.name, resource_id=res.id) }}
   {% endif %}
