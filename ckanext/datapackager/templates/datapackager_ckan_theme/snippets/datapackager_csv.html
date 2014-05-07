@@ -12,6 +12,15 @@ schema_fields - the resource's current schema fields, to be pre-filled in the
 schema_errors -
 
 #}
+
+{# schema_fields is passed when the resource_edit() controller action calls
+   this template, but is undefined when resource_read() calls it. So define
+   it by calling a helper function.
+   This is hacky the template should be refactored or maybe split into two.
+#}
+{% if not schema_fields %}
+  {% set schema_fields = h.get_resource_schema(resource.id)['fields'] %}
+{% endif %}
 <div class="module-content ckanext-datapreview">
   {% set csv_data = h.datapackager_csv_data(resource) %}
   {% if csv_data.success == true %}
@@ -27,11 +36,11 @@ schema_errors -
                 {% set row_number = loop.index0 %}
                 {% set schema_field = schema_fields[row_number] %}
                 {% set field_errors = schema_errors[row_number] %}
-                <fieldset name="Metadata for {{ data[row_number][0] }}" {% if selected_column != loop.index0 %}style="display:none;"{% endif %}>
-                  <legend name="Metadata for {{ data[row_number][0] }}">
+                <fieldset name="Metadata for {{ schema_field['name'] }}" {% if selected_column != loop.index0 %}style="display:none;"{% endif %}>
+                  <legend name="Metadata for {{ schema_field['name'] }}">
                     <h2 class="module-heading">
                       <i class="icon-copy"></i>
-                      Metadata for {{ data[row_number][0] }}
+                      Metadata for {{ schema_field['name'] }}
                     </h2>
                   </legend>
 
@@ -133,6 +142,7 @@ schema_errors -
       <table class="table">
           <tbody id="dataTable">
               {% for row in data %}
+              {% set schema_field = schema_fields[loop.index0] %}
               <tr {% if selected_column == loop.index0 %}class="active"{% endif %}>
                       {% if for_edit %}
                         {% set controller = 'ckanext.datapackager.controllers.package:DataPackagerPackageController' %}
@@ -156,10 +166,10 @@ schema_errors -
                                           class="btn-link"
                                           name="go-to-column-{{ index }}"
                                           value="{{ index }}">
-                                    {{ col }}
+                                    {{ schema_field['name'] }}
                                   </button>
                                 {% else %}
-                                  <a href="{{ link }}">{{ col }}</a>
+                                  <a href="{{ link }}">{{ schema_field['name'] }}</a>
                                 {% endif %}
                               </th>
                           {% else %}
