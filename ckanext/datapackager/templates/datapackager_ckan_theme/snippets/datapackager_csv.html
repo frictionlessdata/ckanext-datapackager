@@ -81,7 +81,7 @@ schema_errors -
 
                       {% if key not in ('name', 'type') %}
                         <button class="btn btn-danger btn-mini"
-                                title="Delete attribute '{{ key }}' from column '{{ data[row_number][0] }}'"
+                                title="Delete attribute '{{ key }}' from column '{{ schema_field['name'] }}'"
                                 type="submit"
                                 name="delete-attr"
                                 value="schema-{{ row_number }}-{{ key }}">
@@ -127,7 +127,7 @@ schema_errors -
               {% set metadata = h.resource_schema_field_show(resource.id, selected_column) %}
               <h2 class="module-heading">
                 <i class="icon-copy"></i>
-                Metadata for {{ data[selected_column][0] }}
+                Metadata for {{ metadata['name'] }}
               </h2>
               <dl class="dl-horizontal">
                   {% for key in metadata %}
