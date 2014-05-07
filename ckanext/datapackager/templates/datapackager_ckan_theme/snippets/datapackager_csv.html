@@ -40,7 +40,8 @@ schema_errors -
                   <input type="hidden" name="schema-{{ row_number }}-index"
                          value="{{ schema_field['index'] }}" />
 
-                  {% for key in schema_field if key != 'index' %}
+                  {% for key in schema_field if key not in ('index',
+                                                            '__new_attr') %}
 
                     <label for="schema-{{ row_number }}-{{ key }}">{{ key }}</label>
 
@@ -76,6 +77,26 @@ schema_errors -
                     </div>
                     <hr/>
                   {% endfor %}
+
+                  <div class="new_attr">
+                    <p>{{ _('Add a new attribute to this column:') }}</p>
+                    <input id="schema-{{ row_number }}-__new_attr_key"
+                           name="schema-{{ row_number }}-__new_attr_key"
+                           type=text
+                           value="{{ schema_field.__new_attr.key }}"
+                           placeholder="Key" />
+                    <input id="schema-{{ row_number }}-__new_attr_value"
+                           name="schema-{{ row_number }}-__new_attr_value"
+                           type=text
+                           value="{{ schema_field.__new_attr.value }}"
+                           placeholder="Value" />
+                    <button class="btn" type="submit"
+                            name="add-new-attr"
+                            value="{{ row_number }}">
+                      <i class="icon-plus"></i>
+                    </button>
+                  </div>
+
                 </fieldset>
               {% endfor %}
 

@@ -192,6 +192,12 @@ ul.dropdown-menu li {
   border-bottom: 1px solid #ddd;
   clear: both;
 }
+.ckanext-datapreview .new_attr {
+  padding: 5px;
+}
+.ckanext-datapreview .new_attr input {
+  width: 80px;
+}
 .warning-block {
   color: #B55457 !important;
 }

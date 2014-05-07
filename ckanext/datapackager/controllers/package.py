@@ -14,10 +14,7 @@ import ckan.lib.base as base
 def _get_data():
     '''Return the data posted by the resource edit form.'''
 
-    return logic.clean_dict(
-        dict_fns.unflatten(
-            logic.tuplize_dict(
-                logic.parse_params(request.POST))))
+    return dict(request.params)
 
 
 def _extract_fields_from_data(data):
@@ -81,6 +78,16 @@ def _extract_fields_from_data(data):
     # It's important for template rendering that the fields are sorted by
     # index.
     new_fields.sort(key=lambda x: x['index'])
+
+    # Convert '__new_attr_key' and '__new_attr_value' into a single
+    # '__new_attr' dictionary with 'key' and 'value' keys.
+    for field in new_fields:
+        field['__new_attr'] = {
+            'key': field['__new_attr_key'],
+            'value': field['__new_attr_value']
+        }
+        del field['__new_attr_key']
+        del field['__new_attr_value']
 
     return new_fields
 
@@ -178,6 +185,14 @@ def _call_actions(schema_fields, resource_id, validate_only=False):
     :rtype: list of dicts
 
     '''
+    # Copy schema_fields because we don't want to edit it.
+    # (Note we deliberately copy each of the dicts in schema_fields.)
+    schema_fields = [field.copy() for field in schema_fields]
+
+    # Delete '__new_attr' items, we don't want to save these in the db.
+    for field in schema_fields:
+        del field['__new_attr']
+
     fields_to_create, fields_to_update, fields_to_delete = (
         _group_submitted_fields(schema_fields, resource_id))
 
@@ -230,7 +245,7 @@ def _delete_form_logic_keys(data):
     for key in data.keys():
         if not (key.startswith('schema-') or
             key.startswith('go-to-column-') or
-            key in ('schema_errors', 'save')):
+            key in ('schema_errors', 'save', 'add-new-attr')):
             new_data[key] = data[key]
     return new_data
 
@@ -368,9 +383,20 @@ class DataPackagerPackageController(toolkit.BaseController):
                                                 resource_id=resource_id,
                                                 id=package_id)
 
-        # Setup template extra_vars.
+        # Get the resource schema fields that will be passed to the template
+        # for rendering into the form.
         schema_fields = toolkit.get_action('resource_schema_show')(
             data_dict={'resource_id': resource_id})['fields']
+
+        # We add one __new_attr entry into each field, this is used when the
+        # user wants to add a new attribute to a field.
+        for field in schema_fields:
+            assert '__new_attr' not in field, ("__new_attr keys are never "
+                                               "saved in the db")
+            field['__new_attr'] = {'key': '', 'value': ''}
+
+
+        # Setup template extra_vars.
         schema_errors = [{} for field in schema_fields]
         extra_vars = {
             'action': 'new',
@@ -518,6 +544,73 @@ class DataPackagerPackageController(toolkit.BaseController):
                                       id=package_id,
                                       resource_id=resource_id))
 
+    def _add_attr_to_schema_field(self, package_id, resource_id):
+        '''Add a new attribute to the selected schema field and re-render the
+        form.
+
+        This is called when the user submits the resource edit form by clicking
+        the plus button in the 'Add a new attribute' section. The values
+        entered into the key and value inputs are converted into a new
+        top-level item in the schema field dict, and the
+        'Add a new attribute' section is cleared ready to add another
+        attribute.
+
+        Note that this doesn't actually save the new attribute in the db,
+        that doesn't happen until the user clicks the Save button.
+
+        '''
+        data = _get_data()
+        schema_fields = _extract_fields_from_data(data)
+
+        # Find the column index and field dict that we are trying to add a new
+        # attribute to.
+        selected_column = int(request.params['add-new-attr'])
+        selected_field = schema_fields[selected_column]
+
+        # Add the new attribute.
+        new_key = selected_field['__new_attr']['key'].strip()
+        new_value = selected_field['__new_attr']['value'].strip()
+        if new_key:
+            # FIXME: This will overwrite an existing field with the same key.
+            # Instead of overwriting we should show the user an error.
+            selected_field[new_key] = new_value
+
+            # Clear the 'Add a new attribute' <input>s, ready to add another
+            # new attribute.
+            selected_field['__new_attr'] = {'key': '', 'value': ''}
+
+        # The user may have edited the values of some existing field attributes
+        # as well, so validate the field attributes and show any errors to the
+        # user.
+        # FIXME: This validates every resource schema field, but we only need
+        # to validate the field for the currently selected column.
+        schema_errors = _call_actions(schema_fields, resource_id,
+                                      validate_only=True)
+
+        # Setup template context variables.
+        toolkit.c.pkg_dict = toolkit.get_action('package_show')(
+            {'for_edit': True}, {'id': package_id})
+        toolkit.c.resource = toolkit.get_action('resource_show')(
+            {'for_edit': True}, {'id': resource_id})
+        toolkit.c.form_action = helpers.url_for(controller='package',
+                                                action='resource_edit',
+                                                resource_id=resource_id,
+                                                id=package_id)
+
+        # Setup template extra_vars.
+        extra_vars = {
+            'schema_fields': schema_fields,
+            'schema_errors': schema_errors,
+            'selected_column': selected_column,
+            'data': _delete_form_logic_keys(data),
+            'errors': {},
+            'error_summary': {},
+            'action': 'new',
+        }
+
+        return toolkit.render('package/resource_edit.html',
+                              extra_vars=extra_vars)
+
     def resource_edit(self, id, resource_id, index=None, data=None,
                       errors=None, error_summary=None):
 
@@ -528,6 +621,8 @@ class DataPackagerPackageController(toolkit.BaseController):
         elif request.method == 'POST' and 'save' in request.params:
             return self._update_resource(id, resource_id, data)
 
+        elif (request.method == 'POST' and 'add-new-attr' in request.params):
+            return self._add_attr_to_schema_field(id, resource_id)
         else:
             return self._re_render_resource_edit_page(id, resource_id, data,
                                                       errors, error_summary)
