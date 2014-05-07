@@ -69,6 +69,17 @@ schema_errors -
                               type=text
                               value="{{ schema_field[key] }}"/>
                       {% endif %}
+
+                      {% if key not in ('name', 'type') %}
+                        <button class="btn btn-danger btn-mini"
+                                title="Delete attribute '{{ key }}' from column '{{ data[row_number][0] }}'"
+                                type="submit"
+                                name="delete-attr"
+                                value="schema-{{ row_number }}-{{ key }}">
+                          <i class="icon-remove"></i>
+                        </button>
+                      {% endif %}
+
                       {% if field_errors[key] %}
                         <span class="error-block">
                           {{ field_errors[key] }}

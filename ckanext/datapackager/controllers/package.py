@@ -245,7 +245,7 @@ def _delete_form_logic_keys(data):
     for key in data.keys():
         if not (key.startswith('schema-') or
             key.startswith('go-to-column-') or
-            key in ('schema_errors', 'save', 'add-new-attr')):
+            key in ('schema_errors', 'save', 'add-new-attr', 'delete-attr')):
             new_data[key] = data[key]
     return new_data
 
@@ -611,18 +611,73 @@ class DataPackagerPackageController(toolkit.BaseController):
         return toolkit.render('package/resource_edit.html',
                               extra_vars=extra_vars)
 
+    def _delete_attr(self, package_id, resource_id):
+        '''Delete an attribute from a resource schema field.
+
+        This is called when the user submits the resource edit form by clicking
+        on one of the delete buttons next to the attributes. The attribute is
+        deleted from the field, and the form is re-rendered without the
+        deleted attribute.
+
+        Note this doesn't actually delete the sttribute from the database,
+        that doesn't happen until the user clicks Save.
+
+        '''
+        data = _get_data()
+        schema_fields = _extract_fields_from_data(data)
+
+        # Find the index and key of the attribute we're trying to delete.
+        _, index, key = request.params['delete-attr'].split('-', 2)
+        index = int(index)
+        # Delete the attribute.
+        field = schema_fields[index]
+        assert key in field
+        del field[key]
+
+        # The user may have edited the values of some existing field attributes
+        # as well, so validate the field attributes and show any errors to the
+        # user.
+        # FIXME: This validates every resource schema field, but we only need
+        # to validate the field for the currently selected column.
+        schema_errors = _call_actions(schema_fields, resource_id,
+                                      validate_only=True)
+
+        # Setup template context variables.
+        toolkit.c.pkg_dict = toolkit.get_action('package_show')(
+            {'for_edit': True}, {'id': package_id})
+        toolkit.c.resource = toolkit.get_action('resource_show')(
+            {'for_edit': True}, {'id': resource_id})
+        toolkit.c.form_action = helpers.url_for(controller='package',
+                                                action='resource_edit',
+                                                resource_id=resource_id,
+                                                id=package_id)
+
+        # Setup template extra_vars.
+        extra_vars = {
+            'schema_fields': schema_fields,
+            'schema_errors': schema_errors,
+            'selected_column': index,
+            'data': _delete_form_logic_keys(data),
+            'errors': {},
+            'error_summary': {},
+            'action': 'new',
+        }
+
+        return toolkit.render('package/resource_edit.html',
+                              extra_vars=extra_vars)
+
     def resource_edit(self, id, resource_id, index=None, data=None,
                       errors=None, error_summary=None):
 
         if request.method == 'GET':
             return self._render_resource_edit_page_first_time(
                 id, resource_id, data, errors, error_summary)
-
         elif request.method == 'POST' and 'save' in request.params:
             return self._update_resource(id, resource_id, data)
-
         elif (request.method == 'POST' and 'add-new-attr' in request.params):
             return self._add_attr_to_schema_field(id, resource_id)
+        elif (request.method == 'POST' and 'delete-attr' in request.params):
+            return self._delete_attr(id, resource_id)
         else:
             return self._re_render_resource_edit_page(id, resource_id, data,
                                                       errors, error_summary)

@@ -164,7 +164,7 @@ ul.dropdown-menu li {
 .ckanext-datapreview label {
   float: left;
   width: 30%;
-  padding-left: 25px;
+  padding-left: 10px;
   padding-right: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -178,7 +178,7 @@ ul.dropdown-menu li {
 .ckanext-datapreview input,
 .ckanext-datapreview select,
 .ckanext-datapreview .error-block {
-  width: 130px;
+  width: 110px;
 }
 .ckanext-datapreview select {
   width: 124px;
