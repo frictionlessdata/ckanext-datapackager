@@ -19,6 +19,8 @@ import ckanext.datapackager.logic.action.update
 import ckanext.datapackager.logic.action.get
 import ckanext.datapackager.logic.action.delete
 import ckanext.datapackager.logic.validators as custom_validators
+import ckanext.datapackager.logic.auth.update
+import ckanext.datapackager.logic.auth.delete
 import ckanext.datapackager.exceptions as exceptions
 
 
@@ -85,6 +87,7 @@ class DataPackagerPlugin(plugins.SingletonPlugin, toolkit.DefaultDatasetForm):
     plugins.implements(plugins.IResourceUpload)
     plugins.implements(plugins.IActions)
     plugins.implements(plugins.IDatasetForm)
+    plugins.implements(plugins.IAuthFunctions)
 
     def update_config(self, config):
         '''Update CKAN's configuration.
@@ -474,3 +477,11 @@ class DataPackagerPlugin(plugins.SingletonPlugin, toolkit.DefaultDatasetForm):
         schema = super(DataPackagerPlugin, self).update_package_schema()
         schema = self._modify_package_schema(schema)
         return schema
+
+    def get_auth_functions(self):
+        return {
+            'package_update':
+                ckanext.datapackager.logic.auth.update.package_update,
+            'package_delete':
+                ckanext.datapackager.logic.auth.delete.package_delete,
+        }

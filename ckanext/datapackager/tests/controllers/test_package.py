@@ -212,6 +212,132 @@ class TestDataPackagerPackageController(
             package_id=dataset['name'])
 
 
+class TestDataPackagerAuthorizationShow(custom_helpers.FunctionalTestBaseClass):
+    def test_anonymous_users_can_view_packages(self):
+        package = factories.Dataset(user=factories.User())
+        response = self.app.get('/package/{0}'.format(package['name']))
+        nose.tools.assert_equals(200, response.status_int)
+
+    def test_users_can_view_other_users_packages(self):
+        package = factories.Dataset(user=factories.User())
+
+        other_user = factories.User()
+        extra_environ = {'REMOTE_USER': str(other_user['name'])}
+
+        response = self.app.get('/package/{0}'.format(package['name']),
+                                extra_environ=extra_environ)
+        nose.tools.assert_equals(200, response.status_int)
+
+    def test_sysadmins_can_view_other_users_packages(self):
+        package = factories.Dataset(user=factories.User())
+
+        other_user = factories.Sysadmin()
+        extra_environ = {'REMOTE_USER': str(other_user['name'])}
+
+        response = self.app.get('/package/{0}'.format(package['name']),
+                                extra_environ=extra_environ)
+        nose.tools.assert_equals(200, response.status_int)
+
+
+class TestDataPackagerAuthorizationCreate(custom_helpers.FunctionalTestBaseClass):
+    def test_anonymous_users_cannot_create_packages(self):
+        response = self.app.get('/package/new')
+        nose.tools.assert_equals(302, response.status_int)
+        nose.tools.assert_equals(
+            'http://localhost/user/login?came_from=http://localhost/package/new',
+            response.location
+        )
+
+    def test_users_can_create_package(self):
+        user = factories.User()
+        extra_environ = {'REMOTE_USER': str(user['name'])}
+
+        response = self.app.get('/package/new', extra_environ=extra_environ)
+        nose.tools.assert_equals(200, response.status_int)
+
+    def test_sysadmins_can_create(self):
+        user = factories.Sysadmin()
+        extra_environ = {'REMOTE_USER': str(user['name'])}
+
+        response = self.app.get('/package/new', extra_environ=extra_environ)
+        nose.tools.assert_equals(200, response.status_int)
+
+
+class TestDataPackagerAuthorizationUpdate(custom_helpers.FunctionalTestBaseClass):
+    def test_user_can_update_packages_they_created(self):
+        user = factories.User()
+        package = factories.Dataset(user=user)
+
+        extra_environ = {'REMOTE_USER': str(user['name'])}
+
+        response = self.app.get('/package/edit/{0}'.format(package['name']),
+                                extra_environ=extra_environ)
+        nose.tools.assert_equals(200, response.status_int)
+
+    def test_user_cannot_update_someone_elses_package(self):
+        package = factories.Dataset(user=factories.User())
+
+        other_user = factories.User()
+        extra_environ = {'REMOTE_USER': str(other_user['name'])}
+
+        response = self.app.get('/package/edit/{0}'.format(package['name']),
+                                extra_environ=extra_environ, expect_errors=True)
+        nose.tools.assert_equals(401, response.status_int)
+
+    def test_anonynmous_user_cannot_update_packages(self):
+        package = factories.Dataset(user=factories.User())
+
+        response = self.app.get('/package/edit/{0}'.format(package['name']),
+                                expect_errors=True)
+        nose.tools.assert_equals(302, response.status_int)
+        nose.tools.assert_equals(
+            'http://localhost/user/login?came_from=http://localhost/package/edit/{0}'.format(package['name']),
+            response.location
+        )
+
+    def test_sysadmins_can_update_all_packages(self):
+        sysadmin = factories.Sysadmin()
+        package = factories.Dataset(user=factories.User())
+
+        extra_environ = {'REMOTE_USER': str(sysadmin['name'])}
+
+        response = self.app.get('/package/edit/{0}'.format(package['name']),
+                                extra_environ=extra_environ)
+        nose.tools.assert_equals(200, response.status_int)
+
+
+class TestDataPackagerAuthorizationDelete(custom_helpers.FunctionalTestBaseClass):
+    def test_user_cannot_delete_someone_elses_package(self):
+        package = factories.Dataset(user=factories.User())
+
+        other_user = factories.User()
+        extra_environ = {'REMOTE_USER': str(other_user['name'])}
+
+        response = self.app.get('/package/delete/{0}'.format(package['name']),
+                                extra_environ=extra_environ, expect_errors=True)
+        nose.tools.assert_equals(401, response.status_int)
+
+    def test_sysadmin_can_delete_anyones_package(self):
+        package = factories.Dataset(user=factories.User())
+
+        sysadmin = factories.Sysadmin()
+        extra_environ = {'REMOTE_USER': str(sysadmin['name'])}
+
+        response = self.app.get('/package/delete/{0}'.format(package['name']),
+                                extra_environ=extra_environ)
+        nose.tools.assert_equals(200, response.status_int)
+
+    def test_users_can_delete_packages_they_created(self):
+        user = factories.Sysadmin()
+        package = factories.Dataset(user=user)
+
+        extra_environ = {'REMOTE_USER': str(user['name'])}
+
+        response = self.app.get('/package/delete/{0}'.format(package['name']),
+                                extra_environ=extra_environ)
+        nose.tools.assert_equals(200, response.status_int)
+
+
 class TestMetadataViewer(custom_helpers.FunctionalTestBaseClass):
     '''Tests for the custom CSV preview and metadata viewer on the resource
     read page.
