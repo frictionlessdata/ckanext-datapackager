@@ -338,7 +338,7 @@ class TestResourceSchemaFieldCreate(custom_helpers.FunctionalTestBaseClass):
 
         '''
         user = factories.User()
-        package = factories.Dataset()
+        package = factories.Dataset(user=user)
         api = ckanapi.TestAppCKAN(self.app, apikey=user['apikey'])
         csv_file = custom_helpers.get_csv_file(
             'test-data/lahmans-baseball-database/AllstarFull.csv')
@@ -367,7 +367,7 @@ class TestResourceSchemaFieldCreate(custom_helpers.FunctionalTestBaseClass):
 
         '''
         user = factories.User()
-        package = factories.Dataset()
+        package = factories.Dataset(user=user)
         api = ckanapi.TestAppCKAN(self.app, apikey=user['apikey'])
         csv_file = custom_helpers.get_csv_file('test-data/datetimes.csv')
         resource = api.action.resource_create(package_id=package['id'],
@@ -395,7 +395,7 @@ class TestResourceSchemaFieldCreate(custom_helpers.FunctionalTestBaseClass):
 
         '''
         user = factories.User()
-        package = factories.Dataset()
+        package = factories.Dataset(user=user)
         api = ckanapi.TestAppCKAN(self.app, apikey=user['apikey'])
         csv_file = custom_helpers.get_csv_file('test-data/times.csv')
         resource = api.action.resource_create(package_id=package['id'],
@@ -427,8 +427,8 @@ class TestResourceSchemaFieldCreate(custom_helpers.FunctionalTestBaseClass):
         we don't crash in this case.
 
         '''
-        resource = factories.Resource(dataset=factories.Dataset())
         user = factories.User()
+        resource = factories.Resource(dataset=factories.Dataset(user=user))
         api = ckanapi.TestAppCKAN(self.app, apikey=user['apikey'])
 
         api.action.resource_schema_field_create(resource_id=resource['id'],
@@ -450,7 +450,7 @@ class TestResourceSchemaFieldCreate(custom_helpers.FunctionalTestBaseClass):
 
         '''
         user = factories.User()
-        package = factories.Dataset()
+        package = factories.Dataset(user=user)
         api = ckanapi.TestAppCKAN(self.app, apikey=user['apikey'])
         csv_file = custom_helpers.get_csv_file('test-data/test.csv')
         resource = api.action.resource_create(package_id=package['id'],
@@ -479,7 +479,7 @@ class TestResourceSchemaFieldCreate(custom_helpers.FunctionalTestBaseClass):
 
         '''
         user = factories.User()
-        package = factories.Dataset()
+        package = factories.Dataset(user=user)
         api = ckanapi.TestAppCKAN(self.app, apikey=user['apikey'])
         csv_file = custom_helpers.get_csv_file(
             'test-data/naive-and-aware-dates.csv')
@@ -514,7 +514,7 @@ class TestResourceCreate(custom_helpers.FunctionalTestBaseClass):
 
         '''
         user = factories.User()
-        package = factories.Dataset()
+        package = factories.Dataset(user=user)
         api = ckanapi.TestAppCKAN(self.app, apikey=user['apikey'])
 
         csv_file = custom_helpers.get_csv_file(
@@ -533,7 +533,7 @@ class TestResourceCreate(custom_helpers.FunctionalTestBaseClass):
 
         '''
         user = factories.User()
-        package = factories.Dataset()
+        package = factories.Dataset(user=user)
         api = ckanapi.TestAppCKAN(self.app, apikey=user['apikey'])
 
         resource_1 = api.action.resource_create(package_id=package['id'],
@@ -555,7 +555,7 @@ class TestResourceCreate(custom_helpers.FunctionalTestBaseClass):
 
         '''
         user = factories.User()
-        dataset = factories.Dataset()
+        dataset = factories.Dataset(user=user)
         api = ckanapi.TestAppCKAN(self.app, apikey=user['apikey'])
         resource_1 = factories.Resource(dataset=dataset, name='foo')
 
@@ -591,7 +591,7 @@ class TestResourceCreate(custom_helpers.FunctionalTestBaseClass):
 
         '''
         user = factories.User()
-        package = factories.Dataset()
+        package = factories.Dataset(user=user)
         api = ckanapi.TestAppCKAN(self.app, apikey=user['apikey'])
 
         resource = api.action.resource_create(package_id=package['id'],
@@ -603,7 +603,7 @@ class TestResourceCreate(custom_helpers.FunctionalTestBaseClass):
     def test_resource_create_url_with_trailing_slash(self):
 
         user = factories.User()
-        package = factories.Dataset()
+        package = factories.Dataset(user=user)
         api = ckanapi.TestAppCKAN(self.app, apikey=user['apikey'])
 
         resource = api.action.resource_create(package_id=package['id'],
@@ -615,7 +615,7 @@ class TestResourceCreate(custom_helpers.FunctionalTestBaseClass):
     def test_resource_create_url_with_no_path(self):
 
         user = factories.User()
-        package = factories.Dataset()
+        package = factories.Dataset(user=user)
         api = ckanapi.TestAppCKAN(self.app, apikey=user['apikey'])
 
         resource = api.action.resource_create(package_id=package['id'],
@@ -630,7 +630,7 @@ class TestResourceCreate(custom_helpers.FunctionalTestBaseClass):
 
         '''
         user = factories.User()
-        dataset = factories.Dataset()
+        dataset = factories.Dataset(user=user)
         api = ckanapi.TestAppCKAN(self.app, apikey=user['apikey'])
 
         resource = api.action.resource_create(package_id=dataset['id'],
@@ -646,7 +646,7 @@ class TestResourceCreate(custom_helpers.FunctionalTestBaseClass):
 
         '''
         user = factories.User()
-        dataset = factories.Dataset()
+        dataset = factories.Dataset(user=user)
         api = ckanapi.TestAppCKAN(self.app, apikey=user['apikey'])
 
         for format_ in ('', ' '):
@@ -664,7 +664,7 @@ class TestResourceCreate(custom_helpers.FunctionalTestBaseClass):
 
         '''
         user = factories.User()
-        dataset = factories.Dataset()
+        dataset = factories.Dataset(user=user)
         api = ckanapi.TestAppCKAN(self.app, apikey=user['apikey'])
 
         for format_ in ('jpeg', 'image/png', 'foobar'):
@@ -681,8 +681,9 @@ class TestResourceSchemaPKeyCreate(custom_helpers.FunctionalTestBaseClass):
     '''Functional tests for resource_schema_pkey_create.'''
 
     def _create_resources(self):
-        resource = factories.Resource(dataset=factories.Dataset())
-        api = ckanapi.TestAppCKAN(self.app, apikey=factories.User()['apikey'])
+        user = factories.User()
+        resource = factories.Resource(dataset=factories.Dataset(user=user))
+        api = ckanapi.TestAppCKAN(self.app, apikey=user['apikey'])
         api.action.resource_schema_field_create(resource_id=resource['id'],
             index=0, name='foo')
         api.action.resource_schema_field_create(resource_id=resource['id'],

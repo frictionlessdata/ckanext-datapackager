@@ -30,3 +30,24 @@ class TestPackageUpdateApi(custom_helpers.FunctionalTestBaseClass):
 
         helpers.call_action('package_update', context=context,
                             id=package['id'], schema='')
+
+class TestResourceUpdateApi(custom_helpers.FunctionalTestBaseClass):
+    def test_user_can_update_resources_in_packages_they_own(self):
+        user = factories.User()
+        package = factories.Dataset(user=user)
+        resource = factories.Resource(dataset=package, name='res')
+        context = {
+            'user': user['name'],
+            'ignore_auth': False
+        }
+        helpers.call_action('resource_update', context=context,
+                            id=resource['id'], name='res', url='url')
+
+    def test_user_cannot_update_resources_in_someone_elses_package(self):
+        package = factories.Dataset(user=factories.User())
+        user = factories.User()
+        resource = factories.Resource(dataset=package, name='res')
+        context = {'user': user['name'], 'ignore_auth': False}
+        nt.assert_raises(toolkit.NotAuthorized, helpers.call_action,
+                         'resource_update', context=context,
+                         id=resource['id'], name='res', url='url')

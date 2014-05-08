@@ -346,9 +346,9 @@ class TestMetadataViewer(custom_helpers.FunctionalTestBaseClass):
     def _create_resource(self, file='test-data/lahmans-baseball-database/ManagersHalf.csv'):
         '''Return a test dataset, resource and resource schema.'''
 
-        dataset = factories.Dataset()
-        csv_file = custom_helpers.get_csv_file(file)
         user = factories.User()
+        dataset = factories.Dataset(user=user)
+        csv_file = custom_helpers.get_csv_file(file)
         api = ckanapi.TestAppCKAN(self.app, apikey=user['apikey'])
         resource = api.action.resource_create(package_id=dataset['id'],
                                               upload=csv_file)
@@ -538,9 +538,9 @@ class TestMetadataViewer(custom_helpers.FunctionalTestBaseClass):
         an error should be shown instead of the CSV preview.
 
         '''
-        dataset = factories.Dataset()
-        non_csv_file = custom_helpers.get_csv_file('test-data/not-a-csv.png')
         user = factories.User()
+        dataset = factories.Dataset(user=user)
+        non_csv_file = custom_helpers.get_csv_file('test-data/not-a-csv.png')
         api = ckanapi.TestAppCKAN(self.app, apikey=user['apikey'])
         resource = api.action.resource_create(package_id=dataset['id'],
                                               upload=non_csv_file)
@@ -665,10 +665,10 @@ class TestMetadataViewer(custom_helpers.FunctionalTestBaseClass):
         nose.tools.assert_true(pkeys[1].a.text, 'teamID')
 
     def test_foreign_key_is_on_page_string(self):
-        dataset = factories.Dataset()
+        user = factories.User()
+        dataset = factories.Dataset(user=user)
         csv_file0 = custom_helpers.get_csv_file(
             'test-data/lahmans-baseball-database/Master.csv')
-        user = factories.User()
         api = ckanapi.TestAppCKAN(self.app, apikey=user['apikey'])
         resource0 = api.action.resource_create(package_id=dataset['id'],
                                               upload=csv_file0)
@@ -706,10 +706,10 @@ class TestMetadataViewer(custom_helpers.FunctionalTestBaseClass):
         nose.tools.assert_true(pkey.li.a.text, 'playerID')
 
     def test_foreign_key_is_on_page_list(self):
-        dataset = factories.Dataset()
+        user = factories.User()
+        dataset = factories.Dataset(user=user)
         csv_file0 = custom_helpers.get_csv_file(
             'test-data/lahmans-baseball-database/BattingPost.csv')
-        user = factories.User()
         api = ckanapi.TestAppCKAN(self.app, apikey=user['apikey'])
         resource0 = api.action.resource_create(package_id=dataset['id'],
                                               upload=csv_file0)
@@ -794,8 +794,8 @@ class TestMetadataEditor(custom_helpers.FunctionalTestBaseClass):
         (For example, renaming a resource should not delete its schema!)
 
         '''
-        dataset = factories.Dataset()
         user = factories.User()
+        dataset = factories.Dataset(user=user)
         api = ckanapi.TestAppCKAN(self.app, apikey=user['apikey'])
         csv_file = _get_csv_file(
             '../test-data/lahmans-baseball-database/PitchingPost.csv')
@@ -819,8 +819,8 @@ class TestMetadataEditor(custom_helpers.FunctionalTestBaseClass):
     def test_edit_one_field(self):
         '''Load the metadata editor, edit one schema field, save it.'''
 
-        dataset = factories.Dataset()
         user = factories.User()
+        dataset = factories.Dataset(user=user)
         api = ckanapi.TestAppCKAN(self.app, apikey=user['apikey'])
         csv_file = _get_csv_file(
             '../test-data/lahmans-baseball-database/PitchingPost.csv')
@@ -847,8 +847,8 @@ class TestMetadataEditor(custom_helpers.FunctionalTestBaseClass):
         '''Load the metadata editor, click on one of the columns, edit some of
         its fields, save it.'''
 
-        dataset = factories.Dataset()
         user = factories.User()
+        dataset = factories.Dataset(user=user)
         api = ckanapi.TestAppCKAN(self.app, apikey=user['apikey'])
         csv_file = _get_csv_file(
             '../test-data/lahmans-baseball-database/PitchingPost.csv')
