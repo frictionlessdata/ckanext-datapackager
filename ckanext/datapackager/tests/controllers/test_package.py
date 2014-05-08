@@ -777,23 +777,14 @@ class TestMetadataViewer(custom_helpers.FunctionalTestBaseClass):
 
 
 class TestMetadataEditor(custom_helpers.FunctionalTestBaseClass):
-    '''Tests for the custom resource edit form.'''
-
-
-    # TODO: Insert tests that the metadata editor shows the right fields with
-    # the right values in them, and with the right column shown, both when
-    # looking at the default column and at another column. Test that the
-    # column links are right.
+    '''Frontend tests for the custom resource edit form.'''
 
     # TODO: Test that edit button isn't shown and editor doesn't load if user
     # isn't authorized.
 
-    def test_rename_resource(self):
-        '''Test that renaming a resource works and doesn't break anything.
+    def _setup(self):
+        '''Create some test objects that a lot of test methods below use.'''
 
-        (For example, renaming a resource should not delete its schema!)
-
-        '''
         user = factories.User()
         dataset = factories.Dataset(user=user)
         api = ckanapi.TestAppCKAN(self.app, apikey=user['apikey'])
@@ -801,6 +792,7 @@ class TestMetadataEditor(custom_helpers.FunctionalTestBaseClass):
             '../test-data/lahmans-baseball-database/PitchingPost.csv')
         resource = api.action.resource_create(package_id=dataset['id'],
                                               upload=csv_file)
+        schema = api.action.resource_schema_show(resource_id=resource['id'])
 
         # Get the resource edit page.
         extra_environ = {'REMOTE_USER': str(user['name'])}
@@ -809,8 +801,190 @@ class TestMetadataEditor(custom_helpers.FunctionalTestBaseClass):
                                                 id=dataset['id'],
                                                 resource_id=resource['id']),
                                 extra_environ=extra_environ)
+
+        return dataset, user, api, resource, schema, response
+
+    def _preview_table(self, response):
+        return response.html.find(class_='ckanext-datapreview').find('table')
+
+    def _metadata_editor(self, response):
+        return response.html.find(class_='ckanext-datapreview').find(
+            class_='meta')
+
+    def _metadata_editor_fieldset(self, response):
+        fieldsets = self._metadata_editor(response)('fieldset')
+        return [fieldset for fieldset in fieldsets
+                if 'active' in fieldset.get('class', '')][0]
+
+    def _click_on_column(self, index, response, extra_environ=None):
+
+        # Find the button for going to the requested column.
+        table = self._preview_table(response.html)
+        row = table.find_all('tr')[index]
+        button = row.find('button')
+
+        # Click the button.
+        return response.forms[0].submit(button['name'],
+                                        extra_environ=extra_environ)
+
+    def test_default_selected_column(self):
+        '''Test the contents of the metadata editor with the default column
+        selected.
+
+        When you first load the metadata editor page, the first column should
+        be selected in the CSV preview and shown in the metadata editor.
+
+        '''
+        _, _, _, _, schema, response = self._setup()
+
+        # The first row in the CSV preview should have CSS class "active".
+        soup = response.html
+        table = self._preview_table(soup)
+        first_row = table.find('tr')
+        assert 'active' in first_row['class']
+
+        # The metadata editor should show only the metadata for the first
+        # column.
+        editor = self._metadata_editor(soup)
+        fieldsets = editor.find_all('fieldset')
+        assert 'active' in fieldsets[0]['class']
+        for fieldset in fieldsets[1:]:
+            assert 'active' not in fieldset.get('class', '')
+
+        # Test that the contents of the metadata editor are correct.
+        fieldset = fieldsets[0]  # All the editor contents are in the fieldset.
+
+        # The title in the metadata editor should have the right field name.
+        assert fieldset.find('legend').text.strip() == (
+            'Metadata for {name}'.format(name=schema['fields'][0]['name']))
+
+        # The "name: " <input> in the metadata editor should be pre-filled with
+        # the right field's name.
+        name_input = fieldset.find(id='schema-0-name')
+        assert name_input['value'] == schema['fields'][0]['name']
+
+        # The "type: " <select> in the metadata editor should be pre-selected
+        # to the right field's type.
+        type_select = fieldset.find(id='schema-0-type')
+
+        # The <select> should have one <option> whose value matches the
+        # field's type, and that option should be selected.
+        selected_options = type_select('option',
+                                       value=schema['fields'][0]['type'])
+        assert len(selected_options) == 1
+        assert 'selected' in selected_options[0].attrs
+
+        # All <options> whose value doesn't match the field's type should not
+        # be selected.
+        unselected_options = [
+            option for option in type_select('option')
+            if option['value'] != schema['fields'][0]['type']]
+        for option in unselected_options:
+            assert 'selected' not in option.attrs
+
+    def test_changing_selected_column(self):
+        _, _, _, _, schema, response = self._setup()
+
+        # We'll test clicking no the 2nd, 5th and last columns.
+        for column_index in (1, 4, len(schema['fields']) - 1):
+
+            response = self._click_on_column(column_index, response)
+
+            # Only the right row in the CSV preview should have CSS class
+            # "active".
+            soup = response.html
+            table = self._preview_table(soup)
+            for index, row in enumerate(table.find_all('tr')):
+                if index == column_index:
+                    assert 'active' in row['class']
+                else:
+                    assert 'active' not in row.get('class', '')
+
+            # The metadata editor should show only the metadata for the right
+            # column.
+            editor = self._metadata_editor(soup)
+            fieldsets = editor.find_all('fieldset')
+            for index, fieldset in enumerate(fieldsets):
+                if index == column_index:
+                    assert 'active' in fieldset['class']
+                else:
+                    assert 'active' not in fieldset.get('class', '')
+
+            # Test that the contents of the metadata editor fieldset are right.
+            fieldset = fieldsets[column_index]
+
+            # The title in the metadata editor should have the right field name
+            assert fieldset.find('legend').text.strip() == (
+                'Metadata for {name}'.format(
+                    name=schema['fields'][column_index]['name']))
+
+            # The "name: " <input> in the metadata editor should be pre-filled
+            # with the right field's name.
+            name_input = fieldset.find(
+                id='schema-{column_index}-name'.format(
+                    column_index=column_index))
+            assert name_input['value'] == (
+                schema['fields'][column_index]['name'])
+
+            # The "type: " <select> in the metadata editor should be
+            # pre-selected to the right field's type.
+            type_select = fieldset.find(
+                id='schema-{column_index}-type'.format(
+                    column_index=column_index))
+
+            # The <select> should have one <option> whose value matches the
+            # field's type, and that option should be selected.
+            selected_options = type_select(
+                'option', value=schema['fields'][column_index]['type'])
+            assert len(selected_options) == 1
+            assert 'selected' in selected_options[0].attrs
+
+            # All <options> whose value doesn't match the field's type should
+            # not be selected.
+            unselected_options = [
+                option for option in type_select('option')
+                if option['value'] != schema['fields'][column_index]['type']]
+            for option in unselected_options:
+                assert 'selected' not in option.attrs
+
+    def test_user_values_persist_when_changing_columns(self):
+        '''If the user enters or selects anything in the form and then clicks
+        to go to a different column, they should be able to go back to the
+        previous column and their input should still be there.
+
+        '''
+        _, _, api, resource, original_schema, response = self._setup()
+
+        # Go to column 2, change some of the form values, go to column 4,
+        # change some values, go back to column 2 and check that our changed
+        # values are still there, then go back to column 4 and check that our
+        # values are still there.
+        response = self._click_on_column(2, response)
+        response.forms[0]['schema-2-name'] = 'foo'
+        response.forms[0]['schema-2-type'] = 'integer'
+        response = self._click_on_column(4, response)
+        response.forms[0]['schema-4-name'] = 'bar'
+        response = self._click_on_column(2, response)
+        assert response.forms[0]['schema-2-name'].value == 'foo'
+        assert response.forms[0]['schema-2-type'].value == 'integer'
+        response = self._click_on_column(4, response)
+        assert response.forms[0]['schema-4-name'].value == 'bar'
+
+        # Our changes should not have been saved in the db yet.
+        schema = api.action.resource_schema_show(resource_id=resource['id'])
+        assert schema == original_schema
+
+    def test_rename_resource(self):
+        '''Test that renaming a resource works and doesn't break anything.
+
+        (For example, renaming a resource should not delete its schema!)
+
+        '''
+        _, user, api, resource, _, response = self._setup()
+
         form = response.forms[0]
         form['name'] = 'changed'
+        extra_environ = {'REMOTE_USER': str(user['name'])}
         form.submit('save', extra_environ=extra_environ)
 
         resource = api.action.resource_show(id=resource['id'])
@@ -819,24 +993,12 @@ class TestMetadataEditor(custom_helpers.FunctionalTestBaseClass):
     def test_edit_one_field(self):
         '''Load the metadata editor, edit one schema field, save it.'''
 
-        user = factories.User()
-        dataset = factories.Dataset(user=user)
-        api = ckanapi.TestAppCKAN(self.app, apikey=user['apikey'])
-        csv_file = _get_csv_file(
-            '../test-data/lahmans-baseball-database/PitchingPost.csv')
-        resource = api.action.resource_create(package_id=dataset['id'],
-                                              upload=csv_file)
+        _, user, api, resource, _, response = self._setup()
 
-        # Get the resource edit page.
-        extra_environ = {'REMOTE_USER': str(user['name'])}
-        response = self.app.get(toolkit.url_for(controller='ckanext.datapackager.controllers.package:DataPackagerPackageController',
-                                                action='resource_edit',
-                                                id=dataset['id'],
-                                                resource_id=resource['id']),
-                                extra_environ=extra_environ)
         form = response.forms[0]
         # Change the name of the first column.
         form['schema-0-name'] = 'changed'
+        extra_environ = {'REMOTE_USER': str(user['name'])}
         form.submit('save', extra_environ=extra_environ)
 
         field = api.action.resource_schema_field_show(
@@ -847,21 +1009,7 @@ class TestMetadataEditor(custom_helpers.FunctionalTestBaseClass):
         '''Load the metadata editor, click on one of the columns, edit some of
         its fields, save it.'''
 
-        user = factories.User()
-        dataset = factories.Dataset(user=user)
-        api = ckanapi.TestAppCKAN(self.app, apikey=user['apikey'])
-        csv_file = _get_csv_file(
-            '../test-data/lahmans-baseball-database/PitchingPost.csv')
-        resource = api.action.resource_create(package_id=dataset['id'],
-                                              upload=csv_file)
-
-        # Get the resource edit page.
-        extra_environ = {'REMOTE_USER': str(user['name'])}
-        response = self.app.get(toolkit.url_for(controller='ckanext.datapackager.controllers.package:DataPackagerPackageController',
-                                                action='resource_edit',
-                                                id=dataset['id'],
-                                                resource_id=resource['id']),
-                                extra_environ=extra_environ)
+        _, user, api, resource, _, response = self._setup()
 
         # Find and click the button for the "IPouts" column.
         response.forms[0].submit('go-to-column-12')
@@ -870,6 +1018,7 @@ class TestMetadataEditor(custom_helpers.FunctionalTestBaseClass):
         form = response.forms[0]
         form['schema-12-min'] = '50'
         form['schema-12-mean'] = '50'
+        extra_environ = {'REMOTE_USER': str(user['name'])}
         form.submit('save', extra_environ=extra_environ)
 
         field = api.action.resource_schema_field_show(
@@ -879,3 +1028,92 @@ class TestMetadataEditor(custom_helpers.FunctionalTestBaseClass):
         # sill be ints, this is a bug.
         assert field['min'] == '50'
         assert field['mean'] == '50'
+
+    def test_edit_multiple_columns(self):
+        '''Edit metadata attributes of multiple columns at once and then save.
+
+        '''
+        _, user, api, resource, original_schema, response = self._setup()
+
+        response = self._click_on_column(2, response)
+        response.forms[0]['schema-2-name'] = 'foo'
+        response.forms[0]['schema-2-type'] = 'integer'
+        response = self._click_on_column(4, response)
+        response.forms[0]['schema-4-name'] = 'bar'
+
+        extra_environ = {'REMOTE_USER': str(user['name'])}
+        response.forms[0].submit('save', extra_environ=extra_environ)
+
+        schema = api.action.resource_schema_show(resource_id=resource['id'])
+        for index, field in enumerate(schema['fields']):
+            if index == 2:
+                assert field['name'] == 'foo'
+                assert field['type'] == 'integer'
+            elif index == 4:
+                assert field['name'] == 'bar'
+                assert field['type'] == original_schema['fields'][4]['type']
+            else:
+                # FIXME: We should be able to assert this, but we can't because
+                # all the attribute values get turned into strings when you
+                # click Save. This is a bug.
+                #assert field == original_schema['fields'][index]
+                pass
+
+    def test_error_when_moving_between_columns(self):
+        '''If you enter an invalid value then try to move to another column,
+        it should reload the same column and show you an error.'''
+
+        _, user, _, _, _, response = self._setup()
+        extra_environ = {'REMOTE_USER': str(user['name'])}
+
+        response = self._click_on_column(2, response,
+                                         extra_environ=extra_environ)
+        response.forms[0]['schema-2-name'] = ''  # An invalid name.
+        response = self._click_on_column(4, response,
+                                         extra_environ=extra_environ)
+
+        fieldset = self._metadata_editor_fieldset(response)
+        name_input = fieldset.find('input', id='schema-2-name')
+        error_block = fieldset.find(class_='error-block')
+        assert error_block.text.strip() == 'Missing value'
+        # The error block should be next to the "name: " <input>
+        assert name_input in [s for s in error_block.previous_siblings]
+
+    def test_error_when_saving(self):
+        '''If you enter an invalid value then try to save, it should reload the
+        same column and show you an error.'''
+
+        _, user, _, _, _, response = self._setup()
+        extra_environ = {'REMOTE_USER': str(user['name'])}
+
+        response = self._click_on_column(2, response,
+                                         extra_environ=extra_environ)
+        response.forms[0]['schema-2-name'] = ''  # An invalid name.
+        response = response.forms[0].submit('save',
+                                            extra_environ=extra_environ)
+
+        fieldset = self._metadata_editor_fieldset(response)
+        name_input = fieldset.find('input', id='schema-2-name')
+        error_block = fieldset.find(class_='error-block')
+        assert error_block.text.strip() == 'Missing value'
+        # The error block should be next to the "name: " <input>
+        assert name_input in [s for s in error_block.previous_siblings]
+
+    # TODO: Test deleting attributes from multiple columns at once and then
+    # saving. Currently it's hard to write tests because all of the delete
+    # buttons have the same name (which may not be valid HTML).
+
+    # TODO: Test adding attributes to multiple columns at once and then saving.
+    # Currently it's hard to write tests because all of the add buttons have
+    # the same name (which may not be valid HTML).
+
+    # TODO: Test that if you enter text into the add attribute <input>s but
+    # don't click add, then go to another column, then go back to the first
+    # column, your text is still there waiting to be added.
+
+    # TODO: Test that you can't add an attribute with an empty key.
+
+    # TODO: Test adding an attribute then deleting it again before hitting
+    # save.
+
+    # TODO: One big test, do everything at once.
