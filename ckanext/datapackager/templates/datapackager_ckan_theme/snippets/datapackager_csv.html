@@ -36,7 +36,8 @@ schema_errors -
                 {% set row_number = loop.index0 %}
                 {% set schema_field = schema_fields[row_number] %}
                 {% set field_errors = schema_errors[row_number] %}
-                <fieldset name="Metadata for {{ schema_field['name'] }}" {% if selected_column != loop.index0 %}style="display:none;"{% endif %}>
+                <fieldset name="Metadata for {{ schema_field['name'] }}"
+                          {% if selected_column == loop.index0 %}class="active"{% endif %}>
                   <legend name="Metadata for {{ schema_field['name'] }}">
                     <h2 class="module-heading">
                       <i class="icon-copy"></i>

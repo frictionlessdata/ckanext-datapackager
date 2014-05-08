@@ -121,6 +121,16 @@
   color: #fff;
   text-decoration: none;
 }
+
+/* Hide all the fieldsets in the metadata editor, then show only the active
+ fieldset. */
+.ckanext-datapreview .meta fieldset {
+  display: none;
+}
+.ckanext-datapreview .meta fieldset.active {
+  display: block;
+}
+
 .data.panel tr th button {
   border: 0;
   padding: 0;
