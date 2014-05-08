@@ -34,6 +34,11 @@
                   for_edit=true %}
       {% endif %}
 
+      <span class="warning-block info-block info-inline">
+        <i class="icon-warning-sign"></i>
+        Reuploading a file will overwrite the current file's schema!
+      </span>
+
       <div style="padding-right:25px;">
         {% set is_upload = (data.url_type == 'upload') %}
         {{ form.image_upload(data, errors, field_url='url', field_upload='upload', field_clear='clear_upload',
