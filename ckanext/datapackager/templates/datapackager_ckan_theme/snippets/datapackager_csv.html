@@ -59,19 +59,18 @@ schema_errors -
                       {% if key == 'type' %}
                         <select id="schema-{{ row_number }}-{{ key }}"
                           name="schema-{{ row_number }}-{{ key }}">
-                          <option value="string">string</option>
-                          <option value="number">number</option>
-                          <option value="integer">integer</option>
-                          <option value="date">date</option>
-                          <option value="time">time</option>
-                          <option value="datetime">datetime</option>
-                          <option value="boolean">boolean</option>
-                          <option value="binary">binary</option>
-                          <option value="object">object</option>
-                          <option value="geopoint">geopoint</option>
-                          <option value="geojson">geojson</option>
-                          <option value="array">array</option>
-                          <option value="any">any</option>
+                          {% for type in ('string', 'number', 'integer',
+                                          'date', 'time', 'datetime',
+                                          'boolean', 'binary', 'object',
+                                          'geopoint', 'geojson', 'array',
+                                          'any') %}
+                            <option value="{{ type }}"
+                                    {% if type == schema_field.type %}
+                                      selected
+                                    {% endif %}>
+                              {{ type }}
+                            </option>
+                          {% endfor %}
                         </select>
                       {% else %}
                         <input id="schema-{{ row_number }}-{{ key }}"
