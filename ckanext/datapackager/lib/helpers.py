@@ -104,3 +104,16 @@ def get_fkey_with_reference(fkey):
         return zip(fkey['fields'], fkey['reference']['fields'])
     except KeyError:
         return []
+
+
+def get_user_package_count(user):
+    context = {
+        'model': model,
+        'session': model.Session,
+        'user': toolkit.c.user,
+    }
+    try:
+        user_dict = toolkit.get_action('user_show')(context, {'id': user})
+        return len(user_dict['datasets'])
+    except (toolkit.ValidationError, toolkit.NotAuthorized, toolkit.NotFound):
+        return 0

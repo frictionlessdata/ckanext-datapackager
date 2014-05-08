@@ -394,6 +394,7 @@ class DataPackagerPlugin(plugins.SingletonPlugin, toolkit.DefaultDatasetForm):
             'datapackager_csv_data': custom_helpers.csv_data,
             'group_by_name': custom_helpers.group_by_name,
             'get_fkey_with_reference': custom_helpers.get_fkey_with_reference,
+            'get_user_package_count': custom_helpers.get_user_package_count,
         }
 
     def after_upload(self, context, resource):
