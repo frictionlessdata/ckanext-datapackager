@@ -1,5 +1,11 @@
 {% extends "page.html" %}
 
+{% block styles %}
+  {{ super() }}
+  {% resource 'datapackager/datapackager.css' %}
+  {% resource 'datapackager/api.css' %}
+{% endblock %}
+
 {% block subtitle %}{{ _('Data Packager API Documentation') }}{% endblock %}
 
 {% block breadcrumb_content %}
@@ -10,9 +16,428 @@
   <article class="module">
     <div class="module-content">
       {% block about %}
-        <h1 class="page-heading">Data Packager API Documentation</h1>
+      <div class="section" id="data-packager-api-documentation">
+        <h1>Data Packager API Documentation</h1>
+        <p>The Data Packager allows you edit data packages via a JSON api, creating packages and
+        files works the same as the CKAN API. For further details of the CKAN API see
+        <a class="reference external" href="http://docs.ckan.org/en/latest/api/index.html#action-api-reference">http://docs.ckan.org/en/latest/api/index.html#action-api-reference</a> . The Data Packager
+        API is an extension on top of the CKAN API, the additional functions are detailed here.</p>
+        <div class="section" id="example">
+          <h2>Example</h2>
+          <p>These examples all use the ckanapi command, for more details see <a class="reference external" href="https://github.com/ckan/ckanapi">https://github.com/ckan/ckanapi</a></p>
+          <p>After creating a package and uploading a csv file from the web interface you
+          can you can fetch it via the api using:</p>
+          <div class="highlight-python"><pre>$ ckanapi action resource_schema_show resource_id=&lt;resource id&gt;
+{
+  "fields": [
+  ]
+}</pre>
+          </div>
+          <p>We can add fields to the schema of our csv file using <cite>resource_schema_field_create</cite>:</p>
+          <div class="highlight-python"><pre>$ ckanapi action resource_schema_field_create resource_id=&lt;resource id&gt; name=my-field type=string
+{
+  "index": 0,
+  "name": "my-field",
+  "type": "string"
+}</pre>
+          </div>
+          <p>And set our new field as the primary key:</p>
+          <div class="highlight-python"><pre>$ ckanapi action resource_schema_pkey_create resource_id=&lt;resource id&gt; pkey=my-field  -c tsb.ini
+"my-field"</pre>
+          </div>
+          <p>We can create another field in the schema and set it as a foreign key to another
+          field in a different csv file as long as it belongs to the same datapackage:</p>
+          <div class="highlight-python"><pre>$ ckanapi action resource_schema_field_create resource_id=&lt;resource id&gt; name=another-field type=string
+{
+  "index": 1,
+  "name": "another-field",
+}
 
-        <p>TODO: Insert API docs here.</p>
+$ ckanapi action resource_schema_fkey_create resource_id=&lt;resource id&gt; field=another-field referenced_field='another-field-id' referenced_resource_id=&lt;other resource id&gt; -c tsb.ini
+{
+  "fields": [
+    {
+      "index": 0,
+      "name": "my-field",
+      "type": "string"
+    },
+    {
+      "index": 1,
+      "name": "another-field"
+    }
+  ],
+  "foreignKeys": [
+    {
+      "fields": "another-field",
+      "fkey_uid": "abcdf1234",
+      "reference": {
+        "_resource_id": "&lt;other resource id&gt;",
+        "fields": "another-field-id",
+        "resource": "another.csv"
+      }
+    }
+  ],
+  "primaryKey": "my-field"
+}</pre>
+          </div>
+        </div>
+      </div>
+      <div class="section" id="api-reference">
+        <h1>API Reference<a class="headerlink" href="#api-reference" title="Permalink to this headline">¶</a></h1>
+        <div class="section" id="schemas-and-fields">
+          <h2>Schemas and fields<a class="headerlink" href="#schemas-and-fields" title="Permalink to this headline">¶</a></h2>
+          <dl class="function">
+            <dt id="ckanext.datapackager.logic.action.create.resource_schema_field_create">
+            <tt class="descclassname">ckanext.datapackager.logic.action.create.</tt><tt class="descname">resource_schema_field_create</tt><big>(</big><em>context</em>, <em>data_dict</em><big>)</big><a class="headerlink" href="#ckanext.datapackager.logic.action.create.resource_schema_field_create" title="Permalink to this definition">¶</a></dt>
+            <dd><p>Create a new field in a resource&#8217;s schema.</p>
+            <p>The schema is stored as a JSON string in the resource&#8217;s <tt class="docutils literal"><span class="pre">schema</span></tt> field.</p>
+            <p>If the resource doesn&#8217;t have a schema yet one will be created.</p>
+            <p>If the schema already contains a field with the given index or name,
+            a ValidationError will be raised. (If you want to update the attributes
+            of an existing field, use
+            <a class="reference internal" href="#ckanext.datapackager.logic.action.update.resource_schema_field_update" title="ckanext.datapackager.logic.action.update.resource_schema_field_update"><tt class="xref py py-func docutils literal"><span class="pre">resource_schema_field_update()</span></tt></a>.)</p>
+            <p>Any other custom parameters beyond those described below can be given, and
+            they will be stored in the field&#8217;s entry in the schema. The values of these
+            custom parameters will be converted to strings.</p>
+            <table class="docutils field-list" frame="void" rules="none">
+              <col class="field-name" />
+              <col class="field-body" />
+              <tbody valign="top">
+              <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+                    <li><strong>resource_id</strong> &#8211; the ID of the resource whose schema the field should be
+                    added to</li>
+                    <li><strong>index</strong> (<em>int</em>) &#8211; the index number of the column in the CSV file that this
+                    field corresponds to: 0 means the first column, 1 means the second
+                    column, and so on</li>
+                    <li><strong>name</strong> (<em>string</em>) &#8211; the name of the field, this should match the title of the
+                    field/column in the data file if there is one</li>
+                    <li><strong>title</strong> (<em>string</em>) &#8211; a nicer human readable label or title for the field
+                    (optional)</li>
+                    <li><strong>description</strong> (<em>string</em>) &#8211; a description of the field (optional)</li>
+                    <li><strong>type</strong> (<em>string</em>) &#8211; the type of the field, one of <tt class="docutils literal"><span class="pre">&quot;string&quot;</span></tt>, <tt class="docutils literal"><span class="pre">&quot;number&quot;</span></tt>,
+                    <tt class="docutils literal"><span class="pre">&quot;integer&quot;</span></tt>, <tt class="docutils literal"><span class="pre">&quot;date&quot;</span></tt>, <tt class="docutils literal"><span class="pre">&quot;time&quot;</span></tt>, <tt class="docutils literal"><span class="pre">&quot;datetime&quot;</span></tt>,
+                    <tt class="docutils literal"><span class="pre">&quot;boolean&quot;</span></tt>, <tt class="docutils literal"><span class="pre">&quot;binary&quot;</span></tt>, <tt class="docutils literal"><span class="pre">&quot;object&quot;</span></tt>, <tt class="docutils literal"><span class="pre">&quot;geopoint&quot;</span></tt>,
+                    <tt class="docutils literal"><span class="pre">&quot;geojson&quot;</span></tt>, <tt class="docutils literal"><span class="pre">&quot;array&quot;</span></tt> or <tt class="docutils literal"><span class="pre">&quot;any&quot;</span></tt>
+                    (optional, default: <tt class="docutils literal"><span class="pre">&quot;string&quot;</span></tt>)</li>
+                    <li><strong>format</strong> (<em>string</em>) &#8211; a string specifying the format of the field,
+                    e.g. <tt class="docutils literal"><span class="pre">&quot;DD.MM.YYYY&quot;</span></tt> for a field of type <tt class="docutils literal"><span class="pre">&quot;date&quot;</span></tt>
+                    (optional)</li>
+                  </ul>
+                </td>
+              </tr>
+              <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">the field that was created</p>
+                </td>
+              </tr>
+              <tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">dict</p>
+                </td>
+              </tr>
+              </tbody>
+            </table>
+          </dd></dl>
+
+          <dl class="function">
+            <dt id="ckanext.datapackager.logic.action.get.resource_schema_field_show">
+            <tt class="descclassname">ckanext.datapackager.logic.action.get.</tt><tt class="descname">resource_schema_field_show</tt><big>(</big><em>context</em>, <em>data_dict</em><big>)</big><a class="headerlink" href="#ckanext.datapackager.logic.action.get.resource_schema_field_show" title="Permalink to this definition">¶</a></dt>
+            <dd><p>Return the given resource schema field.</p>
+            <table class="docutils field-list" frame="void" rules="none">
+              <col class="field-name" />
+              <col class="field-body" />
+              <tbody valign="top">
+              <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+                    <li><strong>resource_id</strong> (<em>string</em>) &#8211; the ID of the resource</li>
+                    <li><strong>index</strong> (<em>int</em>) &#8211; the index of the field to return</li>
+                  </ul>
+                </td>
+              </tr>
+              <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">the field</p>
+                </td>
+              </tr>
+              <tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">dict</p>
+                </td>
+              </tr>
+              </tbody>
+            </table>
+          </dd></dl>
+
+          <dl class="function">
+            <dt id="ckanext.datapackager.logic.action.get.resource_schema_show">
+            <tt class="descclassname">ckanext.datapackager.logic.action.get.</tt><tt class="descname">resource_schema_show</tt><big>(</big><em>context</em>, <em>data_dict</em><big>)</big><a class="headerlink" href="#ckanext.datapackager.logic.action.get.resource_schema_show" title="Permalink to this definition">¶</a></dt>
+            <dd><p>Return the given resource&#8217;s schema.</p>
+            <table class="docutils field-list" frame="void" rules="none">
+              <col class="field-name" />
+              <col class="field-body" />
+              <tbody valign="top">
+              <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>resource_id</strong> (<em>string</em>) &#8211; the ID of the resource whose schema should be returned</td>
+              </tr>
+              <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">the resource&#8217;s schema</td>
+              </tr>
+              <tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">dict</td>
+              </tr>
+              </tbody>
+            </table>
+          </dd></dl>
+
+          <dl class="function">
+            <dt id="ckanext.datapackager.logic.action.update.resource_schema_field_update">
+            <tt class="descclassname">ckanext.datapackager.logic.action.update.</tt><tt class="descname">resource_schema_field_update</tt><big>(</big><em>context</em>, <em>data_dict</em>, <em>validate_only=False</em><big>)</big><a class="headerlink" href="#ckanext.datapackager.logic.action.update.resource_schema_field_update" title="Permalink to this definition">¶</a></dt>
+            <dd><p>Update a new field in a resource&#8217;s schema.</p>
+            <p>The schema is stored as a JSON string in the resource&#8217;s <tt class="docutils literal"><span class="pre">schema</span></tt> field.</p>
+            <p>Any other custom parameters beyond those described below can be given, and
+            they will be stored in the field&#8217;s entry in the schema. The values of these
+            custom parameters will be converted to strings.</p>
+            <table class="docutils field-list" frame="void" rules="none">
+              <col class="field-name" />
+              <col class="field-body" />
+              <tbody valign="top">
+              <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+                    <li><strong>resource_id</strong> &#8211; the ID of the resource whose schema should be updated</li>
+                    <li><strong>index</strong> (<em>int</em>) &#8211; the index number of the field to update, this is the number
+                    of the column in the CSV file that the field corresponds to:
+                    0 means the first column, 1 means the second column, and so
+                    on</li>
+                    <li><strong>name</strong> (<em>string</em>) &#8211; the name of the field, this should match the title of the
+                    field/column in the data file if there is one</li>
+                    <li><strong>title</strong> (<em>string</em>) &#8211; a nicer human readable label or title for the field
+                    (optional)</li>
+                    <li><strong>description</strong> (<em>string</em>) &#8211; a description of the field (optional)</li>
+                    <li><strong>type</strong> (<em>string</em>) &#8211; the type of the field, one of <tt class="docutils literal"><span class="pre">&quot;string&quot;</span></tt>, <tt class="docutils literal"><span class="pre">&quot;number&quot;</span></tt>,
+                    <tt class="docutils literal"><span class="pre">&quot;integer&quot;</span></tt>, <tt class="docutils literal"><span class="pre">&quot;date&quot;</span></tt>, <tt class="docutils literal"><span class="pre">&quot;time&quot;</span></tt>, <tt class="docutils literal"><span class="pre">&quot;datetime&quot;</span></tt>,
+                    <tt class="docutils literal"><span class="pre">&quot;boolean&quot;</span></tt>, <tt class="docutils literal"><span class="pre">&quot;binary&quot;</span></tt>, <tt class="docutils literal"><span class="pre">&quot;object&quot;</span></tt>, <tt class="docutils literal"><span class="pre">&quot;geopoint&quot;</span></tt>,
+                    <tt class="docutils literal"><span class="pre">&quot;geojson&quot;</span></tt>, <tt class="docutils literal"><span class="pre">&quot;array&quot;</span></tt> or <tt class="docutils literal"><span class="pre">&quot;any&quot;</span></tt>
+                    (optional, default: <tt class="docutils literal"><span class="pre">&quot;string&quot;</span></tt>)</li>
+                    <li><strong>format</strong> (<em>string</em>) &#8211; a string specifying the format of the field,
+                    e.g. <tt class="docutils literal"><span class="pre">&quot;DD.MM.YYYY&quot;</span></tt> for a field of type <tt class="docutils literal"><span class="pre">&quot;date&quot;</span></tt>
+                    (optional)</li>
+                  </ul>
+                </td>
+              </tr>
+              <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">the updated field</p>
+                </td>
+              </tr>
+              <tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">dict</p>
+                </td>
+              </tr>
+              </tbody>
+            </table>
+          </dd></dl>
+
+          <dl class="function">
+            <dt id="ckanext.datapackager.logic.action.delete.resource_schema_field_delete">
+            <tt class="descclassname">ckanext.datapackager.logic.action.delete.</tt><tt class="descname">resource_schema_field_delete</tt><big>(</big><em>context</em>, <em>data_dict</em><big>)</big><a class="headerlink" href="#ckanext.datapackager.logic.action.delete.resource_schema_field_delete" title="Permalink to this definition">¶</a></dt>
+            <dd><p>Delete a field from a resource&#8217;s schema.</p>
+            <table class="docutils field-list" frame="void" rules="none">
+              <col class="field-name" />
+              <col class="field-body" />
+              <tbody valign="top">
+              <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+                    <li><strong>resource_id</strong> &#8211; the ID of the resource whose schema the field should be
+                    deleted from</li>
+                    <li><strong>index</strong> (<em>int</em>) &#8211; the index number of the field to delete</li>
+                  </ul>
+                </td>
+              </tr>
+              </tbody>
+            </table>
+          </dd></dl>
+
+        </div>
+        <div class="section" id="primary-keys">
+          <h2>Primary Keys<a class="headerlink" href="#primary-keys" title="Permalink to this headline">¶</a></h2>
+          <dl class="function">
+            <dt id="ckanext.datapackager.logic.action.create.resource_schema_pkey_create">
+            <tt class="descclassname">ckanext.datapackager.logic.action.create.</tt><tt class="descname">resource_schema_pkey_create</tt><big>(</big><em>context</em>, <em>data_dict</em><big>)</big><a class="headerlink" href="#ckanext.datapackager.logic.action.create.resource_schema_pkey_create" title="Permalink to this definition">¶</a></dt>
+            <dd><p>Add a primary key to a resource&#8217;s schema.</p>
+            <table class="docutils field-list" frame="void" rules="none">
+              <col class="field-name" />
+              <col class="field-body" />
+              <tbody valign="top">
+              <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+                    <li><strong>resource_id</strong> (<em>string</em>) &#8211; the ID of the resource</li>
+                    <li><strong>pkey</strong> (<em>string or iterable of strings</em>) &#8211; the primary key, either the name of one of the fields or a
+                    list of field names from the resource&#8217;s schema</li>
+                  </ul>
+                </td>
+              </tr>
+              <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">the primary key that was created</p>
+                </td>
+              </tr>
+              <tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">string or list of strings</p>
+                </td>
+              </tr>
+              </tbody>
+            </table>
+          </dd></dl>
+
+          <dl class="function">
+            <dt id="ckanext.datapackager.logic.action.get.resource_schema_pkey_show">
+            <tt class="descclassname">ckanext.datapackager.logic.action.get.</tt><tt class="descname">resource_schema_pkey_show</tt><big>(</big><em>context</em>, <em>data_dict</em><big>)</big><a class="headerlink" href="#ckanext.datapackager.logic.action.get.resource_schema_pkey_show" title="Permalink to this definition">¶</a></dt>
+            <dd><p>Return the given resource&#8217;s primary key.</p>
+            <table class="docutils field-list" frame="void" rules="none">
+              <col class="field-name" />
+              <col class="field-body" />
+              <tbody valign="top">
+              <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>resource_id</strong> (<em>string</em>) &#8211; the ID of the resource whose schema should be returned</td>
+              </tr>
+              <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">the resource&#8217;s primary key</td>
+              </tr>
+              <tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">string</td>
+              </tr>
+              </tbody>
+            </table>
+          </dd></dl>
+
+          <dl class="function">
+            <dt id="ckanext.datapackager.logic.action.update.resource_schema_pkey_update">
+            <tt class="descclassname">ckanext.datapackager.logic.action.update.</tt><tt class="descname">resource_schema_pkey_update</tt><big>(</big><em>context</em>, <em>data_dict</em><big>)</big><a class="headerlink" href="#ckanext.datapackager.logic.action.update.resource_schema_pkey_update" title="Permalink to this definition">¶</a></dt>
+            <dd><p>Update resource&#8217;s schema&#8217;s primary key.</p>
+            <table class="docutils field-list" frame="void" rules="none">
+              <col class="field-name" />
+              <col class="field-body" />
+              <tbody valign="top">
+              <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+                    <li><strong>resource_id</strong> (<em>string</em>) &#8211; the ID of the resource</li>
+                    <li><strong>pkey</strong> (<em>string or iterable of strings</em>) &#8211; the new value for the primary key, either the name of one of
+                    the fields or a list of field names from the resource&#8217;s schema</li>
+                  </ul>
+                </td>
+              </tr>
+              <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">the updated primary key</p>
+                </td>
+              </tr>
+              <tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">string or list of strings</p>
+                </td>
+              </tr>
+              </tbody>
+            </table>
+          </dd></dl>
+
+          <dl class="function">
+            <dt id="ckanext.datapackager.logic.action.delete.resource_schema_pkey_delete">
+            <tt class="descclassname">ckanext.datapackager.logic.action.delete.</tt><tt class="descname">resource_schema_pkey_delete</tt><big>(</big><em>context</em>, <em>data_dict</em><big>)</big><a class="headerlink" href="#ckanext.datapackager.logic.action.delete.resource_schema_pkey_delete" title="Permalink to this definition">¶</a></dt>
+            <dd><p>Delete a resource&#8217;s schema&#8217;s primary key.</p>
+            <table class="docutils field-list" frame="void" rules="none">
+              <col class="field-name" />
+              <col class="field-body" />
+              <tbody valign="top">
+              <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>resource_id</strong> (<em>string</em>) &#8211; the ID of the resource</td>
+              </tr>
+              </tbody>
+            </table>
+          </dd></dl>
+
+        </div>
+        <div class="section" id="foreign-keys">
+          <h2>Foreign Keys<a class="headerlink" href="#foreign-keys" title="Permalink to this headline">¶</a></h2>
+          <dl class="function">
+            <dt id="ckanext.datapackager.logic.action.create.resource_schema_fkey_create">
+            <tt class="descclassname">ckanext.datapackager.logic.action.create.</tt><tt class="descname">resource_schema_fkey_create</tt><big>(</big><em>context</em>, <em>data_dict</em><big>)</big><a class="headerlink" href="#ckanext.datapackager.logic.action.create.resource_schema_fkey_create" title="Permalink to this definition">¶</a></dt>
+            <dd><p>Add a foreign key to a resource&#8217;s schema.</p>
+            <table class="docutils field-list" frame="void" rules="none">
+              <col class="field-name" />
+              <col class="field-body" />
+              <tbody valign="top">
+              <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+                    <li><strong>resource_id</strong> (<em>string</em>) &#8211; the ID of the resource</li>
+                    <li><strong>referenced_resource_id</strong> &#8211; the resource_id of containing the field
+                    this foreign key is pointing to.</li>
+                    <li><strong>referenced_resource_id</strong> &#8211; string</li>
+                    <li><strong>referenced_field</strong> &#8211; the field referenced in the foreign csv file</li>
+                  </ul>
+                </td>
+              </tr>
+              </tbody>
+            </table>
+          </dd></dl>
+
+          <dl class="function">
+            <dt id="ckanext.datapackager.logic.action.get.resource_schema_fkey_show">
+            <tt class="descclassname">ckanext.datapackager.logic.action.get.</tt><tt class="descname">resource_schema_fkey_show</tt><big>(</big><em>context</em>, <em>data_dict</em><big>)</big><a class="headerlink" href="#ckanext.datapackager.logic.action.get.resource_schema_fkey_show" title="Permalink to this definition">¶</a></dt>
+            <dd><p>Return the given resource&#8217;s foreign keys</p>
+            <table class="docutils field-list" frame="void" rules="none">
+              <col class="field-name" />
+              <col class="field-body" />
+              <tbody valign="top">
+              <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>resource_id</strong> (<em>string</em>) &#8211; the ID of the resource whose schema should be returned</td>
+              </tr>
+              <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">the resource&#8217;s primary key</td>
+              </tr>
+              <tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">list of string</td>
+              </tr>
+              </tbody>
+            </table>
+          </dd></dl>
+
+          <dl class="function">
+            <dt id="ckanext.datapackager.logic.action.update.resource_schema_fkey_update">
+            <tt class="descclassname">ckanext.datapackager.logic.action.update.</tt><tt class="descname">resource_schema_fkey_update</tt><big>(</big><em>context</em>, <em>data_dict</em><big>)</big><a class="headerlink" href="#ckanext.datapackager.logic.action.update.resource_schema_fkey_update" title="Permalink to this definition">¶</a></dt>
+            <dd><p>Update a foreign key to a resource&#8217;s schema.</p>
+            <table class="docutils field-list" frame="void" rules="none">
+              <col class="field-name" />
+              <col class="field-body" />
+              <tbody valign="top">
+              <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+                    <li><strong>resource_id</strong> (<em>string</em>) &#8211; the ID of the resource</li>
+                    <li><strong>referenced_resource_id</strong> &#8211; the resource_id of containing the field
+                    this foreign key is pointing to.</li>
+                    <li><strong>referenced_resource_id</strong> &#8211; string</li>
+                    <li><strong>referenced_field</strong> &#8211; the field referenced in the foreign csv file</li>
+                  </ul>
+                </td>
+              </tr>
+              </tbody>
+            </table>
+          </dd></dl>
+
+          <dl class="function">
+            <dt id="ckanext.datapackager.logic.action.delete.resource_schema_fkey_delete">
+            <tt class="descclassname">ckanext.datapackager.logic.action.delete.</tt><tt class="descname">resource_schema_fkey_delete</tt><big>(</big><em>context</em>, <em>data_dict</em><big>)</big><a class="headerlink" href="#ckanext.datapackager.logic.action.delete.resource_schema_fkey_delete" title="Permalink to this definition">¶</a></dt>
+            <dd><p>Delete a resource&#8217;s schema&#8217;s foreign key.</p>
+            <table class="docutils field-list" frame="void" rules="none">
+              <col class="field-name" />
+              <col class="field-body" />
+              <tbody valign="top">
+              <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+                    <li><strong>resource_id</strong> (<em>string</em>) &#8211; the ID of the resource</li>
+                    <li><strong>fkey_uid</strong> &#8211; the fkey_uid of the foreign key to delete</li>
+                  </ul>
+                </td>
+              </tr>
+              </tbody>
+            </table>
+          </dd></dl>
+
+        </div>
+        <div class="section" id="other">
+          <h2>Other<a class="headerlink" href="#other" title="Permalink to this headline">¶</a></h2>
+          <dl class="function">
+            <dt id="ckanext.datapackager.logic.action.get.package_to_tabular_data_format">
+            <tt class="descclassname">ckanext.datapackager.logic.action.get.</tt><tt class="descname">package_to_tabular_data_format</tt><big>(</big><em>context</em>, <em>data_dict</em><big>)</big><a class="headerlink" href="#ckanext.datapackager.logic.action.get.package_to_tabular_data_format" title="Permalink to this definition">¶</a></dt>
+            <dd><p>Return the given CKAN package in Tabular Data Format.</p>
+            <p>This returns just the data package metadata in JSON format (what would be
+            the contents of the datapackage.json file), it does not return the whole
+            multi-file package including datapackage.json file and additional data
+            files.</p>
+            <p>If a zipstream.ZipFile object is provided with key &#8220;pkg_zipstream&#8221; in the
+            context dict, then a datapackage.json file and data files for each of the
+            package&#8217;s resources (if the resource has a file uploaded to the FileStore)
+            will be added into the zipstream.</p>
+            <table class="docutils field-list" frame="void" rules="none">
+              <col class="field-name" />
+              <col class="field-body" />
+              <tbody valign="top">
+              <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>package_id</strong> (<em>string</em>) &#8211; the ID of the package</td>
+              </tr>
+              <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">the data package metadata</td>
+              </tr>
+              <tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">JSON</td>
+              </tr>
+              </tbody>
+            </table>
+          </dd></dl>
+
+        </div>
+      </div>
+
       {% endblock %}
     </div>
   </article>
