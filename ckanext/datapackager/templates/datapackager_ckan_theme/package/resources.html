@@ -1,7 +1,0 @@
-{% ckan_extends %}
-
-{# Change 'Add new resource' to 'Add new file', could be done in a translation
-   instead. #}
-{% block page_primary_action %}
-  {% link_for _('Add new file'), controller='package', action='new_resource', id=c.pkg_dict.name, class_='btn btn-primary', icon='plus' %}
-{% endblock %}
