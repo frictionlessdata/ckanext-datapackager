@@ -3,8 +3,8 @@
 '''
 import nose.tools
 
-import ckan.new_tests.factories as factories
-import ckan.new_tests.helpers as helpers
+import ckan.tests.factories as factories
+import ckan.tests.helpers as helpers
 import ckanext.datapackager.tests.helpers as custom_helpers
 import ckan.plugins.toolkit as toolkit
 

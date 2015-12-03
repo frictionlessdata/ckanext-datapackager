@@ -3,7 +3,7 @@ import os
 import nose.tools
 import ckanapi as ckanapi
 
-import ckan.new_tests.factories as factories
+import ckan.tests.factories as factories
 
 import ckanext.datapackager.lib.util as util
 import ckanext.datapackager.tests.helpers as custom_helpers

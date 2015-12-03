@@ -7,7 +7,7 @@ import json
 import nose.tools
 import ckanapi
 
-import ckan.new_tests.factories as factories
+import ckan.tests.factories as factories
 import ckan.plugins.toolkit as toolkit
 import ckanext.datapackager.tests.helpers as custom_helpers
 
