@@ -32,15 +32,19 @@ class TestDataPackagerPackageController(
         dataset = factories.Dataset()
 
         # Add a resource with a linked-to, not uploaded, data file.
-        linked_resource = factories.Resource(dataset=dataset,
+        linked_resource = factories.Resource(package_id=dataset['id'],
             url='http://test.com/test-url-1',
             schema='{"fields":[{"type":"string", "name":"col1"}]}')
 
         # Add a resource with an uploaded data file.
         csv_path = '../test-data/lahmans-baseball-database/AllstarFull.csv'
         csv_file = _get_csv_file(csv_path)
-        api.action.resource_create(package_id=dataset['id'],
-            name='AllstarFull.csv', upload=csv_file)
+        api.action.resource_create(
+            package_id=dataset['id'],
+            name='AllstarFull.csv',
+            upload=csv_file,
+            url=''  # FIXME: See https://github.com/ckan/ckan/issues/2769
+        )
 
         # Download the package's SDF ZIP file.
         url = toolkit.url_for(
@@ -89,8 +93,12 @@ class TestDataPackagerPackageController(
             '../test-data/lahmans-baseball-database/TeamsHalf.csv')
         for path in csv_paths:
             csv_file = _get_csv_file(path)
-            api.action.resource_create(package_id=dataset['id'],
-                name=filename(path), upload=csv_file)
+            api.action.resource_create(
+                package_id=dataset['id'],
+                name=filename(path),
+                upload=csv_file,
+                url=''  # FIXME: See https://github.com/ckan/ckan/issues/2769
+            )
 
         # Download the package's SDF ZIP file.
         url = toolkit.url_for(

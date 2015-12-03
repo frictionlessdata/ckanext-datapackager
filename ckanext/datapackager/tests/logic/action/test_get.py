@@ -14,9 +14,9 @@ class TestGet(custom_helpers.FunctionalTestBaseClass):
     def test_package_to_tabular_data_format(self):
 
         dataset = factories.Dataset()
-        factories.Resource(dataset=dataset, url='http://test.com/test-url-1',
+        factories.Resource(package_id=dataset['id'], url='http://test.com/test-url-1',
             schema='{"fields":[{"type":"string", "name":"col1"}]}')
-        factories.Resource(dataset=dataset, url='http://test.com/test-url-2',
+        factories.Resource(package_id=dataset['id'], url='http://test.com/test-url-2',
             schema='{"fields":[{"type":"string", "name":"col1"}]}')
 
         tdf = helpers.call_action('package_to_tabular_data_format',
