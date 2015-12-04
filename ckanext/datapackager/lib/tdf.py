@@ -174,6 +174,6 @@ def _parse_extras(pkg_dict):
               in pkg_dict.get('extras', [])]
 
     if extras:
-        result.update(dict(extras))
+        result['extras'] = dict(extras)
 
     return result

@@ -109,8 +109,6 @@ class TestConvertToDict(object):
         nose.tools.assert_equals(result.get('keywords'), keywords)
 
     def test_dataset_extras(self):
-        # FIXME: What if the extras key already exist in the dataset? For
-        # example, "sources". Shall we throw an exception?
         self.dataset_dict.update({
             'extras': [
                 {'key': 'title_cn', 'value': u'國內生產總值'},
@@ -118,5 +116,7 @@ class TestConvertToDict(object):
             ]
         })
         result = tdf.convert_to_tdf(self.dataset_dict)
-        nose.tools.assert_equals(result.get('title_cn'), u'國內生產總值')
-        nose.tools.assert_equals(result.get('last_updated'), '2011-09-21')
+        nose.tools.assert_equals(result.get('extras'), {
+            'title_cn': u'國內生產總值',
+            'last_updated': '2011-09-21',
+        })
