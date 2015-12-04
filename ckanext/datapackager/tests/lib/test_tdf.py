@@ -128,3 +128,50 @@ class TestConvertToDict(object):
             'title_cn': u'國內生產總值',
             'last_updated': '2011-09-21',
         })
+
+    def test_resource_description(self):
+        self.resource_dict.update({
+            'description': 'GDPs list',
+        })
+        result = tdf.convert_to_tdf(self.dataset_dict)
+        resource = result.get('resources')[0]
+        nose.tools.assert_equals(resource.get('description'),
+                                 self.resource_dict['description'])
+
+    def test_resource_format(self):
+        self.resource_dict.update({
+            'format': 'CSV',
+        })
+        result = tdf.convert_to_tdf(self.dataset_dict)
+        resource = result.get('resources')[0]
+        nose.tools.assert_equals(resource.get('format'),
+                                 self.resource_dict['format'])
+
+    def test_resource_hash(self):
+        self.resource_dict.update({
+            'hash': 'e785c0883d7a104330e69aee73d4f235',
+        })
+        result = tdf.convert_to_tdf(self.dataset_dict)
+        resource = result.get('resources')[0]
+        nose.tools.assert_equals(resource.get('hash'),
+                                 self.resource_dict['hash'])
+
+    def test_resource_name_slugifies_the_name(self):
+        self.resource_dict.update({
+            'name': 'Lista de PIBs dos países!   51',
+        })
+        expected_name = 'lista-de-pibs-dos-paises-51'
+        result = tdf.convert_to_tdf(self.dataset_dict)
+        resource = result.get('resources')[0]
+        nose.tools.assert_equals(resource.get('name'),
+                                 expected_name)
+
+    def test_resource_name_converts_unicode_characters(self):
+        self.resource_dict.update({
+            'name': u'万事开头难',
+        })
+        expected_name = 'mo-shi-kai-tou-nan'
+        result = tdf.convert_to_tdf(self.dataset_dict)
+        resource = result.get('resources')[0]
+        nose.tools.assert_equals(resource.get('name'),
+                                 expected_name)

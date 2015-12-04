@@ -1,1 +1,2 @@
 zipstream==1.1.3
+python-slugify==1.1.4

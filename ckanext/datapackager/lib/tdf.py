@@ -5,6 +5,7 @@
 '''
 import os.path
 import tempfile
+import slugify
 
 import ckan.lib.helpers as h
 import ckan.plugins.toolkit as toolkit
@@ -36,6 +37,18 @@ def _convert_to_tdf_resource(resource_dict, pkg_zipstream=None):
 
     else:
         resource = {'url': resource_dict['url']}
+
+    if resource_dict.get('description'):
+        resource['description'] = resource_dict['description']
+
+    if resource_dict.get('format'):
+        resource['format'] = resource_dict['format']
+
+    if resource_dict.get('hash'):
+        resource['hash'] = resource_dict['hash']
+
+    if resource_dict.get('name'):
+        resource['name'] = slugify.slugify(resource_dict['name'])
 
     try:
         schema_string = resource_dict.get('schema', '')

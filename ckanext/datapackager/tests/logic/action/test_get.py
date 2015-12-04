@@ -6,6 +6,7 @@ import nose.tools
 import ckan.tests.factories as factories
 import ckan.tests.helpers as helpers
 import ckanext.datapackager.tests.helpers as custom_helpers
+import ckanext.datapackager.lib.tdf
 import ckan.plugins.toolkit as toolkit
 
 
@@ -19,27 +20,13 @@ class TestGet(custom_helpers.FunctionalTestBaseClass):
         factories.Resource(package_id=dataset['id'], url='http://test.com/test-url-2',
             schema='{"fields":[{"type":"string", "name":"col1"}]}')
 
+        expected_output = ckanext.datapackager.lib.tdf.convert_to_tdf(
+            helpers.call_action('package_show', id=dataset['id'])
+        )
+
         tdf = helpers.call_action('package_to_tabular_data_format',
                                   id=dataset['name'])
 
-        expected_output = {
-            'name': dataset['name'],
-            'title': dataset['title'],
-            'resources': [
-                {
-                    'schema': {
-                        u'fields': [{u'name': u'col1', u'type': u'string'}]
-                    },
-                    'url': u'http://test.com/test-url-1'
-                },
-                {
-                    'schema': {
-                        u'fields': [{u'name': u'col1', u'type': u'string'}]
-                    },
-                    'url': u'http://test.com/test-url-2'
-                }
-            ]
-        }
         nose.tools.assert_equals(expected_output, tdf)
 
     def test_package_to_tdf_with_missing_id(self):
