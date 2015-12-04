@@ -24,6 +24,7 @@ class TestGet(custom_helpers.FunctionalTestBaseClass):
 
         expected_output = {
             'name': dataset['name'],
+            'title': dataset['title'],
             'resources': [
                 {
                     'schema': {
