@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import nose.tools
 
 import ckanext.datapackager.lib.tdf as tdf
@@ -6,10 +8,14 @@ import ckanext.datapackager.lib.tdf as tdf
 class TestConvertToDict(object):
 
     def setup(self):
+        self.resource_dict = {
+            'url': 'http://someplace.com/data.csv'
+        }
         self.dataset_dict = {
             'name': 'gdp',
             'title': 'Countries GDP',
             'version': '1.0',
+            'resources': [self.resource_dict],
         }
 
     def test_basic_dataset_in_setup_is_valid(self):
@@ -28,7 +34,7 @@ class TestConvertToDict(object):
             invalid_dataset_dict
         )
 
-    def test_attributes_that_can_be_mapped_between_ckan_and_tdf_as_is(self):
+    def test_dataset_name_title_and_version(self):
         self.dataset_dict.update({
             'name': 'gdp',
             'title': 'Countries GDP',
@@ -101,3 +107,16 @@ class TestConvertToDict(object):
         })
         result = tdf.convert_to_tdf(self.dataset_dict)
         nose.tools.assert_equals(result.get('keywords'), keywords)
+
+    def test_dataset_extras(self):
+        # FIXME: What if the extras key already exist in the dataset? For
+        # example, "sources". Shall we throw an exception?
+        self.dataset_dict.update({
+            'extras': [
+                {'key': 'title_cn', 'value': u'國內生產總值'},
+                {'key': 'last_updated', 'value': '2011-09-21'},
+            ]
+        })
+        result = tdf.convert_to_tdf(self.dataset_dict)
+        nose.tools.assert_equals(result.get('title_cn'), u'國內生產總值')
+        nose.tools.assert_equals(result.get('last_updated'), '2011-09-21')

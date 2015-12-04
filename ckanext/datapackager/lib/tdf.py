@@ -67,6 +67,7 @@ def convert_to_tdf(pkg_dict, pkg_zipstream=None):
         _parse_author_and_source,
         _parse_maintainer,
         _parse_tags,
+        _parse_extras,
     ]
     data_package = {
         'name': pkg_dict['name']
@@ -162,5 +163,17 @@ def _parse_tags(pkg_dict):
 
     if keywords:
         result['keywords'] = keywords
+
+    return result
+
+
+def _parse_extras(pkg_dict):
+    result = {}
+
+    extras = [(extra['key'], extra['value']) for extra
+              in pkg_dict.get('extras', [])]
+
+    if extras:
+        result.update(dict(extras))
 
     return result
