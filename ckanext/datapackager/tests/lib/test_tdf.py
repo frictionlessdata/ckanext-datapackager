@@ -43,6 +43,14 @@ class TestConvertToDict(object):
         result = tdf.convert_to_tdf(self.dataset_dict)
         nose.tools.assert_equals(result, self.dataset_dict)
 
+    def test_dataset_notes(self):
+        self.dataset_dict.update({
+            'notes': 'Country, regional and world GDP in current US Dollars.'
+        })
+        result = tdf.convert_to_tdf(self.dataset_dict)
+        nose.tools.assert_equals(result.get('description'),
+                                 self.dataset_dict['notes'])
+
     def test_dataset_license(self):
         license = {
             'type': 'cc-zero',

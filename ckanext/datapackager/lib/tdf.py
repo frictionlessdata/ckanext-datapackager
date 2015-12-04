@@ -63,6 +63,7 @@ def convert_to_tdf(pkg_dict, pkg_zipstream=None):
     '''
     PARSERS = [
         _parse_title_and_version,
+        _parse_notes,
         _parse_license,
         _parse_author_and_source,
         _parse_maintainer,
@@ -104,6 +105,15 @@ def _parse_title_and_version(pkg_dict):
     for attribute in ATTRIBUTES:
         if pkg_dict.get(attribute):
             result[attribute] = pkg_dict[attribute]
+    return result
+
+
+def _parse_notes(pkg_dict):
+    result = {}
+
+    if pkg_dict.get('notes'):
+        result['description'] = pkg_dict['notes']
+
     return result
 
 
