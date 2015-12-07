@@ -28,4 +28,6 @@ class DownloadTabularDataFormatPlugin(plugins.SingletonPlugin):
         return {
             'package_to_tabular_data_format':
                 ckanext.datapackager.logic.action.get.package_to_tabular_data_format,
+            'package_to_tabular_data_format_zip':
+                ckanext.datapackager.logic.action.get.package_to_tabular_data_format_zip,
         }

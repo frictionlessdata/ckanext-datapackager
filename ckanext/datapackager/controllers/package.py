@@ -1,5 +1,3 @@
-import zipstream
-
 import pylons
 
 from ckan.common import request
@@ -324,17 +322,8 @@ class DataPackagerPackageController(toolkit.BaseController):
             package_id)
         r.content_type = 'application/octet-stream'
 
-        # Make a zipstream and put it in the context. This means the
-        # package_to_tabular_data_format action will add files into 
-        # the zipstream for us.
-        pkg_zipstream = zipstream.ZipFile(mode='w',
-                                          compression=zipstream.ZIP_DEFLATED)
-        context['pkg_zipstream'] = pkg_zipstream
-
-        toolkit.get_action('package_to_tabular_data_format')(context,
+        return toolkit.get_action('package_to_tabular_data_format_zip')(context,
             {'id': package_id})
-
-        return pkg_zipstream
 
     def new_resource(self, package_id, data):
         import ckan.controllers.package

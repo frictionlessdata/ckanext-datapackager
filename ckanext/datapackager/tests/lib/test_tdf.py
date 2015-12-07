@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+import tempfile
+import zipfile
 import nose.tools
 
 import ckanext.datapackager.lib.tdf as tdf
@@ -175,3 +177,25 @@ class TestConvertToDict(object):
         resource = result.get('resources')[0]
         nose.tools.assert_equals(resource.get('name'),
                                  expected_name)
+
+
+class TestConvertToZip(object):
+    def test_writes_the_datapackage_zipfile_to_the_received_file(self):
+        dataset_dict = {
+            'name': 'foo'
+        }
+        with tempfile.TemporaryFile() as f:
+            tdf.convert_to_tdf_zip(dataset_dict, f)
+            with zipfile.ZipFile(f) as z:
+                nose.tools.assert_equals(z.namelist(),
+                                         ['datapackage.json'])
+
+    def test_accepts_a_file_path(self):
+        dataset_dict = {
+            'name': 'foo'
+        }
+        with tempfile.NamedTemporaryFile() as f:
+            tdf.convert_to_tdf_zip(dataset_dict, f.name)
+            with zipfile.ZipFile(f) as z:
+                nose.tools.assert_equals(z.namelist(),
+                                         ['datapackage.json'])
