@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import mock
 import tempfile
 import zipfile
 import nose.tools
@@ -130,6 +131,30 @@ class TestConvertToDict(object):
             'title_cn': u'國內生產總值',
             'last_updated': '2011-09-21',
         })
+
+    def test_resource_url(self):
+        self.resource_dict.update({
+            'url': 'http://www.somewhere.com/data.csv',
+        })
+        result = tdf.convert_to_tdf(self.dataset_dict)
+        resource = result.get('resources')[0]
+        nose.tools.assert_equals(resource.get('url'),
+                                 self.resource_dict['url'])
+
+    @mock.patch('ckanext.datapackager.lib.tdf.util')
+    def test_resource_path_for_uploaded_files(self, util_mock):
+        util_mock.get_path_to_resource_file.return_value = 'the_file_path'
+        self.resource_dict.update({
+            'id': 'foo',
+            'url': 'http://www.somewhere.com/data.csv',
+            'url_type': 'upload',
+        })
+        result = tdf.convert_to_tdf(self.dataset_dict)
+        resource = result.get('resources')[0]
+        nose.tools.assert_equals(resource.get('url'),
+                                 self.resource_dict['url'])
+        nose.tools.assert_equals(resource.get('path'),
+                                 'the_file_path')
 
     def test_resource_description(self):
         self.resource_dict.update({

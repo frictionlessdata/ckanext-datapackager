@@ -19,9 +19,9 @@ def _convert_to_tdf_resource(resource_dict):
 
     if resource_dict.get('url_type') == 'upload':
         resource['path'] = util.get_path_to_resource_file(resource_dict)
-    else:
-        if resource_dict.get('url'):
-            resource['url'] = resource_dict['url']
+
+    if resource_dict.get('url'):
+        resource['url'] = resource_dict['url']
 
     if resource_dict.get('description'):
         resource['description'] = resource_dict['description']
