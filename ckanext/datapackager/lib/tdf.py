@@ -40,6 +40,7 @@ def _convert_to_tdf_resource(resource_dict):
         resource['schema'] = h.json.loads(schema_string)
     except ValueError:
         pass
+
     return resource
 
 
@@ -73,6 +74,7 @@ def convert_to_tdf(pkg_dict):
     '''
     PARSERS = [
         _parse_title_and_version,
+        _parse_ckan_url,
         _parse_notes,
         _parse_license,
         _parse_author_and_source,
@@ -101,6 +103,15 @@ def _parse_title_and_version(pkg_dict):
     for attribute in ATTRIBUTES:
         if pkg_dict.get(attribute):
             result[attribute] = pkg_dict[attribute]
+    return result
+
+
+def _parse_ckan_url(pkg_dict):
+    result = {}
+
+    if pkg_dict.get('ckan_url'):
+        result['homepage'] = pkg_dict['ckan_url']
+
     return result
 
 

@@ -119,6 +119,14 @@ class TestConvertToDict(object):
         result = tdf.convert_to_tdf(self.dataset_dict)
         nose.tools.assert_equals(result.get('keywords'), keywords)
 
+    def test_dataset_ckan_url(self):
+        self.dataset_dict.update({
+            'ckan_url': 'http://www.somewhere.com/datasets/foo'
+        })
+        result = tdf.convert_to_tdf(self.dataset_dict)
+        nose.tools.assert_equals(result.get('homepage'),
+                                 self.dataset_dict['ckan_url'])
+
     def test_dataset_extras(self):
         self.dataset_dict.update({
             'extras': [
