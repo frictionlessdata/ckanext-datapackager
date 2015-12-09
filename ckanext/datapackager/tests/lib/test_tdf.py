@@ -200,6 +200,8 @@ class TestConvertToDict(object):
         resource = result.get('resources')[0]
         nose.tools.assert_equals(resource.get('name'),
                                  expected_name)
+        nose.tools.assert_equals(resource.get('title'),
+                                 self.resource_dict['name'])
 
     def test_resource_name_converts_unicode_characters(self):
         self.resource_dict.update({
@@ -210,6 +212,8 @@ class TestConvertToDict(object):
         resource = result.get('resources')[0]
         nose.tools.assert_equals(resource.get('name'),
                                  expected_name)
+        nose.tools.assert_equals(resource.get('title'),
+                                 self.resource_dict['name'])
 
 
 class TestConvertToZip(object):
@@ -236,10 +240,15 @@ class TestConvertToZip(object):
 
 class TestDataPackageToDatasetDict(object):
     def setup(self):
+        self.resource_dict = {
+            'url': 'http://someplace.com/data.csv'
+        }
+
         self.datapackage_dict = {
             'name': 'gdp',
             'title': 'Countries GDP',
             'version': '1.0',
+            'resources': [self.resource_dict],
         }
 
     def test_basic_datapackage_in_setup_is_valid(self):
@@ -376,3 +385,59 @@ class TestDataPackageToDatasetDict(object):
             'title_cn': u'國內生產總值',
             'last_updated': '2011-09-21',
         })
+
+    def test_resource_name_is_used_if_theres_no_title(self):
+        self.resource_dict.update({
+            'name': 'gdp',
+            'title': None,
+        })
+        result = tdf.tdf_to_pkg_dict(self.datapackage_dict)
+        resource = result.get('resources')[0]
+        nose.tools.assert_equals(resource.get('name'),
+                                 self.resource_dict['name'])
+
+    def test_resource_title_is_used_as_name(self):
+        self.resource_dict.update({
+            'name': 'gdp',
+            'title': 'Gross domestic product',
+        })
+        result = tdf.tdf_to_pkg_dict(self.datapackage_dict)
+        resource = result.get('resources')[0]
+        nose.tools.assert_equals(resource.get('name'),
+                                 self.resource_dict['title'])
+
+    def test_resource_url(self):
+        self.resource_dict.update({
+            'url': 'http://www.somewhere.com/data.csv',
+        })
+        result = tdf.tdf_to_pkg_dict(self.datapackage_dict)
+        resource = result.get('resources')[0]
+        nose.tools.assert_equals(resource.get('url'),
+                                 self.resource_dict['url'])
+
+    def test_resource_description(self):
+        self.resource_dict.update({
+            'description': 'GDPs list',
+        })
+        result = tdf.tdf_to_pkg_dict(self.datapackage_dict)
+        resource = result.get('resources')[0]
+        nose.tools.assert_equals(resource.get('description'),
+                                 self.resource_dict['description'])
+
+    def test_resource_format(self):
+        self.resource_dict.update({
+            'format': 'CSV',
+        })
+        result = tdf.tdf_to_pkg_dict(self.datapackage_dict)
+        resource = result.get('resources')[0]
+        nose.tools.assert_equals(resource.get('format'),
+                                 self.resource_dict['format'])
+
+    def test_resource_hash(self):
+        self.resource_dict.update({
+            'hash': 'e785c0883d7a104330e69aee73d4f235',
+        })
+        result = tdf.tdf_to_pkg_dict(self.datapackage_dict)
+        resource = result.get('resources')[0]
+        nose.tools.assert_equals(resource.get('hash'),
+                                 self.resource_dict['hash'])

@@ -35,6 +35,7 @@ def _convert_to_tdf_resource(resource_dict):
 
     if resource_dict.get('name'):
         resource['name'] = slugify.slugify(resource_dict['name'])
+        resource['title'] = resource_dict['name']
 
     try:
         schema_string = resource_dict.get('schema', '')
@@ -117,7 +118,33 @@ def tdf_to_pkg_dict(datapackage_dict):
     for parser in PARSERS:
         pkg_dict.update(parser(datapackage_dict))
 
+    resources = datapackage_dict.get('resources')
+    if resources:
+        pkg_dict['resources'] = [_tdf_resource_to_ckan_resource(r)
+                                 for r in resources]
     return pkg_dict
+
+
+def _tdf_resource_to_ckan_resource(resource_dict):
+    resource = {}
+
+    if resource_dict.get('name'):
+        name = resource_dict.get('title') or resource_dict['name']
+        resource['name'] = name
+
+    if resource_dict.get('url'):
+        resource['url'] = resource_dict['url']
+
+    if resource_dict.get('description'):
+        resource['description'] = resource_dict['description']
+
+    if resource_dict.get('format'):
+        resource['format'] = resource_dict['format']
+
+    if resource_dict.get('hash'):
+        resource['hash'] = resource_dict['hash']
+
+    return resource
 
 
 def _rename_dict_key(original_key, destination_key):
