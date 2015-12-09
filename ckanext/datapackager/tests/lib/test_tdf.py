@@ -232,3 +232,147 @@ class TestConvertToZip(object):
             with zipfile.ZipFile(f) as z:
                 nose.tools.assert_equals(z.namelist(),
                                          ['datapackage.json'])
+
+
+class TestDataPackageToDatasetDict(object):
+    def setup(self):
+        self.datapackage_dict = {
+            'name': 'gdp',
+            'title': 'Countries GDP',
+            'version': '1.0',
+        }
+
+    def test_basic_datapackage_in_setup_is_valid(self):
+        tdf.tdf_to_pkg_dict(self.datapackage_dict)
+
+    def test_datapackage_only_requires_a_name_to_be_valid(self):
+        invalid_datapackage_dict = {}
+        valid_datapackage_dict = {
+            'name': 'gdp'
+        }
+
+        tdf.tdf_to_pkg_dict(valid_datapackage_dict)
+        nose.tools.assert_raises(
+            KeyError,
+            tdf.tdf_to_pkg_dict,
+            invalid_datapackage_dict
+        )
+
+    def test_datapackage_name_title_and_version(self):
+        self.datapackage_dict.update({
+            'name': 'gdp',
+            'title': 'Countries GDP',
+            'version': '1.0',
+        })
+        result = tdf.tdf_to_pkg_dict(self.datapackage_dict)
+        nose.tools.assert_equals(result, self.datapackage_dict)
+
+    def test_datapackage_description(self):
+        self.datapackage_dict.update({
+            'description': 'Country, regional and world GDP in current USD.'
+        })
+        result = tdf.tdf_to_pkg_dict(self.datapackage_dict)
+        nose.tools.assert_equals(result.get('notes'),
+                                 self.datapackage_dict['description'])
+
+    def test_datapackage_license_as_string(self):
+        self.datapackage_dict.update({
+            'license': 'cc-zero'
+        })
+        result = tdf.tdf_to_pkg_dict(self.datapackage_dict)
+        nose.tools.assert_equals(result.get('license_id'), 'cc-zero')
+
+    def test_datapackage_license_as_dict(self):
+        license = {
+            'type': 'cc-zero',
+            'title': 'Creative Commons CC Zero License (cc-zero)',
+            'url': 'http://opendefinition.org/licenses/cc-zero/'
+        }
+        self.datapackage_dict.update({
+            'license': license
+        })
+        result = tdf.tdf_to_pkg_dict(self.datapackage_dict)
+        nose.tools.assert_equals(result.get('license_id'), license['type'])
+        nose.tools.assert_equals(result.get('license_title'), license['title'])
+        nose.tools.assert_equals(result.get('license_url'), license['url'])
+
+    def test_datapackage_sources(self):
+        sources = [
+            {
+                'name': 'World Bank and OECD',
+                'email': 'someone@worldbank.org',
+                'web': 'http://data.worldbank.org/indicator/NY.GDP.MKTP.CD',
+            }
+        ]
+        self.datapackage_dict.update({
+            'sources': sources
+        })
+        result = tdf.tdf_to_pkg_dict(self.datapackage_dict)
+        nose.tools.assert_equals(result.get('author'), sources[0]['name'])
+        nose.tools.assert_equals(result.get('author_email'),
+                                 sources[0]['email'])
+        nose.tools.assert_equals(result.get('source'), sources[0]['web'])
+
+    def test_datapackage_author_as_string(self):
+        # FIXME: Add author.web
+        author = {
+            'name': 'John Smith',
+            'email': 'jsmith@email.com'
+        }
+        self.datapackage_dict.update({
+            'author': '{name} <{email}>'.format(name=author['name'],
+                                                email=author['email'])
+        })
+        result = tdf.tdf_to_pkg_dict(self.datapackage_dict)
+        nose.tools.assert_equals(result.get('maintainer'), author['name'])
+        nose.tools.assert_equals(result.get('maintainer_email'),
+                                 author['email'])
+
+    def test_datapackage_author_as_string_without_email(self):
+        # FIXME: Add author.web
+        author = {
+            'name': 'John Smith'
+        }
+        self.datapackage_dict.update({
+            'author': author['name']
+        })
+        result = tdf.tdf_to_pkg_dict(self.datapackage_dict)
+        nose.tools.assert_equals(result.get('maintainer'), author['name'])
+
+    def test_datapackage_author_as_dict(self):
+        # FIXME: Add author.web
+        author = {
+            'name': 'John Smith',
+            'email': 'jsmith@email.com'
+        }
+        self.datapackage_dict.update({
+            'author': author
+        })
+        result = tdf.tdf_to_pkg_dict(self.datapackage_dict)
+        nose.tools.assert_equals(result.get('maintainer'), author['name'])
+        nose.tools.assert_equals(result.get('maintainer_email'),
+                                 author['email'])
+
+    def test_datapackage_keywords(self):
+        keywords = [
+            'economy!!!', 'world bank',
+        ]
+        self.datapackage_dict.update({
+            'keywords': keywords
+        })
+        result = tdf.tdf_to_pkg_dict(self.datapackage_dict)
+        nose.tools.assert_equals(result.get('tags'), [
+            {'name': 'economy'},
+            {'name': 'world-bank'},
+        ])
+
+    def test_datapackage_extras(self):
+        self.datapackage_dict.update({
+            'title_cn': u'國內生產總值',
+            'last_updated': '2011-09-21'
+        })
+        result = tdf.tdf_to_pkg_dict(self.datapackage_dict)
+        nose.tools.assert_equals(result.get('extras'), {
+            'title_cn': u'國內生產總值',
+            'last_updated': '2011-09-21',
+        })

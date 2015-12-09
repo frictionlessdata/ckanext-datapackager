@@ -3,6 +3,7 @@
 (Including converting CKAN's package and resource formats into SDF.)
 
 '''
+import re
 import slugify
 
 import datapackage
@@ -73,7 +74,8 @@ def convert_to_tdf(pkg_dict):
 
     '''
     PARSERS = [
-        _parse_title_and_version,
+        _rename_dict_key('title', 'title'),
+        _rename_dict_key('version', 'version'),
         _parse_ckan_url,
         _parse_notes,
         _parse_license,
@@ -97,13 +99,36 @@ def convert_to_tdf(pkg_dict):
     return data_package
 
 
-def _parse_title_and_version(pkg_dict):
-    ATTRIBUTES = ['title', 'version']
-    result = {}
-    for attribute in ATTRIBUTES:
-        if pkg_dict.get(attribute):
-            result[attribute] = pkg_dict[attribute]
-    return result
+def tdf_to_pkg_dict(datapackage_dict):
+    PARSERS = [
+        _rename_dict_key('title', 'title'),
+        _rename_dict_key('version', 'version'),
+        _rename_dict_key('description', 'notes'),
+        _datapackage_parse_license,
+        _datapackage_parse_sources,
+        _datapackage_parse_author,
+        _datapackage_parse_keywords,
+        _datapackage_parse_unknown_fields_as_extras,
+    ]
+    pkg_dict = {
+        'name': datapackage_dict['name']
+    }
+
+    for parser in PARSERS:
+        pkg_dict.update(parser(datapackage_dict))
+
+    return pkg_dict
+
+
+def _rename_dict_key(original_key, destination_key):
+    def _parser(the_dict):
+        result = {}
+
+        if the_dict.get(original_key):
+            result[destination_key] = the_dict[original_key]
+
+        return result
+    return _parser
 
 
 def _parse_ckan_url(pkg_dict):
@@ -192,5 +217,109 @@ def _parse_extras(pkg_dict):
 
     if extras:
         result['extras'] = dict(extras)
+
+    return result
+
+
+def _datapackage_parse_license(datapackage_dict):
+    result = {}
+
+    license = datapackage_dict.get('license')
+    if license:
+        if isinstance(license, dict):
+            if license.get('type'):
+                result['license_id'] = license['type']
+            if license.get('title'):
+                result['license_title'] = license['title']
+            if license.get('title'):
+                result['license_url'] = license['url']
+        elif isinstance(license, str):
+            result['license_id'] = license
+
+    return result
+
+
+def _datapackage_parse_sources(datapackage_dict):
+    result = {}
+
+    sources = datapackage_dict.get('sources')
+    if sources:
+        author = sources[0].get('name')
+        author_email = sources[0].get('email')
+        source = sources[0].get('web')
+        if author:
+            result['author'] = author
+        if author_email:
+            result['author_email'] = author_email
+        if source:
+            result['source'] = source
+
+    return result
+
+
+def _datapackage_parse_author(datapackage_dict):
+    result = {}
+
+    author = datapackage_dict.get('author')
+    if author:
+        maintainer = maintainer_email = None
+
+        if isinstance(author, dict):
+            maintainer = author.get('name')
+            maintainer_email = author.get('email')
+        elif isinstance(author, str):
+            match = re.match(r'(?P<name>[^<]+)'
+                             r'(?:<(?P<email>\S+)>)?',
+                             author)
+
+            maintainer = match.group('name')
+            maintainer_email = match.group('email')
+
+        if maintainer:
+            result['maintainer'] = maintainer.strip()
+        if maintainer_email:
+            result['maintainer_email'] = maintainer_email
+
+    return result
+
+
+def _datapackage_parse_keywords(datapackage_dict):
+    result = {}
+
+    keywords = datapackage_dict.get('keywords')
+    if keywords:
+        result['tags'] = [{'name': slugify.slugify(keyword)}
+                          for keyword in keywords]
+
+    return result
+
+
+def _datapackage_parse_unknown_fields_as_extras(datapackage_dict):
+    # FIXME: It's bad to hardcode it here. Instead, we should change the
+    # parsers pattern to remove whatever they use from the `datapackage_dict`
+    # and call this parser at last. Anything that's still in `datapackage_dict`
+    # would then be added to extras.
+    KNOWN_FIELDS = [
+        'name',
+        'resources',
+        'license',
+        'title',
+        'description',
+        'homepage',
+        'version',
+        'sources',
+        'author',
+        'keywords',
+    ]
+
+    result = {}
+    extras = {}
+
+    for key, value in datapackage_dict.items():
+        if key not in KNOWN_FIELDS:
+            extras[key] = value
+
+    if extras:
+        result['extras'] = extras
 
     return result

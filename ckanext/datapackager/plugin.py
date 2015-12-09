@@ -1,5 +1,6 @@
 import ckan.plugins as plugins
 import ckan.plugins.toolkit as toolkit
+import ckanext.datapackager.logic.action.create
 import ckanext.datapackager.logic.action.get
 
 
@@ -26,6 +27,8 @@ class DownloadTabularDataFormatPlugin(plugins.SingletonPlugin):
 
     def get_actions(self):
         return {
+            'package_create_from_datapackage':
+                ckanext.datapackager.logic.action.create.package_create_from_datapackage,
             'package_to_tabular_data_format':
                 ckanext.datapackager.logic.action.get.package_to_tabular_data_format,
             'package_to_tabular_data_format_zip':
