@@ -17,7 +17,7 @@ class TestResourceSchemaFieldCreate(custom_helpers.FunctionalTestBaseClass):
         user = factories.User()
         package = factories.Dataset(user=user)
         api = ckanapi.TestAppCKAN(self.app, apikey=user['apikey'])
-        csv_file = custom_helpers.get_csv_file('test-data/datetimes.csv')
+        csv_file = custom_helpers.get_csv_file('datetimes.csv')
         resource = api.action.resource_create(
             package_id=package['id'],
             upload=csv_file,

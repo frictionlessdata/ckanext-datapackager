@@ -14,13 +14,6 @@ import ckan.plugins.toolkit as toolkit
 import ckanext.datapackager.tests.helpers as custom_helpers
 
 
-def _get_csv_file(relative_path):
-        path = os.path.join(os.path.split(__file__)[0], relative_path)
-        abspath = os.path.abspath(path)
-        csv_file = open(abspath)
-        return csv_file
-
-
 class TestDataPackagerPackageController(
         custom_helpers.FunctionalTestBaseClass):
     '''Functional tests for the DataPackagerPackageController class.'''
@@ -42,8 +35,8 @@ class TestDataPackagerPackageController(
             schema='{"fields":[{"type":"string", "name":"col1"}]}')
 
         # Add a resource with an uploaded data file.
-        csv_path = '../test-data/lahmans-baseball-database/AllstarFull.csv'
-        csv_file = _get_csv_file(csv_path)
+        csv_path = 'lahmans-baseball-database/AllstarFull.csv'
+        csv_file = custom_helpers.get_csv_file(csv_path)
         api.action.resource_create(
             package_id=dataset['id'],
             name='AllstarFull',
@@ -81,7 +74,7 @@ class TestDataPackagerPackageController(
 
         # Check the contents of the allstarfull.csv file.
         assert (zip_.open('data/allstarfull.csv').read() ==
-                _get_csv_file(csv_path).read())
+                custom_helpers.get_csv_file(csv_path).read())
 
     def test_download_tdf_with_three_files(self):
         '''Upload three CSV files to a package and test downloading the ZIP.'''
@@ -97,11 +90,11 @@ class TestDataPackagerPackageController(
             filename = '.'.join([filename_without_format(path), 'csv'])
             return os.path.join('data', filename)
 
-        csv_paths = ('../test-data/lahmans-baseball-database/AllstarFull.csv',
-            '../test-data/lahmans-baseball-database/PitchingPost.csv',
-            '../test-data/lahmans-baseball-database/TeamsHalf.csv')
+        csv_paths = ('lahmans-baseball-database/AllstarFull.csv',
+            'lahmans-baseball-database/PitchingPost.csv',
+            'lahmans-baseball-database/TeamsHalf.csv')
         for path in csv_paths:
-            csv_file = _get_csv_file(path)
+            csv_file = custom_helpers.get_csv_file(path)
             api.action.resource_create(
                 package_id=dataset['id'],
                 name=filename_without_format(path),
@@ -136,7 +129,7 @@ class TestDataPackagerPackageController(
         # Check the contents of the CSV files.
         for csv_path in csv_paths:
             assert (zip_.open(filename_inside_package(csv_path)).read() ==
-                    _get_csv_file(csv_path).read())
+                    custom_helpers.get_csv_file(csv_path).read())
 
     def test_that_download_button_is_on_page(self):
         '''Tests that the download button is shown on the dataset pages.'''
