@@ -32,7 +32,8 @@ class TestPackageCreateFromDataPackage(custom_helpers.FunctionalTestBaseClass):
                                body=json.dumps(datapackage))
         # FIXME: Remove this when
         # https://github.com/okfn/datapackage-py/issues/20 is done
-        httpretty.register_uri(httpretty.GET, datapackage['resources'][0]['url'])
+        httpretty.register_uri(httpretty.GET,
+                               datapackage['resources'][0]['url'])
 
         helpers.call_action('package_create_from_datapackage', url=url)
 
@@ -42,3 +43,38 @@ class TestPackageCreateFromDataPackage(custom_helpers.FunctionalTestBaseClass):
                                 datapackage['resources'][0]['name'])
         nose.tools.assert_equal(resource['url'],
                                 datapackage['resources'][0]['url'])
+
+    @httpretty.activate
+    def test_it_creates_a_dataset_without_resources(self):
+        httpretty.HTTPretty.allow_net_connect = False
+        url = 'http://www.somewhere.com/datapackage.json'
+        datapackage = {
+            'name': 'foo'
+        }
+        httpretty.register_uri(httpretty.GET, url,
+                               body=json.dumps(datapackage))
+
+        helpers.call_action('package_create_from_datapackage', url=url)
+
+        helpers.call_action('package_show', id=datapackage['name'])
+
+    @httpretty.activate
+    def test_it_uploads_local_files(self):
+        httpretty.HTTPretty.allow_net_connect = False
+        url = 'http://www.somewhere.com/datapackage.zip'
+        datapkg_path = custom_helpers.fixture_path('datetimes-datapackage.zip')
+        with open(datapkg_path, 'rb') as f:
+            httpretty.register_uri(httpretty.GET, url, body=f.read())
+
+        # FIXME: Remove this when
+        # https://github.com/okfn/datapackage-py/issues/20 is done
+        timezones_url = 'https://www.somewhere.com/timezones.csv'
+        httpretty.register_uri(httpretty.GET, timezones_url, body='')
+
+        helpers.call_action('package_create_from_datapackage', url=url)
+
+        dataset = helpers.call_action('package_show', id='datetimes')
+        resources = dataset.get('resources')
+
+        nose.tools.assert_equal(resources[0]['url_type'], 'upload')
+        nose.tools.assert_regexp_matches(resources[0]['url'], 'datetimes.csv$')
