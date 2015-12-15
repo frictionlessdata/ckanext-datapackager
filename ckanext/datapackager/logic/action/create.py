@@ -16,6 +16,6 @@ def package_create_from_datapackage(context, data_dict):
         raise toolkit.ValidationError({'url': 'missing url'})
 
     dp = datapackage.DataPackage(url)
-    pkg_dict = tdf.tdf_to_pkg_dict(dp.to_dict())
+    pkg_dict = tdf.tdf_to_pkg_dict(dp)
 
     return toolkit.get_action('package_create')(context, pkg_dict)

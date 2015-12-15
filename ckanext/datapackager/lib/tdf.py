@@ -100,7 +100,7 @@ def convert_to_tdf(pkg_dict):
     return data_package
 
 
-def tdf_to_pkg_dict(datapackage_dict):
+def tdf_to_pkg_dict(datapackage):
     PARSERS = [
         _rename_dict_key('title', 'title'),
         _rename_dict_key('version', 'version'),
@@ -112,39 +112,41 @@ def tdf_to_pkg_dict(datapackage_dict):
         _datapackage_parse_unknown_fields_as_extras,
     ]
     pkg_dict = {
-        'name': datapackage_dict['name']
+        'name': datapackage.metadata['name']
     }
 
     for parser in PARSERS:
-        pkg_dict.update(parser(datapackage_dict))
+        pkg_dict.update(parser(datapackage.metadata))
 
-    resources = datapackage_dict.get('resources')
-    if resources:
+    if datapackage.resources:
         pkg_dict['resources'] = [_tdf_resource_to_ckan_resource(r)
-                                 for r in resources]
+                                 for r in datapackage.resources]
     return pkg_dict
 
 
-def _tdf_resource_to_ckan_resource(resource_dict):
-    resource = {}
+def _tdf_resource_to_ckan_resource(resource):
+    resource_dict = {}
 
-    if resource_dict.get('name'):
-        name = resource_dict.get('title') or resource_dict['name']
-        resource['name'] = name
+    if resource.metadata.get('name'):
+        name = resource.metadata.get('title') or resource.metadata['name']
+        resource_dict['name'] = name
 
-    if resource_dict.get('url'):
-        resource['url'] = resource_dict['url']
+    if resource.metadata.get('url'):
+        resource_dict['url'] = resource.metadata['url']
 
-    if resource_dict.get('description'):
-        resource['description'] = resource_dict['description']
+    if resource.local_data_path:
+        resource_dict['path'] = resource.local_data_path
 
-    if resource_dict.get('format'):
-        resource['format'] = resource_dict['format']
+    if resource.metadata.get('description'):
+        resource_dict['description'] = resource.metadata['description']
 
-    if resource_dict.get('hash'):
-        resource['hash'] = resource_dict['hash']
+    if resource.metadata.get('format'):
+        resource_dict['format'] = resource.metadata['format']
 
-    return resource
+    if resource.metadata.get('hash'):
+        resource_dict['hash'] = resource.metadata['hash']
+
+    return resource_dict
 
 
 def _rename_dict_key(original_key, destination_key):
