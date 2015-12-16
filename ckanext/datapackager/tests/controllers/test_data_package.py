@@ -14,9 +14,9 @@ import ckan.plugins.toolkit as toolkit
 import ckanext.datapackager.tests.helpers as custom_helpers
 
 
-class TestDataPackagerPackageController(
+class TestDataPackageController(
         custom_helpers.FunctionalTestBaseClass):
-    '''Functional tests for the DataPackagerPackageController class.'''
+    '''Functional tests for the DataPackageController class.'''
 
     @httpretty.activate
     def test_download_tdf(self):
@@ -46,7 +46,7 @@ class TestDataPackagerPackageController(
 
         # Download the package's SDF ZIP file.
         url = toolkit.url_for(
-            controller='ckanext.datapackager.controllers.package:DataPackagerPackageController',
+            controller='ckanext.datapackager.controllers.data_package:DataPackageController',
             action='download_tabular_data_format',
             package_id=dataset['name'])
         response = self.app.get(url)
@@ -105,7 +105,7 @@ class TestDataPackagerPackageController(
 
         # Download the package's SDF ZIP file.
         url = toolkit.url_for(
-            controller='ckanext.datapackager.controllers.package:DataPackagerPackageController',
+            controller='ckanext.datapackager.controllers.data_package:DataPackageController',
             action='download_tabular_data_format',
             package_id=dataset['name'])
         response = self.app.get(url)
@@ -141,6 +141,6 @@ class TestDataPackagerPackageController(
         download_button = soup.find(id='download_tdf_button')
         download_url = download_button['href']
         assert download_url == toolkit.url_for(
-            controller='ckanext.datapackager.controllers.package:DataPackagerPackageController',
+            controller='ckanext.datapackager.controllers.data_package:DataPackageController',
             action='download_tabular_data_format',
             package_id=dataset['name'])

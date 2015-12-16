@@ -2,7 +2,7 @@
 
 {% block primary_content_inner %}
   <div style="float:right; margin-left:10px">
-    <a href="{% url_for controller='ckanext.datapackager.controllers.package:DataPackagerPackageController', action='download_tabular_data_format', package_id=pkg.name %}"
+    <a href="{% url_for 'download_tabular_data_format', package_id=pkg.name %}"
        class='btn btn-primary', id='download_tdf_button'>
        <i class='icon-download'></i>Download Data Package
     </a>

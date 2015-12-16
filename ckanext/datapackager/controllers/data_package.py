@@ -2,7 +2,7 @@ import ckan.model as model
 import ckan.plugins.toolkit as toolkit
 
 
-class DataPackagerPackageController(toolkit.BaseController):
+class DataPackageController(toolkit.BaseController):
 
     def new(self):
         return toolkit.render('data_package/import_data_package.html')
