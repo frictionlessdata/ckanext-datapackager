@@ -4,6 +4,23 @@ import ckan.plugins.toolkit as toolkit
 
 class DataPackagerPackageController(toolkit.BaseController):
 
+    def new(self):
+        return toolkit.render('data_package/import_data_package.html')
+
+    def import_data_package(self):
+        context = {
+            'model': model,
+            'session': model.Session,
+            'user': toolkit.c.user or toolkit.c.author,
+        }
+        dataset = toolkit.get_action('package_create_from_datapackage')(
+            context,
+            toolkit.request.params
+        )
+        toolkit.redirect_to(controller='package',
+                            action='read',
+                            id=dataset['id'])
+
     def download_tabular_data_format(self, package_id):
         '''Return the given package as a Tabular Data Format ZIP file.
 

@@ -20,9 +20,26 @@ class DownloadTabularDataFormatPlugin(plugins.SingletonPlugin):
         toolkit.add_template_directory(config, 'templates')
 
     def before_map(self, map_):
-        map_.connect('/package/{package_id}/download_tabular_data_format',
+        map_.connect(
+            'import_data_package',
+            '/import_data_package',
             controller='ckanext.datapackager.controllers.package:DataPackagerPackageController',
-            action='download_tabular_data_format')
+            action='new',
+            conditions=dict(method=['GET']),
+        )
+        map_.connect(
+            'import_data_package',
+            '/import_data_package',
+            controller='ckanext.datapackager.controllers.package:DataPackagerPackageController',
+            action='import_data_package',
+            conditions=dict(method=['POST']),
+        )
+        map_.connect(
+            'download_tabular_data_format',
+            '/dataset/{package_id}/download_tabular_data_format',
+            controller='ckanext.datapackager.controllers.package:DataPackagerPackageController',
+            action='download_tabular_data_format'
+        )
         return map_
 
     def get_actions(self):
