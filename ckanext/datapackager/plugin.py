@@ -17,7 +17,7 @@ class DownloadTabularDataFormatPlugin(plugins.SingletonPlugin):
     plugins.implements(plugins.IRoutes, inherit=True)
 
     def update_config(self, config):
-        toolkit.add_template_directory(config, 'templates/download_tdf')
+        toolkit.add_template_directory(config, 'templates')
 
     def before_map(self, map_):
         map_.connect('/package/{package_id}/download_tabular_data_format',
