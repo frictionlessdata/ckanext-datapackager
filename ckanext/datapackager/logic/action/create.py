@@ -34,20 +34,30 @@ def package_create_from_datapackage(context, data_dict):
     res = toolkit.get_action('package_create')(context, pkg_dict)
 
     if resources:
-        for resource in resources:
-            resource['package_id'] = res['id']
-            path = resource.get('path')
-            if path:
-                resource['url'] = path
-                resource['url_type'] = 'upload'
-                # FIXME: Close this file
-                resource['upload'] = _UploadLocalFileStorage(open(path, 'r'))
-                del resource['path']
-            toolkit.get_action('resource_create')(context, resource)
-
-        res = toolkit.get_action('package_show')(context, {'id': res['id']})
+        pkg_id = res['id']
+        _create_resources(pkg_id, context, resources)
+        res = toolkit.get_action('package_show')(context, {'id': pkg_id})
 
     return res
+
+
+def _create_resources(pkg_id, context, resources):
+    for resource in resources:
+        resource['package_id'] = pkg_id
+        if resource.get('path'):
+            _create_and_upload_local_resource(context, resource)
+        else:
+            toolkit.get_action('resource_create')(context, resource)
+
+
+def _create_and_upload_local_resource(context, resource):
+    path = resource['path']
+    with open(path, 'r') as f:
+        resource['url'] = path
+        resource['url_type'] = 'upload'
+        resource['upload'] = _UploadLocalFileStorage(f)
+        del resource['path']
+        toolkit.get_action('resource_create')(context, resource)
 
 
 class _UploadLocalFileStorage(cgi.FieldStorage):
