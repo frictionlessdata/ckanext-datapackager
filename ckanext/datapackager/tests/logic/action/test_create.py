@@ -78,3 +78,51 @@ class TestPackageCreateFromDataPackage(custom_helpers.FunctionalTestBaseClass):
 
         nose.tools.assert_equal(resources[0]['url_type'], 'upload')
         nose.tools.assert_regexp_matches(resources[0]['url'], 'datetimes.csv$')
+
+    @httpretty.activate
+    def test_it_uploads_resources_with_inline_strings_as_data(self):
+        httpretty.HTTPretty.allow_net_connect = False
+        url = 'http://www.somewhere.com/datapackage.json'
+        datapackage = {
+            'name': 'foo',
+            'resources': [
+                {
+                    'name': 'the-resource',
+                    'data': 'inline data',
+                }
+            ]
+        }
+        httpretty.register_uri(httpretty.GET, url,
+                               body=json.dumps(datapackage))
+
+        helpers.call_action('package_create_from_datapackage', url=url)
+
+        dataset = helpers.call_action('package_show', id='foo')
+        resources = dataset.get('resources')
+
+        nose.tools.assert_equal(resources[0]['url_type'], 'upload')
+        nose.tools.assert_true(resources[0]['name'] in resources[0]['url'])
+
+    @httpretty.activate
+    def test_it_uploads_resources_with_inline_dicts_as_data(self):
+        httpretty.HTTPretty.allow_net_connect = False
+        url = 'http://www.somewhere.com/datapackage.json'
+        datapackage = {
+            'name': 'foo',
+            'resources': [
+                {
+                    'name': 'the-resource',
+                    'data': {'foo': 'bar'},
+                }
+            ]
+        }
+        httpretty.register_uri(httpretty.GET, url,
+                               body=json.dumps(datapackage))
+
+        helpers.call_action('package_create_from_datapackage', url=url)
+
+        dataset = helpers.call_action('package_show', id='foo')
+        resources = dataset.get('resources')
+
+        nose.tools.assert_equal(resources[0]['url_type'], 'upload')
+        nose.tools.assert_true(resources[0]['name'] in resources[0]['url'])

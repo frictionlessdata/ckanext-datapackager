@@ -137,6 +137,9 @@ def _tdf_resource_to_ckan_resource(resource):
     if resource.local_data_path:
         resource_dict['path'] = resource.local_data_path
 
+    if resource.metadata.get('data'):
+        resource_dict['data'] = resource.metadata['data']
+
     if resource.metadata.get('description'):
         resource_dict['description'] = resource.metadata['description']
 
