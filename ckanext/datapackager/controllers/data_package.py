@@ -5,7 +5,16 @@ import ckan.plugins.toolkit as toolkit
 class DataPackageController(toolkit.BaseController):
 
     def new(self):
-        return toolkit.render('data_package/import_data_package.html')
+        data = {
+            'owner_org': toolkit.request.params.get('group'),
+        }
+
+        return toolkit.render(
+            'data_package/import_data_package.html',
+            extra_vars={
+                'data': data,
+            }
+        )
 
     def import_data_package(self):
         context = {
