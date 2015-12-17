@@ -4,15 +4,28 @@ import ckan.plugins.toolkit as toolkit
 
 class DataPackageController(toolkit.BaseController):
 
-    def new(self):
-        data = {
+    def new(self, data=None, errors=None, error_summary=None):
+        context = {
+            'model': model,
+            'session': model.Session,
+            'user': toolkit.c.user or toolkit.c.author,
+            'auth_user_obj': toolkit.c.userobj,
+        }
+        self._authorize_or_abort(context)
+
+        errors = errors or {}
+        error_summary = error_summary or {}
+        default_data = {
             'owner_org': toolkit.request.params.get('group'),
         }
+        data = data or default_data
 
         return toolkit.render(
             'data_package/import_data_package.html',
             extra_vars={
                 'data': data,
+                'errors': errors,
+                'error_summary': error_summary,
             }
         )
 
@@ -22,13 +35,23 @@ class DataPackageController(toolkit.BaseController):
             'session': model.Session,
             'user': toolkit.c.user or toolkit.c.author,
         }
-        dataset = toolkit.get_action('package_create_from_datapackage')(
-            context,
-            toolkit.request.params
-        )
-        toolkit.redirect_to(controller='package',
-                            action='read',
-                            id=dataset['id'])
+        self._authorize_or_abort(context)
+
+        try:
+            data = {
+                'url': toolkit.request.params.get('url')
+            }
+            dataset = toolkit.get_action('package_create_from_datapackage')(
+                context,
+                data,
+            )
+            toolkit.redirect_to(controller='package',
+                                action='read',
+                                id=dataset['name'])
+        except toolkit.ValidationError as e:
+            errors = e.error_dict
+            error_summary = e.error_summary
+            return self.new(data=data, errors=errors, error_summary=error_summary)
 
     def download_tabular_data_format(self, package_id):
         '''Return the given package as a Tabular Data Format ZIP file.
@@ -48,3 +71,9 @@ class DataPackageController(toolkit.BaseController):
             context,
             {'id': package_id}
         )
+
+    def _authorize_or_abort(self, context):
+        try:
+            toolkit.check_access('package_create', context)
+        except toolkit.NotAuthorized:
+            toolkit.abort(401, toolkit._('Unauthorized to create a package'))

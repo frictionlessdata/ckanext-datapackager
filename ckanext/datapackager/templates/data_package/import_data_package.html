@@ -1,5 +1,4 @@
 {% extends 'package/base_form_page.html' %}
-{% set data = data or {} %}
 
 {% block subtitle %}{{ _('Import from Data Package') }}{% endblock %}
 
@@ -24,5 +23,5 @@
 {% endblock %}
 
 {% block form %}
-  {% snippet 'data_package/snippets/import_data_package_form.html', data=data %}
+  {% snippet 'data_package/snippets/import_data_package_form.html', data=data, errors=errors, error_summary=error_summary %}
 {% endblock %}
