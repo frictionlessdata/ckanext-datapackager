@@ -283,6 +283,14 @@ class TestDataPackageToDatasetDict(object):
         nose.tools.assert_equals(result['version'],
                                  datapackage_dict['version'])
 
+    def test_name_is_lowercased(self):
+        self.datapackage.metadata.update({
+            'name': 'ThEnAmE',
+        })
+        result = tdf.tdf_to_pkg_dict(self.datapackage)
+        nose.tools.assert_equals(result['name'],
+                                 self.datapackage.metadata['name'].lower())
+
     def test_datapackage_description(self):
         self.datapackage.metadata.update({
             'description': 'Country, regional and world GDP in current USD.'

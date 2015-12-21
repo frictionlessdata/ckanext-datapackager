@@ -112,7 +112,7 @@ def tdf_to_pkg_dict(datapackage):
         _datapackage_parse_unknown_fields_as_extras,
     ]
     pkg_dict = {
-        'name': datapackage.metadata['name']
+        'name': datapackage.metadata['name'].lower()
     }
 
     for parser in PARSERS:
