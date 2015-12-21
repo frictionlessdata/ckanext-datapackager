@@ -11,8 +11,10 @@ import ckanext.datapackager.lib.tdf as tdf
 def package_create_from_datapackage(context, data_dict):
     '''Create a new dataset (package) from a Data Package file.
 
-    :param url: url of the datapackage
+    :param url: url of the datapackage (optional if `upload` is defined)
     :type url: string
+    :param upload: the uploaded datapackage (optional if `url` is defined)
+    :type upload: cgi.FieldStorage
     :param name: the name of the new dataset, must be between 2 and 100
         characters long and contain only lowercase alphanumeric characters,
         ``-`` and ``_``, e.g. ``'warandpeace'`` (optional, default:
@@ -26,11 +28,19 @@ def package_create_from_datapackage(context, data_dict):
     :type owner_org: string
     '''
     try:
-        url = data_dict['url']
+        url = data_dict.get('url')
+        upload = data_dict.get('upload')
+        if not url and upload is None:
+            raise KeyError()
     except KeyError:
-        raise toolkit.ValidationError({'url': 'missing url'})
+        msg = {'url': 'you must either define a URL or upload attribute'}
+        raise toolkit.ValidationError(msg)
 
-    dp = datapackage.DataPackage(url)
+    if upload is not None:
+        dp = datapackage.DataPackage(upload.file)
+    else:
+        dp = datapackage.DataPackage(url)
+
     pkg_dict = tdf.tdf_to_pkg_dict(dp)
 
     owner_org = data_dict.get('owner_org')

@@ -39,14 +39,9 @@ class DataPackageController(toolkit.BaseController):
 
         try:
             params = toolkit.request.params
-            data = {
-                'url': params.get('url'),
-                'owner_org': params.get('owner_org'),
-                'private': params.get('private'),
-            }
             dataset = toolkit.get_action('package_create_from_datapackage')(
                 context,
-                data,
+                params,
             )
             toolkit.redirect_to(controller='package',
                                 action='read',
@@ -54,7 +49,7 @@ class DataPackageController(toolkit.BaseController):
         except toolkit.ValidationError as e:
             errors = e.error_dict
             error_summary = e.error_summary
-            return self.new(data=data,
+            return self.new(data=params,
                             errors=errors,
                             error_summary=error_summary)
 

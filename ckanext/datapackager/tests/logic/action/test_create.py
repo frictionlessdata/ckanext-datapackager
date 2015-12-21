@@ -1,6 +1,7 @@
 import json
 import httpretty
 import nose.tools
+import tempfile
 
 import ckan.tests.helpers as helpers
 import ckanext.datapackager.tests.helpers as custom_helpers
@@ -9,7 +10,7 @@ import ckan.tests.factories as factories
 
 
 class TestPackageCreateFromDataPackage(custom_helpers.FunctionalTestBaseClass):
-    def test_it_requires_a_url(self):
+    def test_it_requires_a_url_if_theres_no_upload_param(self):
         nose.tools.assert_raises(
             toolkit.ValidationError,
             helpers.call_action,
@@ -195,3 +196,20 @@ class TestPackageCreateFromDataPackage(custom_helpers.FunctionalTestBaseClass):
                                       owner_org=organization['id'],
                                       private=True)
         nose.tools.assert_true(dataset['private'])
+
+    def test_it_allows_uploading_a_datapackage(self):
+        class _UploadFile(object):
+            '''Mock the parts from cgi.FileStorage we use.'''
+            def __init__(self, fp):
+                self.file = fp
+
+        datapackage = {
+            'name': 'foo',
+        }
+        with tempfile.NamedTemporaryFile() as tmpfile:
+            tmpfile.write(json.dumps(datapackage))
+            tmpfile.flush()
+
+            dataset = helpers.call_action('package_create_from_datapackage',
+                                          upload=_UploadFile(tmpfile))
+            nose.tools.assert_equal(dataset['name'], 'foo')
