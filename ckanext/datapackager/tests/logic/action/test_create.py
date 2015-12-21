@@ -126,3 +126,52 @@ class TestPackageCreateFromDataPackage(custom_helpers.FunctionalTestBaseClass):
 
         nose.tools.assert_equal(resources[0]['url_type'], 'upload')
         nose.tools.assert_true(resources[0]['name'] in resources[0]['url'])
+
+    @httpretty.activate
+    def test_it_allows_specifying_the_dataset_name(self):
+        httpretty.HTTPretty.allow_net_connect = False
+        url = 'http://www.somewhere.com/datapackage.json'
+        datapackage = {
+            'name': 'foo',
+        }
+        httpretty.register_uri(httpretty.GET, url,
+                               body=json.dumps(datapackage))
+
+        dataset = helpers.call_action('package_create_from_datapackage',
+                                      url=url,
+                                      name='bar')
+        nose.tools.assert_equal(dataset['name'], 'bar')
+
+    @httpretty.activate
+    def test_it_creates_unique_name_if_name_wasnt_specified(self):
+        httpretty.HTTPretty.allow_net_connect = False
+        url = 'http://www.somewhere.com/datapackage.json'
+        datapackage = {
+            'name': 'foo',
+        }
+        httpretty.register_uri(httpretty.GET, url,
+                               body=json.dumps(datapackage))
+
+        helpers.call_action('package_create', name=datapackage['name'])
+        dataset = helpers.call_action('package_create_from_datapackage',
+                                      url=url)
+        nose.tools.assert_true(dataset['name'].startswith('foo'))
+
+    @httpretty.activate
+    def test_it_fails_if_specifying_name_that_already_exists(self):
+        httpretty.HTTPretty.allow_net_connect = False
+        url = 'http://www.somewhere.com/datapackage.json'
+        datapackage = {
+            'name': 'foo',
+        }
+        httpretty.register_uri(httpretty.GET, url,
+                               body=json.dumps(datapackage))
+
+        helpers.call_action('package_create', name=datapackage['name'])
+        nose.tools.assert_raises(
+            toolkit.ValidationError,
+            helpers.call_action,
+            'package_create_from_datapackage',
+            url=url,
+            name=datapackage['name']
+        )

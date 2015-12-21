@@ -1,3 +1,4 @@
+import random
 import cgi
 import json
 import tempfile
@@ -12,6 +13,12 @@ def package_create_from_datapackage(context, data_dict):
 
     :param url: url of the datapackage
     :type url: string
+    :param name: the name of the new dataset, must be between 2 and 100
+        characters long and contain only lowercase alphanumeric characters,
+        ``-`` and ``_``, e.g. ``'warandpeace'`` (optional, default:
+        datapackage's name concatenated with a random string to avoid
+        name collisions)
+    :type name: string
     :param owner_org: the id of the dataset's owning organization, see
         :py:func:`~ckan.logic.action.get.organization_list` or
         :py:func:`~ckan.logic.action.get.organization_list_for_user` for
@@ -30,15 +37,41 @@ def package_create_from_datapackage(context, data_dict):
     if owner_org:
         pkg_dict['owner_org'] = owner_org
 
+    name = data_dict.get('name')
+    if name:
+        pkg_dict['name'] = name
+
     resources = pkg_dict.get('resources', [])
     if resources:
         del pkg_dict['resources']
-    res = toolkit.get_action('package_create')(context, pkg_dict)
+
+    res = _package_create_with_unique_name(context, pkg_dict, name)
 
     if resources:
         pkg_id = res['id']
         _create_resources(pkg_id, context, resources)
         res = toolkit.get_action('package_show')(context, {'id': pkg_id})
+
+    return res
+
+
+def _package_create_with_unique_name(context, pkg_dict, name=None):
+    res = None
+    if name:
+        pkg_dict['name'] = name
+
+    try:
+        res = toolkit.get_action('package_create')(context, pkg_dict)
+    except toolkit.ValidationError as e:
+        if not name and \
+           'That URL is already in use.' in e.error_dict.get('name', []):
+            random_num = random.randint(0, 9999999999)
+            name = '{name}-{rand}'.format(name=pkg_dict.get('name', 'dp'),
+                                          rand=random_num)
+            pkg_dict['name'] = name
+            res = toolkit.get_action('package_create')(context, pkg_dict)
+        else:
+            raise e
 
     return res
 
