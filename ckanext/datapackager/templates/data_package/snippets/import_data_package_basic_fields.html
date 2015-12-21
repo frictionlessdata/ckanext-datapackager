@@ -10,9 +10,6 @@
 {% endblock %}
 
 {% block package_basic_fields_url %}
-  {% set prefix = h.url_for(controller='package', action='read', id='') %}
-
-  {{ form.prepend('name', id='field-name', label=_('Name'), prepend=prefix, placeholder=_('eg. my-dataset'), value=data.name, error=errors.name) }}
 {% endblock %}
 
 {% block package_basic_fields_description %}
