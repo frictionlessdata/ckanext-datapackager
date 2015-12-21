@@ -5,6 +5,7 @@ import nose.tools
 import ckan.tests.helpers as helpers
 import ckanext.datapackager.tests.helpers as custom_helpers
 import ckan.plugins.toolkit as toolkit
+import ckan.tests.factories as factories
 
 
 class TestPackageCreateFromDataPackage(custom_helpers.FunctionalTestBaseClass):
@@ -186,7 +187,11 @@ class TestPackageCreateFromDataPackage(custom_helpers.FunctionalTestBaseClass):
         httpretty.register_uri(httpretty.GET, url,
                                body=json.dumps(datapackage))
 
+        user = factories.Sysadmin()
+        organization = factories.Organization()
         dataset = helpers.call_action('package_create_from_datapackage',
+                                      context={'user': user['id']},
                                       url=url,
+                                      owner_org=organization['id'],
                                       private=True)
         nose.tools.assert_true(dataset['private'])
