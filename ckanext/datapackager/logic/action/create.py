@@ -37,6 +37,10 @@ def package_create_from_datapackage(context, data_dict):
     if owner_org:
         pkg_dict['owner_org'] = owner_org
 
+    private = data_dict.get('private')
+    if private:
+        pkg_dict['private'] = private
+
     name = data_dict.get('name')
     if name:
         pkg_dict['name'] = name

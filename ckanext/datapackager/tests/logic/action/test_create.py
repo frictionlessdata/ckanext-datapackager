@@ -175,3 +175,18 @@ class TestPackageCreateFromDataPackage(custom_helpers.FunctionalTestBaseClass):
             url=url,
             name=datapackage['name']
         )
+
+    @httpretty.activate
+    def test_it_allows_changing_dataset_visibility(self):
+        httpretty.HTTPretty.allow_net_connect = False
+        url = 'http://www.somewhere.com/datapackage.json'
+        datapackage = {
+            'name': 'foo',
+        }
+        httpretty.register_uri(httpretty.GET, url,
+                               body=json.dumps(datapackage))
+
+        dataset = helpers.call_action('package_create_from_datapackage',
+                                      url=url,
+                                      private=True)
+        nose.tools.assert_true(dataset['private'])

@@ -38,8 +38,11 @@ class DataPackageController(toolkit.BaseController):
         self._authorize_or_abort(context)
 
         try:
+            params = toolkit.request.params
             data = {
-                'url': toolkit.request.params.get('url')
+                'url': params.get('url'),
+                'owner_org': params.get('owner_org'),
+                'private': params.get('private'),
             }
             dataset = toolkit.get_action('package_create_from_datapackage')(
                 context,
@@ -51,7 +54,9 @@ class DataPackageController(toolkit.BaseController):
         except toolkit.ValidationError as e:
             errors = e.error_dict
             error_summary = e.error_summary
-            return self.new(data=data, errors=errors, error_summary=error_summary)
+            return self.new(data=data,
+                            errors=errors,
+                            error_summary=error_summary)
 
     def download_tabular_data_format(self, package_id):
         '''Return the given package as a Tabular Data Format ZIP file.
