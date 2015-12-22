@@ -27,19 +27,13 @@ def package_create_from_datapackage(context, data_dict):
         available values (optional)
     :type owner_org: string
     '''
-    try:
-        url = data_dict.get('url')
-        upload = data_dict.get('upload')
-        if not url and upload is None:
-            raise KeyError()
-    except KeyError:
-        msg = {'url': 'you must either define a URL or upload attribute'}
+    url = data_dict.get('url')
+    upload = data_dict.get('upload')
+    if not url and upload is None:
+        msg = {'url': ['you must define either a url or upload attribute']}
         raise toolkit.ValidationError(msg)
 
-    if upload is not None:
-        dp = datapackage.DataPackage(upload.file)
-    else:
-        dp = datapackage.DataPackage(url)
+    dp = _load_and_validate_datapackage(url=url, upload=upload)
 
     pkg_dict = tdf.tdf_to_pkg_dict(dp)
 
@@ -67,6 +61,25 @@ def package_create_from_datapackage(context, data_dict):
         res = toolkit.get_action('package_show')(context, {'id': pkg_id})
 
     return res
+
+
+def _load_and_validate_datapackage(url=None, upload=None):
+    try:
+        if upload is not None:
+            dp = datapackage.DataPackage(upload.file)
+        else:
+            dp = datapackage.DataPackage(url)
+
+        dp.validate()
+    except datapackage.exceptions.DataPackageException as e:
+        msg = {'datapackage': [e.message]}
+        raise toolkit.ValidationError(msg)
+
+    if not dp.safe():
+        msg = {'datapackage': ['the Data Package has unsafe attributes']}
+        raise toolkit.ValidationError(msg)
+
+    return dp
 
 
 def _package_create_with_unique_name(context, pkg_dict, name=None):

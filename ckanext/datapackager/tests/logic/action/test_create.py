@@ -18,6 +18,44 @@ class TestPackageCreateFromDataPackage(custom_helpers.FunctionalTestBaseClass):
         )
 
     @httpretty.activate
+    def test_it_raises_if_datapackage_is_invalid(self):
+        httpretty.HTTPretty.allow_net_connect = False
+        url = 'http://www.somewhere.com/datapackage.json'
+        datapackage = {}
+        httpretty.register_uri(httpretty.GET, url,
+                               body=json.dumps(datapackage))
+
+        nose.tools.assert_raises(
+            toolkit.ValidationError,
+            helpers.call_action,
+            'package_create_from_datapackage',
+            url=url,
+        )
+
+    @httpretty.activate
+    def test_it_raises_if_datapackage_is_unsafe(self):
+        httpretty.HTTPretty.allow_net_connect = False
+        url = 'http://www.somewhere.com/datapackage.json'
+        datapackage = {
+            'name': 'unsafe',
+            'resources': [
+                {
+                    'name': 'unsafe-resource',
+                    'path': '/etc/shadow',
+                }
+            ]
+        }
+        httpretty.register_uri(httpretty.GET, url,
+                               body=json.dumps(datapackage))
+
+        nose.tools.assert_raises(
+            toolkit.ValidationError,
+            helpers.call_action,
+            'package_create_from_datapackage',
+            url=url,
+        )
+
+    @httpretty.activate
     def test_it_creates_the_dataset(self):
         httpretty.HTTPretty.allow_net_connect = False
         url = 'http://www.somewhere.com/datapackage.json'
