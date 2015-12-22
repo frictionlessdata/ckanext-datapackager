@@ -6,7 +6,6 @@
 import re
 import slugify
 
-import datapackage
 import ckan.lib.helpers as h
 
 import ckanext.datapackager.lib.util as util
@@ -17,9 +16,6 @@ def _convert_to_tdf_resource(resource_dict):
 
     '''
     resource = {}
-
-    if resource_dict.get('url_type') == 'upload':
-        resource['path'] = util.get_path_to_resource_file(resource_dict)
 
     if resource_dict.get('url'):
         resource['url'] = resource_dict['url']
@@ -44,23 +40,6 @@ def _convert_to_tdf_resource(resource_dict):
         pass
 
     return resource
-
-
-def convert_to_tdf_zip(pkg_dict, file_or_path):
-    '''Saves the given CKAN package dict into a Tabular Data Format package.
-
-    Convert the given package dict into a Data Package and saves it into the
-    file or path received as parameter.
-
-    :param file_or_path: Where to write the Data Package zip file into. It can
-        either be a path or a file-like object.
-    :type file_or_path: str or file-like object
-    '''
-    tdf_dict = convert_to_tdf(pkg_dict)
-    # FIXME: This should use the "tabular" schema, but there're some issues
-    # with it.
-    data_package = datapackage.DataPackage(tdf_dict)
-    data_package.save(file_or_path)
 
 
 def convert_to_tdf(pkg_dict):

@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 
 import mock
-import tempfile
-import zipfile
 import nose.tools
 import httpretty
 
@@ -152,9 +150,7 @@ class TestConvertToDict(object):
         nose.tools.assert_equals(resource.get('url'),
                                  self.resource_dict['url'])
 
-    @mock.patch('ckanext.datapackager.lib.tdf.util')
-    def test_resource_path_for_uploaded_files(self, util_mock):
-        util_mock.get_path_to_resource_file.return_value = 'the_file_path'
+    def test_resource_path_isnt_set_even_for_uploaded_resources(self):
         self.resource_dict.update({
             'id': 'foo',
             'url': 'http://www.somewhere.com/data.csv',
@@ -164,8 +160,7 @@ class TestConvertToDict(object):
         resource = result.get('resources')[0]
         nose.tools.assert_equals(resource.get('url'),
                                  self.resource_dict['url'])
-        nose.tools.assert_equals(resource.get('path'),
-                                 'the_file_path')
+        nose.tools.assert_not_in('path', resource)
 
     def test_resource_description(self):
         self.resource_dict.update({
@@ -217,28 +212,6 @@ class TestConvertToDict(object):
                                  expected_name)
         nose.tools.assert_equals(resource.get('title'),
                                  self.resource_dict['name'])
-
-
-class TestConvertToZip(object):
-    def test_writes_the_datapackage_zipfile_to_the_received_file(self):
-        dataset_dict = {
-            'name': 'foo'
-        }
-        with tempfile.TemporaryFile() as f:
-            tdf.convert_to_tdf_zip(dataset_dict, f)
-            with zipfile.ZipFile(f) as z:
-                nose.tools.assert_equals(z.namelist(),
-                                         ['datapackage.json'])
-
-    def test_accepts_a_file_path(self):
-        dataset_dict = {
-            'name': 'foo'
-        }
-        with tempfile.NamedTemporaryFile() as f:
-            tdf.convert_to_tdf_zip(dataset_dict, f.name)
-            with zipfile.ZipFile(f) as z:
-                nose.tools.assert_equals(z.namelist(),
-                                         ['datapackage.json'])
 
 
 class TestDataPackageToDatasetDict(object):

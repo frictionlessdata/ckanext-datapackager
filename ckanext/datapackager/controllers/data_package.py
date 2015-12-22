@@ -54,7 +54,7 @@ class DataPackageController(toolkit.BaseController):
                             error_summary=error_summary)
 
     def download_tabular_data_format(self, package_id):
-        '''Return the given package as a Tabular Data Format ZIP file.
+        '''Return the given package as a Tabular Data Format JSON file.
 
         '''
         context = {
@@ -63,11 +63,11 @@ class DataPackageController(toolkit.BaseController):
             'user': toolkit.c.user or toolkit.c.author,
         }
         r = toolkit.response
-        r.content_disposition = 'attachment; filename={0}.zip'.format(
+        r.content_disposition = 'attachment; filename=datapackage.json'.format(
             package_id)
-        r.content_type = 'application/octet-stream'
+        r.content_type = 'application/json'
 
-        return toolkit.get_action('package_to_tabular_data_format_zip')(
+        return toolkit.get_action('package_to_tabular_data_format')(
             context,
             {'id': package_id}
         )
