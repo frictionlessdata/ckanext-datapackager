@@ -27,6 +27,14 @@ To install `ckanext-datapackager` into a CKAN instance, do:
 3. Add `datapackager` to the `ckan.plugins` setting in your CKAN config file;
 4. Restart CKAN.
 
+## Using
+
+### Web Interface
+
+#### Importing
+
+![Importing Data Package](doc/images/ckanext-datapackager-import-demo.gif)
+
 ## Developing ckanext-datapackager
 
 ### Running tests
