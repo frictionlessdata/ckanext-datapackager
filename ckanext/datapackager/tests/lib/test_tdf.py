@@ -192,6 +192,18 @@ class TestConvertToDict(object):
         nose.tools.assert_equals(resource.get('hash'),
                                  self.resource_dict['hash'])
 
+    def test_resource_name_lowercases_the_name(self):
+        self.resource_dict.update({
+            'name': 'ThE-nAmE',
+        })
+        expected_name = 'the-name'
+        result = tdf.convert_to_tdf(self.dataset_dict)
+        resource = result.get('resources')[0]
+        nose.tools.assert_equals(resource.get('name'),
+                                 expected_name)
+        nose.tools.assert_equals(resource.get('title'),
+                                 self.resource_dict['name'])
+
     def test_resource_name_slugifies_the_name(self):
         self.resource_dict.update({
             'name': 'Lista de PIBs dos países!   51',

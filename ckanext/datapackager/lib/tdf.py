@@ -29,7 +29,7 @@ def _convert_to_tdf_resource(resource_dict):
         resource['hash'] = resource_dict['hash']
 
     if resource_dict.get('name'):
-        resource['name'] = slugify.slugify(resource_dict['name'])
+        resource['name'] = slugify.slugify(resource_dict['name']).lower()
         resource['title'] = resource_dict['name']
 
     try:
