@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-import mock
 import nose.tools
 import httpretty
 
@@ -132,13 +131,17 @@ class TestConvertToDict(object):
         self.dataset_dict.update({
             'extras': [
                 {'key': 'title_cn', 'value': u'國內生產總值'},
-                {'key': 'last_updated', 'value': '2011-09-21'},
+                {'key': 'years', 'value': '[2015, 2016]'},
+                {'key': 'last_year', 'value': 2016},
+                {'key': 'location', 'value': '{"country": "China"}'},
             ]
         })
         result = tdf.convert_to_tdf(self.dataset_dict)
-        nose.tools.assert_equals(result.get('extras'), {
+        nose.tools.assert_equal(result.get('extras'), {
             'title_cn': u'國內生產總值',
-            'last_updated': '2011-09-21',
+            'years': [2015, 2016],
+            'last_year': 2016,
+            'location': {'country': 'China'},
         })
 
     def test_resource_url(self):
@@ -366,13 +369,17 @@ class TestDataPackageToDatasetDict(object):
     def test_datapackage_extras(self):
         self.datapackage.metadata.update({
             'title_cn': u'國內生產總值',
-            'last_updated': '2011-09-21'
+            'years': [2015, 2016],
+            'last_year': 2016,
+            'location': {'country': 'China'},
         })
         result = tdf.tdf_to_pkg_dict(self.datapackage)
-        nose.tools.assert_equals(result.get('extras'), {
-            'title_cn': u'國內生產總值',
-            'last_updated': '2011-09-21',
-        })
+        nose.tools.assert_items_equal(result.get('extras'), [
+            {'key': 'title_cn', 'value': u'國內生產總值'},
+            {'key': 'years', 'value': '[2015, 2016]'},
+            {'key': 'last_year', 'value': 2016},
+            {'key': 'location', 'value': '{"country": "China"}'},
+        ])
 
     def test_resource_name_is_used_if_theres_no_title(self):
         resource = {

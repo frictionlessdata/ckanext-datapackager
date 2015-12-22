@@ -3,12 +3,11 @@
 (Including converting CKAN's package and resource formats into SDF.)
 
 '''
+import json
 import re
 import slugify
 
 import ckan.lib.helpers as h
-
-import ckanext.datapackager.lib.util as util
 
 
 def _convert_to_tdf_resource(resource_dict):
@@ -223,8 +222,14 @@ def _parse_tags(pkg_dict):
 def _parse_extras(pkg_dict):
     result = {}
 
-    extras = [(extra['key'], extra['value']) for extra
+    extras = [[extra['key'], extra['value']] for extra
               in pkg_dict.get('extras', [])]
+
+    for extra in extras:
+        try:
+            extra[1] = json.loads(extra[1])
+        except (ValueError, TypeError):
+            pass
 
     if extras:
         result['extras'] = dict(extras)
@@ -324,13 +329,15 @@ def _datapackage_parse_unknown_fields_as_extras(datapackage_dict):
     ]
 
     result = {}
-    extras = {}
-
-    for key, value in datapackage_dict.items():
-        if key not in KNOWN_FIELDS:
-            extras[key] = value
+    extras = [{'key': k, 'value': v}
+              for k, v in datapackage_dict.items()
+              if k not in KNOWN_FIELDS]
 
     if extras:
+        for extra in extras:
+            value = extra['value']
+            if isinstance(value, dict) or isinstance(value, list):
+                extra['value'] = json.dumps(value)
         result['extras'] = extras
 
     return result

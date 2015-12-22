@@ -66,7 +66,8 @@ class TestPackageCreateFromDataPackage(custom_helpers.FunctionalTestBaseClass):
                     'name': 'the-resource',
                     'url': 'http://www.somewhere.com/data.csv',
                 }
-            ]
+            ],
+            'some_extra_data': {'foo': 'bar'},
         }
         httpretty.register_uri(httpretty.GET, url,
                                body=json.dumps(datapackage))
@@ -75,9 +76,14 @@ class TestPackageCreateFromDataPackage(custom_helpers.FunctionalTestBaseClass):
         httpretty.register_uri(httpretty.GET,
                                datapackage['resources'][0]['url'])
 
-        helpers.call_action('package_create_from_datapackage', url=url)
+        dataset = helpers.call_action('package_create_from_datapackage',
+                                      url=url)
 
-        dataset = helpers.call_action('package_show', id='foo')
+        extras = dataset['extras']
+        nose.tools.assert_equal(extras[0]['key'], 'some_extra_data')
+        nose.tools.assert_dict_equal(json.loads(extras[0]['value']),
+                                     datapackage['some_extra_data'])
+
         resource = dataset.get('resources')[0]
         nose.tools.assert_equal(resource['name'],
                                 datapackage['resources'][0]['name'])
