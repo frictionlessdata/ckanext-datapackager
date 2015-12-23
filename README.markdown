@@ -35,9 +35,19 @@ To install `ckanext-datapackager` into a CKAN instance, do:
 
 ![Importing Data Package](doc/images/ckanext-datapackager-import-demo.gif)
 
+1. Visit the Dataset list page (e.g. `http://your-ckan-address.com/dataset`)
+2. Click on `Import Data Package` button;
+3. Upload or link to a Data Package JSON or ZIP file;
+  * Depending on your CKAN configuration, you might also need to define
+    the dataset's organization and visibility here.
+4. Review the created dataset.
+
 #### Exporting
 
 ![Exporting CKAN Dataset as Data Package](doc/images/ckanext-datapackager-export-link.jpg)
+
+1. Go to the dataset's page;
+2. Click on `Download Data Package` button.
 
 ## Developing ckanext-datapackager
 
