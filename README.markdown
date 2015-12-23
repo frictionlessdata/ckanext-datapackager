@@ -49,6 +49,10 @@ To install `ckanext-datapackager` into a CKAN instance, do:
 1. Go to the dataset's page;
 2. Click on `Download Data Package` button.
 
+### API
+
+Read the docstrings inside the files at [ckanext/datapackager/logic/action](ckanext/datapackager/logic/action)
+
 ## Developing ckanext-datapackager
 
 ### Running tests
