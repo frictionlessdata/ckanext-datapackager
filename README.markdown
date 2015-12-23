@@ -14,15 +14,11 @@ To install `ckanext-datapackager` into a CKAN instance, do:
 
 1. If you're using a virtual environment for CKAN, activate it doing, for example:
 
-    ```
-    source /usr/lib/ckan/default/bin/activate
-    ```
+        source /usr/lib/ckan/default/bin/activate
     
 2. Install the `ckanext-datapackager` extension using pip:
 
-    ```
-    pip install ckanext-datapackager
-    ```
+        pip install ckanext-datapackager
     
 3. Add `datapackager` to the `ckan.plugins` setting in your CKAN config file;
 4. Restart CKAN.
