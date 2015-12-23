@@ -64,7 +64,7 @@ class FunctionalTestBaseClass():
     def setup_class(cls):
         # Make a copy of the Pylons config, so we can restore it in teardown.
         cls.original_config = config.copy()
-        _load_plugin('downloadtdf')
+        _load_plugin('datapackager')
         cls.app = _get_test_app()
 
     def setup(self):
