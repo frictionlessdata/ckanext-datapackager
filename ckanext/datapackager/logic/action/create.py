@@ -5,7 +5,7 @@ import tempfile
 import ckan.plugins.toolkit as toolkit
 
 import datapackage
-import ckanext.datapackager.lib.tdf as tdf
+import ckanext.datapackager.lib.converter as converter
 
 
 def package_create_from_datapackage(context, data_dict):
@@ -35,30 +35,30 @@ def package_create_from_datapackage(context, data_dict):
 
     dp = _load_and_validate_datapackage(url=url, upload=upload)
 
-    pkg_dict = tdf.tdf_to_pkg_dict(dp)
+    dataset_dict = converter.datapackage_to_dataset(dp)
 
     owner_org = data_dict.get('owner_org')
     if owner_org:
-        pkg_dict['owner_org'] = owner_org
+        dataset_dict['owner_org'] = owner_org
 
     private = data_dict.get('private')
     if private:
-        pkg_dict['private'] = private
+        dataset_dict['private'] = private
 
     name = data_dict.get('name')
     if name:
-        pkg_dict['name'] = name
+        dataset_dict['name'] = name
 
-    resources = pkg_dict.get('resources', [])
+    resources = dataset_dict.get('resources', [])
     if resources:
-        del pkg_dict['resources']
+        del dataset_dict['resources']
 
-    res = _package_create_with_unique_name(context, pkg_dict, name)
+    res = _package_create_with_unique_name(context, dataset_dict, name)
 
     if resources:
-        pkg_id = res['id']
-        _create_resources(pkg_id, context, resources)
-        res = toolkit.get_action('package_show')(context, {'id': pkg_id})
+        dataset_id = res['id']
+        _create_resources(dataset_id, context, resources)
+        res = toolkit.get_action('package_show')(context, {'id': dataset_id})
 
     return res
 
@@ -82,30 +82,30 @@ def _load_and_validate_datapackage(url=None, upload=None):
     return dp
 
 
-def _package_create_with_unique_name(context, pkg_dict, name=None):
+def _package_create_with_unique_name(context, dataset_dict, name=None):
     res = None
     if name:
-        pkg_dict['name'] = name
+        dataset_dict['name'] = name
 
     try:
-        res = toolkit.get_action('package_create')(context, pkg_dict)
+        res = toolkit.get_action('package_create')(context, dataset_dict)
     except toolkit.ValidationError as e:
         if not name and \
            'That URL is already in use.' in e.error_dict.get('name', []):
             random_num = random.randint(0, 9999999999)
-            name = '{name}-{rand}'.format(name=pkg_dict.get('name', 'dp'),
+            name = '{name}-{rand}'.format(name=dataset_dict.get('name', 'dp'),
                                           rand=random_num)
-            pkg_dict['name'] = name
-            res = toolkit.get_action('package_create')(context, pkg_dict)
+            dataset_dict['name'] = name
+            res = toolkit.get_action('package_create')(context, dataset_dict)
         else:
             raise e
 
     return res
 
 
-def _create_resources(pkg_id, context, resources):
+def _create_resources(dataset_id, context, resources):
     for resource in resources:
-        resource['package_id'] = pkg_id
+        resource['package_id'] = dataset_id
         if resource.get('data'):
             _create_and_upload_resource_with_inline_data(context, resource)
         elif resource.get('path'):

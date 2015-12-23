@@ -56,7 +56,7 @@ class DataPackageController(toolkit.BaseController):
                             error_summary=error_summary)
 
     def export_datapackage(self, package_id):
-        '''Return the given package as a Tabular Data Format JSON file.
+        '''Return the given dataset as a Data Package JSON file.
 
         '''
         context = {
@@ -80,4 +80,4 @@ class DataPackageController(toolkit.BaseController):
         try:
             toolkit.check_access('package_create', context)
         except toolkit.NotAuthorized:
-            toolkit.abort(401, toolkit._('Unauthorized to create a package'))
+            toolkit.abort(401, toolkit._('Unauthorized to create a dataset'))

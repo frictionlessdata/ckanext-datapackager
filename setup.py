@@ -23,7 +23,6 @@ setup(
     ],
     entry_points='''
         [ckan.plugins]
-        # Add plugins here, e.g.
-        datapackager=ckanext.datapackager.plugin:DownloadTabularDataFormatPlugin
+        datapackager=ckanext.datapackager.plugin:DataPackagerPlugin
     ''',
 )

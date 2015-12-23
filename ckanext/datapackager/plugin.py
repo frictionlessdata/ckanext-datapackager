@@ -4,12 +4,8 @@ import ckanext.datapackager.logic.action.create
 import ckanext.datapackager.logic.action.get
 
 
-class DownloadTabularDataFormatPlugin(plugins.SingletonPlugin):
-    '''Plugin that adds downloading packages in Tabular Data Format.
-
-    Adds a API endpoint and download button to package pages that downloads a
-    Tabular Data Format JSON file of the package.
-
+class DataPackagerPlugin(plugins.SingletonPlugin):
+    '''Plugin that adds importing/exporting datasets as Data Packages.
     '''
     plugins.implements(plugins.IActions)
     plugins.implements(plugins.IConfigurer)

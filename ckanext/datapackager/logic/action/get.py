@@ -1,30 +1,30 @@
 import ckan.plugins.toolkit as toolkit
 
-import ckanext.datapackager.lib.tdf as tdf
+import ckanext.datapackager.lib.converter as converter
 
 
 @toolkit.side_effect_free
 def package_show_as_datapackage(context, data_dict):
-    '''Return the given CKAN package in Tabular Data Format.
+    '''Return the given CKAN dataset into a Data Package.
 
     This returns just the data package metadata in JSON format (what would be
     the contents of the datapackage.json file), it does not return the whole
     multi-file package including datapackage.json file and additional data
     files.
 
-    :param package_id: the ID of the package
-    :type package_id: string
+    :param id: the ID of the dataset
+    :type id: string
 
-    :returns: the data package metadata
+    :returns: the datapackage metadata
     :rtype: JSON
 
     '''
     try:
-        package_id = data_dict['id']
+        dataset_id = data_dict['id']
     except KeyError:
         raise toolkit.ValidationError({'id': 'missing id'})
 
-    pkg_dict = toolkit.get_action('package_show')(context,
-                                                  {'name_or_id': package_id})
+    dataset_dict = toolkit.get_action('package_show')(context,
+                                                      {'id': dataset_id})
 
-    return tdf.convert_to_tdf(pkg_dict)
+    return converter.dataset_to_datapackage(dataset_dict)

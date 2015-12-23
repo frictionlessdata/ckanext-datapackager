@@ -21,8 +21,8 @@ class TestDataPackageController(
     '''Functional tests for the DataPackageController class.'''
 
     @httpretty.activate
-    def test_download_tdf(self):
-        '''Test downloading a Tabular Data Format JSON file of a package.
+    def test_download_datapackage(self):
+        '''Test downloading a DataPackage file of a package.
 
         '''
         user = factories.Sysadmin()

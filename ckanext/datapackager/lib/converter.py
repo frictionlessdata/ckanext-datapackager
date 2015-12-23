@@ -1,7 +1,4 @@
-'''Some library functions for dealing with Tabular Data Format.
-
-(Including converting CKAN's package and resource formats into SDF.)
-
+'''Functions for converting between CKAN's dataset and Data Packages.
 '''
 import json
 import re
@@ -10,8 +7,8 @@ import slugify
 import ckan.lib.helpers as h
 
 
-def _convert_to_tdf_resource(resource_dict):
-    '''Convert a CKAN resource dict into a Tabular Data Format resource dict.
+def _convert_to_datapackage_resource(resource_dict):
+    '''Convert a CKAN resource dict into a Data Package resource dict.
 
     '''
     resource = {}
@@ -41,14 +38,10 @@ def _convert_to_tdf_resource(resource_dict):
     return resource
 
 
-def convert_to_tdf(pkg_dict):
-    '''Convert the given CKAN package dict into a Tabular Data Format dict.
+def dataset_to_datapackage(dataset_dict):
+    '''Convert the given CKAN dataset dict into a Data Package dict.
 
-    Convert the given package dict into a dict that, if dumped to a JSON
-    string, can form the valid contents of the package descriptor file in a
-    Tabular Data Format data package.
-
-    :returns: the data package dict
+    :returns: the datapackage dict
     :rtype: dict
 
     '''
@@ -64,21 +57,26 @@ def convert_to_tdf(pkg_dict):
         _parse_extras,
     ]
     dp = {
-        'name': pkg_dict['name']
+        'name': dataset_dict['name']
     }
 
     for parser in PARSERS:
-        dp.update(parser(pkg_dict))
+        dp.update(parser(dataset_dict))
 
-    resources = pkg_dict.get('resources')
+    resources = dataset_dict.get('resources')
     if resources:
-        dp['resources'] = [_convert_to_tdf_resource(r)
+        dp['resources'] = [_convert_to_datapackage_resource(r)
                            for r in resources]
 
     return dp
 
 
-def tdf_to_pkg_dict(datapackage):
+def datapackage_to_dataset(datapackage):
+    '''Convert the given datapackage into a CKAN dataset dict.
+
+    :returns: the dataset dict
+    :rtype: dict
+    '''
     PARSERS = [
         _rename_dict_key('title', 'title'),
         _rename_dict_key('version', 'version'),
@@ -89,20 +87,20 @@ def tdf_to_pkg_dict(datapackage):
         _datapackage_parse_keywords,
         _datapackage_parse_unknown_fields_as_extras,
     ]
-    pkg_dict = {
+    dataset_dict = {
         'name': datapackage.metadata['name'].lower()
     }
 
     for parser in PARSERS:
-        pkg_dict.update(parser(datapackage.metadata))
+        dataset_dict.update(parser(datapackage.metadata))
 
     if datapackage.resources:
-        pkg_dict['resources'] = [_tdf_resource_to_ckan_resource(r)
-                                 for r in datapackage.resources]
-    return pkg_dict
+        dataset_dict['resources'] = [_datapackage_resource_to_ckan_resource(r)
+                                     for r in datapackage.resources]
+    return dataset_dict
 
 
-def _tdf_resource_to_ckan_resource(resource):
+def _datapackage_resource_to_ckan_resource(resource):
     resource_dict = {}
 
     if resource.metadata.get('name'):
@@ -141,34 +139,34 @@ def _rename_dict_key(original_key, destination_key):
     return _parser
 
 
-def _parse_ckan_url(pkg_dict):
+def _parse_ckan_url(dataset_dict):
     result = {}
 
-    if pkg_dict.get('ckan_url'):
-        result['homepage'] = pkg_dict['ckan_url']
+    if dataset_dict.get('ckan_url'):
+        result['homepage'] = dataset_dict['ckan_url']
 
     return result
 
 
-def _parse_notes(pkg_dict):
+def _parse_notes(dataset_dict):
     result = {}
 
-    if pkg_dict.get('notes'):
-        result['description'] = pkg_dict['notes']
+    if dataset_dict.get('notes'):
+        result['description'] = dataset_dict['notes']
 
     return result
 
 
-def _parse_license(pkg_dict):
+def _parse_license(dataset_dict):
     result = {}
     license = {}
 
-    if pkg_dict.get('license_id'):
-        license['type'] = pkg_dict['license_id']
-    if pkg_dict.get('license_title'):
-        license['title'] = pkg_dict['license_title']
-    if pkg_dict.get('license_url'):
-        license['url'] = pkg_dict['license_url']
+    if dataset_dict.get('license_id'):
+        license['type'] = dataset_dict['license_id']
+    if dataset_dict.get('license_title'):
+        license['title'] = dataset_dict['license_title']
+    if dataset_dict.get('license_url'):
+        license['url'] = dataset_dict['license_url']
 
     if license:
         result['license'] = license
@@ -176,16 +174,16 @@ def _parse_license(pkg_dict):
     return result
 
 
-def _parse_author_and_source(pkg_dict):
+def _parse_author_and_source(dataset_dict):
     result = {}
     source = {}
 
-    if pkg_dict.get('author'):
-        source['name'] = pkg_dict['author']
-    if pkg_dict.get('author_email'):
-        source['email'] = pkg_dict['author_email']
-    if pkg_dict.get('source'):
-        source['web'] = pkg_dict['source']
+    if dataset_dict.get('author'):
+        source['name'] = dataset_dict['author']
+    if dataset_dict.get('author_email'):
+        source['email'] = dataset_dict['author_email']
+    if dataset_dict.get('source'):
+        source['web'] = dataset_dict['source']
 
     if source:
         result['sources'] = [source]
@@ -193,14 +191,14 @@ def _parse_author_and_source(pkg_dict):
     return result
 
 
-def _parse_maintainer(pkg_dict):
+def _parse_maintainer(dataset_dict):
     result = {}
     author = {}
 
-    if pkg_dict.get('maintainer'):
-        author['name'] = pkg_dict['maintainer']
-    if pkg_dict.get('maintainer_email'):
-        author['email'] = pkg_dict['maintainer_email']
+    if dataset_dict.get('maintainer'):
+        author['name'] = dataset_dict['maintainer']
+    if dataset_dict.get('maintainer_email'):
+        author['email'] = dataset_dict['maintainer_email']
 
     if author:
         result['author'] = author
@@ -208,10 +206,10 @@ def _parse_maintainer(pkg_dict):
     return result
 
 
-def _parse_tags(pkg_dict):
+def _parse_tags(dataset_dict):
     result = {}
 
-    keywords = [tag['name'] for tag in pkg_dict.get('tags', [])]
+    keywords = [tag['name'] for tag in dataset_dict.get('tags', [])]
 
     if keywords:
         result['keywords'] = keywords
@@ -219,11 +217,11 @@ def _parse_tags(pkg_dict):
     return result
 
 
-def _parse_extras(pkg_dict):
+def _parse_extras(dataset_dict):
     result = {}
 
     extras = [[extra['key'], extra['value']] for extra
-              in pkg_dict.get('extras', [])]
+              in dataset_dict.get('extras', [])]
 
     for extra in extras:
         try:
