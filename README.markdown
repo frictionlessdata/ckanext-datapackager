@@ -73,10 +73,13 @@ ckanext-datapackager.
 
 ## Where is the old Open Knowledge's Data Packager?
 
-The [Open Knowledge Data Packager](http://datapackager.okfn.org) is a web app for quickly creating and
-publishing [Tabular Data Packages](http://dataprotocols.org/tabular-data-package/).
-For more information, see the [blog post on CKAN.org](http://ckan.org/2014/06/09/the-open-knowledge-data-packager/)
-and the [about page on datapackager.okfn.org](http://datapackager.okfn.org/about).
+The [Open Knowledge Data Packager](http://datapackager.okfn.org) was written for
+an old CKAN version (2.2), and is now deprecated. This extension implements
+parts of its functionality and improves them, supporting the current CKAN
+version (2.4).
+
+If you still need the old Data Packager, checkout this repository's commit
+[57cff1f](https://github.com/ckan/ckanext-datapackager/commit/57cff1f5112504091891195a097433579275f968).
 
 [ckan]: http://ckan.org
 [data-packages]: http://dataprotocols.org/data-packages/
