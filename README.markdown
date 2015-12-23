@@ -47,7 +47,21 @@ To install `ckanext-datapackager` into a CKAN instance, do:
 
 ### API
 
-Read the docstrings inside the files at [ckanext/datapackager/logic/action](ckanext/datapackager/logic/action)
+These examples use [ckanapi][ckanapi]. For more information, check the
+docstrings inside the files at
+[ckanext/datapackager/logic/action](ckanext/datapackager/logic/action).
+
+#### Importing
+
+If the datapackage is reachable through an URL, use:
+
+    ckanapi action package_create_from_datapackage url=URL_TO_DATAPACKAGE owner_org=OWNER_ORGANIZATION_ID -r http://CKAN_URL
+
+For uploading the datapackage, check the documentation on uploading files using [ckanapi][ckanapi].
+
+#### Exporting
+
+    ckanapi action package_show_as_datapackage id=PACKAGE_ID -r http://CKAN_URL -a APIKEY
 
 ## Developing ckanext-datapackager
 
@@ -79,3 +93,4 @@ If you still need the old Data Packager, checkout this repository's commit
 
 [ckan]: http://ckan.org
 [data-packages]: http://dataprotocols.org/data-packages/
+[ckanapi]: https://github.com/ckan/ckanapi
