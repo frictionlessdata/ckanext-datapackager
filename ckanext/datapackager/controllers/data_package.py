@@ -1,3 +1,5 @@
+import json
+
 import ckan.model as model
 import ckan.plugins.toolkit as toolkit
 
@@ -67,10 +69,12 @@ class DataPackageController(toolkit.BaseController):
             package_id)
         r.content_type = 'application/json'
 
-        return toolkit.get_action('package_to_tabular_data_format')(
+        datapackage_dict = toolkit.get_action('package_to_tabular_data_format')(
             context,
             {'id': package_id}
         )
+
+        return json.dumps(datapackage_dict, indent=2)
 
     def _authorize_or_abort(self, context):
         try:

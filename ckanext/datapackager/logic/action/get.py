@@ -1,4 +1,3 @@
-import json
 import ckan.plugins.toolkit as toolkit
 
 import ckanext.datapackager.lib.tdf as tdf
@@ -28,5 +27,4 @@ def package_to_tabular_data_format(context, data_dict):
     pkg_dict = toolkit.get_action('package_show')(context,
                                                   {'name_or_id': package_id})
 
-    datapackage_dict = tdf.convert_to_tdf(pkg_dict)
-    return json.dumps(datapackage_dict, indent=2)
+    return tdf.convert_to_tdf(pkg_dict)
