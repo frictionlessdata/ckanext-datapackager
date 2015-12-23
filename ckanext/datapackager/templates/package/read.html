@@ -2,8 +2,8 @@
 
 {% block primary_content_inner %}
   <div style="float:right; margin-left:10px">
-    <a href="{% url_for 'download_tabular_data_format', package_id=pkg.name %}"
-       class='btn btn-primary', id='download_tdf_button'>
+    <a href="{% url_for 'export_datapackage', package_id=pkg.name %}"
+       class='btn btn-primary', id='export_datapackage_button'>
        <i class='icon-download'></i>Download Data Package
     </a>
   </div>

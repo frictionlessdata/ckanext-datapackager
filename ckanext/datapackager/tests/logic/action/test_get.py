@@ -12,7 +12,7 @@ import ckan.plugins.toolkit as toolkit
 
 class TestGet(custom_helpers.FunctionalTestBaseClass):
 
-    def test_package_to_tabular_data_format(self):
+    def test_package_show_as_datapackage(self):
 
         dataset = factories.Dataset()
         factories.Resource(package_id=dataset['id'], url='http://test.com/test-url-1',
@@ -24,14 +24,14 @@ class TestGet(custom_helpers.FunctionalTestBaseClass):
             helpers.call_action('package_show', id=dataset['id'])
         )
 
-        tdf = helpers.call_action('package_to_tabular_data_format',
+        tdf = helpers.call_action('package_show_as_datapackage',
                                   id=dataset['name'])
 
-        nose.tools.assert_equals(expected_output, tdf)
+        nose.tools.assert_items_equal(expected_output, tdf)
 
     def test_package_to_tdf_with_missing_id(self):
         nose.tools.assert_raises(
             toolkit.ValidationError,
             helpers.call_action,
-            'package_to_tabular_data_format',
+            'package_show_as_datapackage',
         )

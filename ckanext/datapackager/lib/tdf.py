@@ -63,19 +63,19 @@ def convert_to_tdf(pkg_dict):
         _parse_tags,
         _parse_extras,
     ]
-    data_package = {
+    dp = {
         'name': pkg_dict['name']
     }
 
     for parser in PARSERS:
-        data_package.update(parser(pkg_dict))
+        dp.update(parser(pkg_dict))
 
     resources = pkg_dict.get('resources')
     if resources:
-        data_package['resources'] = [_convert_to_tdf_resource(r)
-                                     for r in resources]
+        dp['resources'] = [_convert_to_tdf_resource(r)
+                           for r in resources]
 
-    return data_package
+    return dp
 
 
 def tdf_to_pkg_dict(datapackage):

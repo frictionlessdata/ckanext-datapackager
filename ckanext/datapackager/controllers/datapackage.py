@@ -23,7 +23,7 @@ class DataPackageController(toolkit.BaseController):
         data = data or default_data
 
         return toolkit.render(
-            'data_package/import_data_package.html',
+            'datapackage/import_datapackage.html',
             extra_vars={
                 'data': data,
                 'errors': errors,
@@ -31,7 +31,7 @@ class DataPackageController(toolkit.BaseController):
             }
         )
 
-    def import_data_package(self):
+    def import_datapackage(self):
         context = {
             'model': model,
             'session': model.Session,
@@ -55,7 +55,7 @@ class DataPackageController(toolkit.BaseController):
                             errors=errors,
                             error_summary=error_summary)
 
-    def download_tabular_data_format(self, package_id):
+    def export_datapackage(self, package_id):
         '''Return the given package as a Tabular Data Format JSON file.
 
         '''
@@ -69,7 +69,7 @@ class DataPackageController(toolkit.BaseController):
             package_id)
         r.content_type = 'application/json'
 
-        datapackage_dict = toolkit.get_action('package_to_tabular_data_format')(
+        datapackage_dict = toolkit.get_action('package_show_as_datapackage')(
             context,
             {'id': package_id}
         )

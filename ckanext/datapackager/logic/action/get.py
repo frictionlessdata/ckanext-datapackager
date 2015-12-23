@@ -4,7 +4,7 @@ import ckanext.datapackager.lib.tdf as tdf
 
 
 @toolkit.side_effect_free
-def package_to_tabular_data_format(context, data_dict):
+def package_show_as_datapackage(context, data_dict):
     '''Return the given CKAN package in Tabular Data Format.
 
     This returns just the data package metadata in JSON format (what would be

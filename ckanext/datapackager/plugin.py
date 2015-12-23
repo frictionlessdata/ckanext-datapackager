@@ -20,24 +20,24 @@ class DownloadTabularDataFormatPlugin(plugins.SingletonPlugin):
 
     def before_map(self, map_):
         map_.connect(
-            'import_data_package',
-            '/import_data_package',
-            controller='ckanext.datapackager.controllers.data_package:DataPackageController',
+            'import_datapackage',
+            '/import_datapackage',
+            controller='ckanext.datapackager.controllers.datapackage:DataPackageController',
             action='new',
             conditions=dict(method=['GET']),
         )
         map_.connect(
-            'import_data_package',
-            '/import_data_package',
-            controller='ckanext.datapackager.controllers.data_package:DataPackageController',
-            action='import_data_package',
+            'import_datapackage',
+            '/import_datapackage',
+            controller='ckanext.datapackager.controllers.datapackage:DataPackageController',
+            action='import_datapackage',
             conditions=dict(method=['POST']),
         )
         map_.connect(
-            'download_tabular_data_format',
-            '/dataset/{package_id}/download_tabular_data_format',
-            controller='ckanext.datapackager.controllers.data_package:DataPackageController',
-            action='download_tabular_data_format'
+            'export_datapackage',
+            '/dataset/{package_id}/export_datapackage',
+            controller='ckanext.datapackager.controllers.datapackage:DataPackageController',
+            action='export_datapackage'
         )
         return map_
 
@@ -45,6 +45,6 @@ class DownloadTabularDataFormatPlugin(plugins.SingletonPlugin):
         return {
             'package_create_from_datapackage':
                 ckanext.datapackager.logic.action.create.package_create_from_datapackage,
-            'package_to_tabular_data_format':
-                ckanext.datapackager.logic.action.get.package_to_tabular_data_format,
+            'package_show_as_datapackage':
+                ckanext.datapackager.logic.action.get.package_show_as_datapackage,
         }

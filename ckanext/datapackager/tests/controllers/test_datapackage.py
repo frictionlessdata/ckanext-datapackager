@@ -47,10 +47,8 @@ class TestDataPackageController(
         )
 
         # Download the package's JSON file.
-        url = toolkit.url_for(
-            controller='ckanext.datapackager.controllers.data_package:DataPackageController',
-            action='download_tabular_data_format',
-            package_id=dataset['name'])
+        url = toolkit.url_for('export_datapackage',
+                              package_id=dataset['name'])
         response = self.app.get(url)
 
         # Open and validate the response as a JSON.
@@ -79,29 +77,27 @@ class TestDataPackageController(
 
         response = self.app.get('/dataset/{0}'.format(dataset['name']))
         soup = response.html
-        download_button = soup.find(id='download_tdf_button')
+        download_button = soup.find(id='export_datapackage_button')
         download_url = download_button['href']
-        assert download_url == toolkit.url_for(
-            controller='ckanext.datapackager.controllers.data_package:DataPackageController',
-            action='download_tabular_data_format',
-            package_id=dataset['name'])
+        assert download_url == toolkit.url_for('export_datapackage',
+                                               package_id=dataset['name'])
 
     def test_new_renders(self):
         user = factories.User()
         env = {'REMOTE_USER': user['name'].encode('ascii')}
-        url = toolkit.url_for('import_data_package')
+        url = toolkit.url_for('import_datapackage')
         response = self.app.get(url, extra_environ=env)
         assert_equals(200, response.status_int)
 
     @helpers.change_config('ckan.auth.anon_create_dataset', False)
     def test_new_requires_user_to_be_able_to_create_packages(self):
-        url = toolkit.url_for('import_data_package')
+        url = toolkit.url_for('import_datapackage')
         response = self.app.get(url)
         assert_equals(302, response.status_int)
         assert_true('Unauthorized to create a package' in response.follow())
 
     @httpretty.activate
-    def test_import_data_package(self):
+    def test_import_datapackage(self):
         httpretty.HTTPretty.allow_net_connect = False
         datapackage_url = 'http://www.foo.com/datapackage.json'
         datapackage = {
@@ -118,7 +114,7 @@ class TestDataPackageController(
 
         user = factories.User()
         env = {'REMOTE_USER': user['name'].encode('ascii')}
-        url = toolkit.url_for('import_data_package', url=datapackage_url)
+        url = toolkit.url_for('import_datapackage', url=datapackage_url)
         response = self.app.post(
             url,
             extra_environ=env,
