@@ -1,11 +1,12 @@
 {% ckan_extends %}
 
-{% block primary_content_inner %}
-  <div style="float:right; margin-left:10px">
+{% block package_resources %}
+  <div style="float:right; margin-right: -7px;">
     <a href="{% url_for 'export_datapackage', package_id=pkg.name %}"
-       class='btn btn-primary', id='export_datapackage_button'>
+       class='btn', id='export_datapackage_button'>
        <i class='icon-download'></i>Download Data Package
     </a>
   </div>
+  <div class="clearfix"></div>
   {{ super() }}
 {% endblock %}
