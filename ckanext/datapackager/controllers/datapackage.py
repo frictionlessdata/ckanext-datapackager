@@ -69,10 +69,14 @@ class DataPackageController(toolkit.BaseController):
             package_id)
         r.content_type = 'application/json'
 
-        datapackage_dict = toolkit.get_action('package_show_as_datapackage')(
-            context,
-            {'id': package_id}
-        )
+        try:
+            datapackage_dict = toolkit.get_action(
+                'package_show_as_datapackage')(
+                context,
+                {'id': package_id}
+            )
+        except toolkit.ObjectNotFound:
+            toolkit.abort(404, 'Dataset not found')
 
         return json.dumps(datapackage_dict, indent=2)
 
