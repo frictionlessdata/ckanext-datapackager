@@ -1,7 +1,9 @@
 language: python
 python: 2.7
 env:
-  - PGVERSION=9.1 CKANTAG=ckan-2.4.1
+    - CKANVERSION=master
+    - CKANVERSION=2.4
+    - CKANVERSION=2.5
 install:
     - ./bin/travis-build.bash
     - pip install coveralls
