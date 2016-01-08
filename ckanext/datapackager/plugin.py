@@ -31,7 +31,7 @@ class DataPackagerPlugin(plugins.SingletonPlugin):
         )
         map_.connect(
             'export_datapackage',
-            '/dataset/{package_id}/export_datapackage',
+            '/dataset/{package_id}/datapackage.json',
             controller='ckanext.datapackager.controllers.datapackage:DataPackageController',
             action='export_datapackage'
         )
