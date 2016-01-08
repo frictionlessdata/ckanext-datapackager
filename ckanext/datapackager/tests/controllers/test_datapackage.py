@@ -89,12 +89,13 @@ class TestDataPackageController(
         response = self.app.get(url, extra_environ=env)
         assert_equals(200, response.status_int)
 
-    @helpers.change_config('ckan.auth.anon_create_dataset', False)
+    @helpers.change_config('ckan.auth.create_unowned_dataset', False)
     def test_new_requires_user_to_be_able_to_create_packages(self):
+        user = factories.User()
+        env = {'REMOTE_USER': user['name'].encode('ascii')}
         url = toolkit.url_for('import_datapackage')
-        response = self.app.get(url)
-        assert_equals(302, response.status_int)
-        assert_true('Unauthorized to create a package' in response.follow())
+        response = self.app.get(url, extra_environ=env, status=[401])
+        assert_true('Unauthorized to create a dataset' in response.body)
 
     @httpretty.activate
     def test_import_datapackage(self):
