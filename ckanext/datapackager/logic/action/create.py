@@ -1,187 +1,148 @@
+import random
+import cgi
 import json
-
+import tempfile
 import ckan.plugins.toolkit as toolkit
-import ckan.lib.navl.dictization_functions as dictization_functions
 
-import ckanext.datapackager.logic.schema as schema
-import ckanext.datapackager.exceptions as exceptions
-import ckanext.datapackager.lib.csv_utils as csv_utils
-import ckanext.datapackager.lib.util as util
+import datapackage
+import ckanext.datapackager.lib.converter as converter
 
 
-def resource_schema_field_create(context, data_dict):
-    '''Create a new field in a resource's schema.
+def package_create_from_datapackage(context, data_dict):
+    '''Create a new dataset (package) from a Data Package file.
 
-    The schema is stored as a JSON string in the resource's ``schema`` field.
-
-    If the resource doesn't have a schema yet one will be created.
-
-    If the schema already contains a field with the given index or name,
-    a ValidationError will be raised. (If you want to update the attributes
-    of an existing field, use
-    :py:func:`~ckanext.datapackager.logic.action.update.resource_schema_field_update`.)
-
-    Any other custom parameters beyond those described below can be given, and
-    they will be stored in the field's entry in the schema. The values of these
-    custom parameters will be converted to strings.
-
-    :param resource_id: the ID of the resource whose schema the field should be
-                        added to
-    :type resource: string
-
-    :param index: the index number of the column in the CSV file that this
-        field corresponds to: 0 means the first column, 1 means the second
-        column, and so on
-    :type index: int
-
-    :param name: the name of the field, this should match the title of the
-                 field/column in the data file if there is one
+    :param url: url of the datapackage (optional if `upload` is defined)
+    :type url: string
+    :param upload: the uploaded datapackage (optional if `url` is defined)
+    :type upload: cgi.FieldStorage
+    :param name: the name of the new dataset, must be between 2 and 100
+        characters long and contain only lowercase alphanumeric characters,
+        ``-`` and ``_``, e.g. ``'warandpeace'`` (optional, default:
+        datapackage's name concatenated with a random string to avoid
+        name collisions)
     :type name: string
-
-    :param title: a nicer human readable label or title for the field
-                  (optional)
-    :type title: string
-
-    :param description: a description of the field (optional)
-    :type description: string
-
-    :param type: the type of the field, one of ``"string"``, ``"number"``,
-                 ``"integer"``, ``"date"``, ``"time"``, ``"datetime"``,
-                 ``"boolean"``, ``"binary"``, ``"object"``, ``"geopoint"``,
-                 ``"geojson"``, ``"array"`` or ``"any"``
-                 (optional, default: ``"string"``)
-    :type type: string
-
-    :param format: a string specifying the format of the field,
-                   e.g. ``"DD.MM.YYYY"`` for a field of type ``"date"``
-                   (optional)
-    :type format: string
-
-    :returns: the field that was created
-    :rtype: dict
-
+    :param owner_org: the id of the dataset's owning organization, see
+        :py:func:`~ckan.logic.action.get.organization_list` or
+        :py:func:`~ckan.logic.action.get.organization_list_for_user` for
+        available values (optional)
+    :type owner_org: string
     '''
+    url = data_dict.get('url')
+    upload = data_dict.get('upload')
+    if not url and upload is None:
+        msg = {'url': ['you must define either a url or upload attribute']}
+        raise toolkit.ValidationError(msg)
+
+    dp = _load_and_validate_datapackage(url=url, upload=upload)
+
+    dataset_dict = converter.datapackage_to_dataset(dp)
+
+    owner_org = data_dict.get('owner_org')
+    if owner_org:
+        dataset_dict['owner_org'] = owner_org
+
+    private = data_dict.get('private')
+    if private:
+        dataset_dict['private'] = private
+
+    name = data_dict.get('name')
+    if name:
+        dataset_dict['name'] = name
+
+    resources = dataset_dict.get('resources', [])
+    if resources:
+        del dataset_dict['resources']
+
+    res = _package_create_with_unique_name(context, dataset_dict, name)
+
+    if resources:
+        dataset_id = res['id']
+        _create_resources(dataset_id, context, resources)
+        res = toolkit.get_action('package_show')(context, {'id': dataset_id})
+
+    return res
+
+
+def _load_and_validate_datapackage(url=None, upload=None):
     try:
-        data_dict, errors = dictization_functions.validate(data_dict,
-            schema.resource_schema_field_create_schema(), context)
-    except exceptions.InvalidResourceIDException, e:
-        raise toolkit.ValidationError(e)
-    if errors:
-        raise toolkit.ValidationError(errors)
+        if upload is not None:
+            dp = datapackage.DataPackage(upload.file)
+        else:
+            dp = datapackage.DataPackage(url)
 
-    resource_id = data_dict.pop('resource_id')
+        dp.validate()
+    except datapackage.exceptions.DataPackageException as e:
+        msg = {'datapackage': [e.message]}
+        raise toolkit.ValidationError(msg)
 
-    resource_dict = toolkit.get_action('resource_show')(context,
-        {'id': resource_id})
+    if not dp.safe():
+        msg = {'datapackage': ['the Data Package has unsafe attributes']}
+        raise toolkit.ValidationError(msg)
 
-    if data_dict.get('type') in ('date', 'time', 'datetime'):
-
-        try:
-            path = util.get_path_to_resource_file(resource_dict)
-        except exceptions.ResourceFileDoesNotExistException:
-            path = None
-
-        if path:
-            try:
-                data_dict['temporal_extent'] = csv_utils.temporal_extent(path,
-                                                 column_num=data_dict['index'])
-            except ValueError:
-                pass
-            except TypeError:
-                pass
-
-    schema_ = toolkit.get_action('resource_schema_show')(context,
-        {'resource_id': resource_id})
-    schema_['fields'].append(data_dict)
-    schema_ = json.dumps(schema_)
-
-    toolkit.get_action('resource_update')(context,
-        {'id': resource_id, 'url': resource_dict['url'],
-         'name': resource_dict['name'], 'schema': schema_})
-
-    # This is probably unnecessary as we already have the schema above.
-    field = toolkit.get_action('resource_schema_field_show')(context,
-        {'resource_id': resource_id, 'index': data_dict['index']})
-
-    return field
+    return dp
 
 
-def resource_schema_pkey_create(context, data_dict):
-    '''Add a primary key to a resource's schema.
+def _package_create_with_unique_name(context, dataset_dict, name=None):
+    res = None
+    if name:
+        dataset_dict['name'] = name
 
-    :param resource_id: the ID of the resource
-    :type resource_id: string
-
-    :param pkey: the primary key, either the name of one of the fields or a
-        list of field names from the resource's schema
-    :type pkey: string or iterable of strings
-
-    :returns: the primary key that was created
-    :rtype: string or list of strings
-
-    '''
-    # Fail if the resource already has a primary key.
-    resource_id = toolkit.get_or_bust(data_dict, 'resource_id')
     try:
-        pkey = toolkit.get_action('resource_schema_pkey_show')(context,
-            {'resource_id': resource_id})
-    except exceptions.InvalidResourceIDException:
-        raise toolkit.ValidationError(toolkit._("Invalid resource_id"))
-    if pkey is not None:
-        raise toolkit.ValidationError(toolkit._("The resource already has a "
-                                                "primary key"))
+        res = toolkit.get_action('package_create')(context, dataset_dict)
+    except toolkit.ValidationError as e:
+        if not name and \
+           'That URL is already in use.' in e.error_dict.get('name', []):
+            random_num = random.randint(0, 9999999999)
+            name = '{name}-{rand}'.format(name=dataset_dict.get('name', 'dp'),
+                                          rand=random_num)
+            dataset_dict['name'] = name
+            res = toolkit.get_action('package_create')(context, dataset_dict)
+        else:
+            raise e
 
-    # Otherwise create is the same as update.
-    return toolkit.get_action('resource_schema_pkey_update')(context,
-                                                             data_dict)
+    return res
 
 
-def resource_schema_fkey_create(context, data_dict):
-    '''Add a foreign key to a resource's schema.
+def _create_resources(dataset_id, context, resources):
+    for resource in resources:
+        resource['package_id'] = dataset_id
+        if resource.get('data'):
+            _create_and_upload_resource_with_inline_data(context, resource)
+        elif resource.get('path'):
+            _create_and_upload_local_resource(context, resource)
+        else:
+            toolkit.get_action('resource_create')(context, resource)
 
-    :param resource_id: the ID of the resource
-    :type resource_id: string
 
-    :param referenced_resource_id: the resource_id of containing the field
-        this foreign key is pointing to.
-    :param referenced_resource_id: string
+def _create_and_upload_resource_with_inline_data(context, resource):
+    prefix = resource.get('name', 'tmp')
+    data = resource['data']
+    del resource['data']
+    if not isinstance(data, str):
+        data = json.dumps(data, indent=2)
 
-    :param referenced_field: the field referenced in the foreign csv file
-    :type referenceed_field: string
+    with tempfile.NamedTemporaryFile(prefix=prefix) as f:
+        f.write(data)
+        f.seek(0)
+        _create_and_upload_resource(context, resource, f)
 
-    '''
-    data_dict, errors = dictization_functions.validate(data_dict,
-        schema.resource_schema_fkey_create_schema(), context)
-    if errors:
-        raise toolkit.ValidationError(errors)
 
-    resource_id = data_dict['resource_id']
+def _create_and_upload_local_resource(context, resource):
+    path = resource['path']
+    del resource['path']
+    with open(path, 'r') as f:
+        _create_and_upload_resource(context, resource, f)
 
-    schema_ = toolkit.get_action('resource_schema_show')(context,
-        {'resource_id': resource_id})
 
-    current = schema_.get('foreignKeys', [])
-    # we update by just removing the fkey with the id we are updating and
-    # adding a new entry with same id
-    current.append({
-        'fields': data_dict['field'],
-        'fkey_uid': data_dict['fkey_uid'],
-        'reference': {
-            'resource': data_dict['referenced_resource'],
-            '_resource_id': data_dict['referenced_resource_id'],
-            'fields': data_dict['referenced_field'],
-        }
-    })
+def _create_and_upload_resource(context, resource, the_file):
+    resource['url'] = 'url'
+    resource['url_type'] = 'upload'
+    resource['upload'] = _UploadLocalFileStorage(the_file)
+    toolkit.get_action('resource_create')(context, resource)
 
-    schema_['foreignKeys'] = current 
-    schema_ = json.dumps(schema_)
 
-    resource_dict = toolkit.get_action('resource_show')(context,
-        {'id': resource_id})
-
-    toolkit.get_action('resource_update')(context,
-        {'id': resource_id, 'url': resource_dict['url'],
-         'name': resource_dict['name'], 'schema': schema_})
-
-    return toolkit.get_action('resource_schema_show')(context,
-        {'resource_id': resource_id})
+class _UploadLocalFileStorage(cgi.FieldStorage):
+    def __init__(self, fp, *args, **kwargs):
+        self.name = fp.name
+        self.filename = fp.name
+        self.file = fp

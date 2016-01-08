@@ -8,10 +8,13 @@ import webtest
 
 
 def get_csv_file(relative_path):
-        path = os.path.join(os.path.split(__file__)[0], relative_path)
-        abspath = os.path.abspath(path)
-        csv_file = open(abspath)
-        return csv_file
+    csv_file = open(fixture_path(relative_path))
+    return csv_file
+
+
+def fixture_path(path):
+    path = os.path.join(os.path.split(__file__)[0], 'test-data', path)
+    return os.path.abspath(path)
 
 
 def _get_test_app():
@@ -62,7 +65,6 @@ class FunctionalTestBaseClass():
         # Make a copy of the Pylons config, so we can restore it in teardown.
         cls.original_config = config.copy()
         _load_plugin('datapackager')
-        _load_plugin('downloadtdf')
         cls.app = _get_test_app()
 
     def setup(self):

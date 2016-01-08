@@ -3,7 +3,7 @@ import os
 import nose.tools
 import ckanapi as ckanapi
 
-import ckan.new_tests.factories as factories
+import ckan.tests.factories as factories
 
 import ckanext.datapackager.lib.util as util
 import ckanext.datapackager.tests.helpers as custom_helpers
@@ -17,9 +17,12 @@ class TestResourceSchemaFieldCreate(custom_helpers.FunctionalTestBaseClass):
         user = factories.User()
         package = factories.Dataset(user=user)
         api = ckanapi.TestAppCKAN(self.app, apikey=user['apikey'])
-        csv_file = custom_helpers.get_csv_file('test-data/datetimes.csv')
-        resource = api.action.resource_create(package_id=package['id'],
-                                              upload=csv_file)
+        csv_file = custom_helpers.get_csv_file('datetimes.csv')
+        resource = api.action.resource_create(
+            package_id=package['id'],
+            upload=csv_file,
+            url=''  # FIXME: See https://github.com/ckan/ckan/issues/2769
+        )
 
         path = util.get_path_to_resource_file(resource)
 
@@ -28,7 +31,6 @@ class TestResourceSchemaFieldCreate(custom_helpers.FunctionalTestBaseClass):
         assert open(path).read() == (
             open(os.path.join(os.path.split(__file__)[0],
                 '../test-data/datetimes.csv')).read())
-
 
     def test_get_path_to_resource_file_with_linked_file(self):
 

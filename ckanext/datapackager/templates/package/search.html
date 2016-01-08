@@ -1,0 +1,10 @@
+{% ckan_extends %}
+
+{% block page_primary_action %}
+  {% if h.check_access('package_create') %}
+    <div class="page_primary_action">
+      {% link_for _('Add Dataset'), controller='package', action='new', class_='btn btn-primary', icon='plus-sign-alt' %}
+      {% link_for _('Import Data Package'), controller='ckanext.datapackager.controllers.datapackage:DataPackageController', action='new', class_='btn', icon='plus-sign-alt' %}
+    </div>
+  {% endif %}
+{% endblock %}

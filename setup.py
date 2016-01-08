@@ -1,5 +1,4 @@
 from setuptools import setup, find_packages
-import sys, os
 
 version = '0.1'
 
@@ -9,7 +8,7 @@ setup(
     description="",
     long_description='''
     ''',
-    classifiers=[], # Get strings from http://pypi.python.org/pypi?%3Aaction=list_classifiers
+    classifiers=[],  # Get strings from http://pypi.python.org/pypi?%3Aaction=list_classifiers
     keywords='',
     author='',
     author_email='',
@@ -24,8 +23,6 @@ setup(
     ],
     entry_points='''
         [ckan.plugins]
-        # Add plugins here, e.g.
         datapackager=ckanext.datapackager.plugin:DataPackagerPlugin
-        downloadtdf=ckanext.datapackager.plugin:DownloadTabularDataFormatPlugin
     ''',
 )

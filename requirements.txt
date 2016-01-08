@@ -1,3 +1,2 @@
-pandas==0.13.1
-zipstream==1.0.3
-python-magic==0.4.6
+python-slugify==1.1.4
+-e git://github.com/okfn/datapackage-py.git@master#egg=datapackage

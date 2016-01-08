@@ -1,0 +1,27 @@
+{% extends 'package/base_form_page.html' %}
+
+{% block subtitle %}{{ _('Import Data Package') }}{% endblock %}
+
+{% block breadcrumb_content %}
+  <li>{% link_for _('Datasets'), controller='package', action='search' %}</li>
+  <li class="active"><a href="">{{ _('Import Data Package') }}</a></li></a></li>
+{% endblock %}
+
+{% block info_module %}
+  <section class="module module-narrow module-shallow">
+    <h2 class="module-heading"><i class="icon-info-sign"></i> {{ _('What are Data Packages?') }}</h2>
+    <div class="module-content">
+      <p>
+        {% trans %}
+        A <a href="http://dataprotocols.org/data-packages/">Data Package</a> is
+        a coherent collection of data and possibly other assets in a single
+        'package'.
+        {% endtrans %}
+      </p>
+    </div>
+  </section>
+{% endblock %}
+
+{% block form %}
+  {% snippet 'datapackage/snippets/import_datapackage_form.html', data=data, errors=errors, error_summary=error_summary %}
+{% endblock %}

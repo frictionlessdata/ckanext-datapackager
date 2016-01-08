@@ -1,9 +1,0 @@
-Lahman's Baseball Database:
-
-http://seanlahman.com/baseball-archive/statistics/
-
-Retrieved 18th Feb 2014 under Creative Commons Attribution-ShareAlike 3.0 Unported license (CC BY-SA 3.0):
-
-http://creativecommons.org/licenses/by-sa/3.0/
-
-We have not made any changes to the CSV files in this directory.

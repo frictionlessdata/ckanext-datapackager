@@ -1,0 +1,8 @@
+{% ckan_extends %}
+
+{% block page_primary_action %}
+  {{ super() }}
+  {% if h.check_access('package_create', {'owner_org': c.group_dict.id}) %}
+    {% link_for _('Import Data Package'), controller='ckanext.datapackager.controllers.datapackage:DataPackageController', action='new', group=c.group_dict.id, class_='btn', icon='plus-sign-alt' %}
+  {% endif %}
+{% endblock %}
