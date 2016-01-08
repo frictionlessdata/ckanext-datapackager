@@ -15,11 +15,11 @@ To install `ckanext-datapackager` into a CKAN instance, do:
 1. If you're using a virtual environment for CKAN, activate it doing, for example:
 
         source /usr/lib/ckan/default/bin/activate
-    
+
 2. Install the `ckanext-datapackager` extension using pip:
 
         pip install ckanext-datapackager
-    
+
 3. Add `datapackager` to the `ckan.plugins` setting in your CKAN config file;
 4. Restart CKAN.
 
@@ -47,21 +47,75 @@ To install `ckanext-datapackager` into a CKAN instance, do:
 
 ### API
 
-These examples use [ckanapi][ckanapi]. For more information, check the
+
+The extension provides two API actions for importing (`package_create_from_datapackage`) and exporting (`package_show_as_datapackage`) Data Packages on CKAN.
+
+For more information on their parameters and return values, check the
 docstrings inside the files at
 [ckanext/datapackager/logic/action](ckanext/datapackager/logic/action).
 
+
+
+
+
 #### Importing
 
-If the datapackage is reachable through an URL, use:
+If the Data Package (either the `datapackage.json` file or a zip file with the `datapackage.json` and the data files) is reachable through an URL, you can do a request to `package_create_from_datapackage` as such:
 
-    ckanapi action package_create_from_datapackage url=URL_TO_DATAPACKAGE owner_org=OWNER_ORGANIZATION_ID -r http://CKAN_URL
+```
+curl -X POST \
+     -H 'Authorization: YOUR_CKAN_API_KEY' \
+     -d '{"url": "https://link.to/datapackage.json"}' \
+     http://CKAN_HOST/api/action/package_create_from_datapackage
+```
 
-For uploading the datapackage, check the documentation on uploading files using [ckanapi][ckanapi].
+You can also use [ckanapi][ckanapi]:
+
+    ckanapi action package_create_from_datapackage url=URL_TO_DATAPACKAGE owner_org=OWNER_ORGANIZATION_ID -r http://CKAN_HOST
+
+For uploading the Data Package, check the documentation on uploading files using [ckanapi](https://github.com/ckan/ckanapi#file-uploads) or check this example using [requests](http://docs.python-requests.org/en/latest/):
+
+```python
+import requests
+
+r = requests.post('http://CKAN_HOST/api/action/package_create_from_datapackage',
+                   headers={'Authorization': YOUR_CKAN_API_KEY},
+                   files=[('upload', file('/path/to/datapackage.json/or/file.zip'))])
+
+
+```
 
 #### Exporting
 
-    ckanapi action package_show_as_datapackage id=PACKAGE_ID -r http://CKAN_URL -a APIKEY
+For exporting a dataset as a `datapackage.json` just call `package_show_as_datapackage` with the relevant dataset id:
+
+    curl 'http://CKAN_HOST/api/action/package_show_as_datapackage?id=940a5fe0-0c72-41c4-8a28-8c794f399036'
+
+    {"help": "http://CKAN_HOST/api/3/action/help_show?name=package_show_as_datapackage",
+     "success": true,
+     "result": {
+        "name": "bond-yields-uk-2-7334836228",
+        "title": "Test Data Package",
+        "resources": [
+            {"url": "http://some.file",
+             "format": "CSV"}
+        ]
+      }
+    }
+
+Or if using ckanapi:
+
+    ckanapi action package_show_as_datapackage id=PACKAGE_ID -r http://CKAN_URL
+
+Note that this returns the standard CKAN API output where the `datapackage.json` file is returned under the `result` key.
+If you would rather like to get the `datapackage.json` file directly you can use this direct endpoint:
+
+    http://CKAN_HOST/dataset/DATASET_NAME_OR_ID/datapackage.json
+
+For instance
+
+    curl http://CKAN_HOST/dataset/bond-yields-uk-10y/datapackage.json
+
 
 ## Developing ckanext-datapackager
 
