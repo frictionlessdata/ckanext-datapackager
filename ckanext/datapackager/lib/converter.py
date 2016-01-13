@@ -107,8 +107,8 @@ def _datapackage_resource_to_ckan_resource(resource):
         name = resource.metadata.get('title') or resource.metadata['name']
         resource_dict['name'] = name
 
-    if resource.metadata.get('url'):
-        resource_dict['url'] = resource.metadata['url']
+    if resource.remote_data_path:
+        resource_dict['url'] = resource.remote_data_path
 
     if resource.local_data_path:
         resource_dict['path'] = resource.local_data_path

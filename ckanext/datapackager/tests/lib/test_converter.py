@@ -432,6 +432,24 @@ class TestDataPackageToDatasetDict(object):
         nose.tools.assert_equals(result.get('resources')[0].get('url'),
                                  resource['url'])
 
+    @httpretty.activate
+    def test_resource_url_is_set_to_its_remote_data_path(self):
+        url = 'http://www.somewhere.com/data.csv'
+        datapackage_dict = {
+            'name': 'gdp',
+            'title': 'Countries GDP',
+            'version': '1.0',
+            'resources': [
+                {'path': 'data.csv'}
+            ],
+            'base': 'http://www.somewhere.com',
+        }
+        httpretty.register_uri(httpretty.GET, url, body='')
+        dp = datapackage.DataPackage(datapackage_dict)
+        result = converter.datapackage_to_dataset(dp)
+        nose.tools.assert_equals(result.get('resources')[0].get('url'),
+                                 dp.resources[0].remote_data_path)
+
     def test_resource_description(self):
         resource = {
             'description': 'GDPs list'
