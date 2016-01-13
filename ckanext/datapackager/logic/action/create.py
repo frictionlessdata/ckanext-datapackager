@@ -29,7 +29,7 @@ def package_create_from_datapackage(context, data_dict):
     '''
     url = data_dict.get('url')
     upload = data_dict.get('upload')
-    if not url and not upload:
+    if not url and not _upload_attribute_is_valid(upload):
         msg = {'url': ['you must define either a url or upload attribute']}
         raise toolkit.ValidationError(msg)
 
@@ -65,7 +65,7 @@ def package_create_from_datapackage(context, data_dict):
 
 def _load_and_validate_datapackage(url=None, upload=None):
     try:
-        if upload:
+        if _upload_attribute_is_valid(upload):
             dp = datapackage.DataPackage(upload.file)
         else:
             dp = datapackage.DataPackage(url)
@@ -139,6 +139,10 @@ def _create_and_upload_resource(context, resource, the_file):
     resource['url_type'] = 'upload'
     resource['upload'] = _UploadLocalFileStorage(the_file)
     toolkit.get_action('resource_create')(context, resource)
+
+
+def _upload_attribute_is_valid(upload):
+    return hasattr(upload, 'file') and hasattr(upload.file, 'read')
 
 
 class _UploadLocalFileStorage(cgi.FieldStorage):
