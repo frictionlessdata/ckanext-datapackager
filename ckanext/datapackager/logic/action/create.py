@@ -29,7 +29,7 @@ def package_create_from_datapackage(context, data_dict):
     '''
     url = data_dict.get('url')
     upload = data_dict.get('upload')
-    if not url and upload is None:
+    if not url and not upload:
         msg = {'url': ['you must define either a url or upload attribute']}
         raise toolkit.ValidationError(msg)
 
@@ -65,7 +65,7 @@ def package_create_from_datapackage(context, data_dict):
 
 def _load_and_validate_datapackage(url=None, upload=None):
     try:
-        if upload is not None:
+        if upload:
             dp = datapackage.DataPackage(upload.file)
         else:
             dp = datapackage.DataPackage(url)
