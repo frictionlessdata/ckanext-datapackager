@@ -53,14 +53,24 @@ def package_create_from_datapackage(context, data_dict):
     if resources:
         del dataset_dict['resources']
 
+    # Create as draft by default so if there's any issue on creating the
+    # resources and we're unable to purge the dataset, at least it's not shown.
+    dataset_dict['state'] = 'draft'
     res = _package_create_with_unique_name(context, dataset_dict, name)
 
-    if resources:
-        dataset_id = res['id']
-        _create_resources(dataset_id, context, resources)
-        res = toolkit.get_action('package_show')(context, {'id': dataset_id})
+    dataset_id = res['id']
 
-    return res
+    if resources:
+        try:
+            _create_resources(dataset_id, context, resources)
+        except Exception:
+            toolkit.get_action('dataset_purge')(context, {'id': dataset_id})
+            raise
+
+    return toolkit.get_action('package_update')(context, {
+        'id': dataset_id,
+        'state': 'active',
+    })
 
 
 def _load_and_validate_datapackage(url=None, upload=None):
@@ -98,7 +108,7 @@ def _package_create_with_unique_name(context, dataset_dict, name=None):
             dataset_dict['name'] = name
             res = toolkit.get_action('package_create')(context, dataset_dict)
         else:
-            raise e
+            raise
 
     return res
 
@@ -130,8 +140,12 @@ def _create_and_upload_resource_with_inline_data(context, resource):
 def _create_and_upload_local_resource(context, resource):
     path = resource['path']
     del resource['path']
-    with open(path, 'r') as f:
-        _create_and_upload_resource(context, resource, f)
+    try:
+        with open(path, 'r') as f:
+            _create_and_upload_resource(context, resource, f)
+    except IOError:
+        msg = {'datapackage': ['Couldn\'t create some of the resources']}
+        raise toolkit.ValidationError(msg)
 
 
 def _create_and_upload_resource(context, resource, the_file):

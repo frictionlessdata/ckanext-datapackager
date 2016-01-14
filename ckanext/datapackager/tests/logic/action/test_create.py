@@ -2,6 +2,7 @@ import json
 import httpretty
 import nose.tools
 import tempfile
+import mock
 
 import ckan.tests.helpers as helpers
 import ckanext.datapackager.tests.helpers as custom_helpers
@@ -102,7 +103,30 @@ class TestPackageCreateFromDataPackage(custom_helpers.FunctionalTestBaseClass):
 
         helpers.call_action('package_create_from_datapackage', url=url)
 
-        helpers.call_action('package_show', id=datapackage['name'])
+        dataset = helpers.call_action('package_show', id=datapackage['name'])
+        nose.tools.assert_equal(dataset['state'], 'active')
+
+    @mock.patch('ckanext.datapackager.logic.action.create._create_and_upload_resource')
+    @httpretty.activate
+    def test_it_purges_the_dataset_if_there_was_some_error_creating_resources(self, _create_and_upload_resource_mock):
+        httpretty.HTTPretty.allow_net_connect = False
+        url = 'http://www.somewhere.com/datapackage.zip'
+        datapkg_path = custom_helpers.fixture_path('datetimes-datapackage.zip')
+        with open(datapkg_path, 'rb') as f:
+            httpretty.register_uri(httpretty.GET, url, body=f.read())
+
+        _create_and_upload_resource_mock.side_effect = IOError
+        original_datasets = helpers.call_action('package_list')
+
+        nose.tools.assert_raises(
+            toolkit.ValidationError,
+            helpers.call_action,
+            'package_create_from_datapackage',
+            url=url
+        )
+
+        new_datasets = helpers.call_action('package_list')
+        nose.tools.assert_equal(original_datasets, new_datasets)
 
     @httpretty.activate
     def test_it_uploads_local_files(self):
