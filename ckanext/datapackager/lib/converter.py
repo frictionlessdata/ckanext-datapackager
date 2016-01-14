@@ -247,7 +247,7 @@ def _datapackage_parse_license(datapackage_dict):
                 result['license_title'] = license['title']
             if license.get('title'):
                 result['license_url'] = license['url']
-        elif isinstance(license, str):
+        elif isinstance(license, basestring):
             result['license_id'] = license
 
     return result
@@ -281,7 +281,7 @@ def _datapackage_parse_author(datapackage_dict):
         if isinstance(author, dict):
             maintainer = author.get('name')
             maintainer_email = author.get('email')
-        elif isinstance(author, str):
+        elif isinstance(author, basestring):
             match = re.match(r'(?P<name>[^<]+)'
                              r'(?:<(?P<email>\S+)>)?',
                              author)

@@ -294,6 +294,13 @@ class TestDataPackageToDatasetDict(object):
         result = converter.datapackage_to_dataset(self.datapackage)
         nose.tools.assert_equals(result.get('license_id'), 'cc-zero')
 
+    def test_datapackage_license_as_unicode(self):
+        self.datapackage.metadata.update({
+            'license': u'cc-zero'
+        })
+        result = converter.datapackage_to_dataset(self.datapackage)
+        nose.tools.assert_equals(result.get('license_id'), 'cc-zero')
+
     def test_datapackage_license_as_dict(self):
         license = {
             'type': 'cc-zero',
@@ -339,6 +346,17 @@ class TestDataPackageToDatasetDict(object):
         nose.tools.assert_equals(result.get('maintainer'), author['name'])
         nose.tools.assert_equals(result.get('maintainer_email'),
                                  author['email'])
+
+    def test_datapackage_author_as_unicode(self):
+        # FIXME: Add author.web
+        author = {
+            'name': u'John Smith',
+        }
+        self.datapackage.metadata.update({
+            'author': author['name'],
+        })
+        result = converter.datapackage_to_dataset(self.datapackage)
+        nose.tools.assert_equals(result.get('maintainer'), author['name'])
 
     def test_datapackage_author_as_string_without_email(self):
         # FIXME: Add author.web
