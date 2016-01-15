@@ -2,7 +2,6 @@ import json
 import httpretty
 import nose.tools
 import tempfile
-import mock
 
 import ckan.tests.helpers as helpers
 import ckanext.datapackager.tests.helpers as custom_helpers
@@ -79,6 +78,7 @@ class TestPackageCreateFromDataPackage(custom_helpers.FunctionalTestBaseClass):
 
         dataset = helpers.call_action('package_create_from_datapackage',
                                       url=url)
+        nose.tools.assert_equal(dataset['state'], 'active')
 
         extras = dataset['extras']
         nose.tools.assert_equal(extras[0]['key'], 'some_extra_data')
@@ -103,27 +103,22 @@ class TestPackageCreateFromDataPackage(custom_helpers.FunctionalTestBaseClass):
 
         helpers.call_action('package_create_from_datapackage', url=url)
 
-        dataset = helpers.call_action('package_show', id=datapackage['name'])
-        nose.tools.assert_equal(dataset['state'], 'active')
+        helpers.call_action('package_show', id=datapackage['name'])
 
-    @mock.patch('ckanext.datapackager.logic.action.create._create_and_upload_resource')
-    @httpretty.activate
-    def test_it_purges_the_dataset_if_there_was_some_error_creating_resources(self, _create_and_upload_resource_mock):
-        httpretty.HTTPretty.allow_net_connect = False
-        url = 'http://www.somewhere.com/datapackage.zip'
-        datapkg_path = custom_helpers.fixture_path('datetimes-datapackage.zip')
-        with open(datapkg_path, 'rb') as f:
-            httpretty.register_uri(httpretty.GET, url, body=f.read())
+    def test_it_deletes_dataset_on_error_when_creating_resources(self):
+        datapkg_path = custom_helpers.fixture_path(
+            'datetimes-datapackage-with-inexistent-resource.zip'
+        )
 
-        _create_and_upload_resource_mock.side_effect = IOError
         original_datasets = helpers.call_action('package_list')
 
-        nose.tools.assert_raises(
-            toolkit.ValidationError,
-            helpers.call_action,
-            'package_create_from_datapackage',
-            url=url
-        )
+        with open(datapkg_path, 'rb') as datapkg:
+            nose.tools.assert_raises(
+                toolkit.ValidationError,
+                helpers.call_action,
+                'package_create_from_datapackage',
+                upload=_UploadFile(datapkg),
+            )
 
         new_datasets = helpers.call_action('package_list')
         nose.tools.assert_equal(original_datasets, new_datasets)
@@ -266,11 +261,6 @@ class TestPackageCreateFromDataPackage(custom_helpers.FunctionalTestBaseClass):
         nose.tools.assert_true(dataset['private'])
 
     def test_it_allows_uploading_a_datapackage(self):
-        class _UploadFile(object):
-            '''Mock the parts from cgi.FileStorage we use.'''
-            def __init__(self, fp):
-                self.file = fp
-
         datapackage = {
             'name': 'foo',
         }
@@ -281,3 +271,9 @@ class TestPackageCreateFromDataPackage(custom_helpers.FunctionalTestBaseClass):
             dataset = helpers.call_action('package_create_from_datapackage',
                                           upload=_UploadFile(tmpfile))
             nose.tools.assert_equal(dataset['name'], 'foo')
+
+
+class _UploadFile(object):
+    '''Mock the parts from cgi.FileStorage we use.'''
+    def __init__(self, fp):
+        self.file = fp

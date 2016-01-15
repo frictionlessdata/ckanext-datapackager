@@ -63,14 +63,13 @@ def package_create_from_datapackage(context, data_dict):
     if resources:
         try:
             _create_resources(dataset_id, context, resources)
-        except Exception:
-            toolkit.get_action('dataset_purge')(context, {'id': dataset_id})
-            raise
+            res = toolkit.get_action('package_show')(context, {'id': dataset_id})
+        except Exception as e:
+            toolkit.get_action('package_delete')(context, {'id': dataset_id})
+            raise e
 
-    return toolkit.get_action('package_update')(context, {
-        'id': dataset_id,
-        'state': 'active',
-    })
+    res['state'] = 'active'
+    return toolkit.get_action('package_update')(context, res)
 
 
 def _load_and_validate_datapackage(url=None, upload=None):
