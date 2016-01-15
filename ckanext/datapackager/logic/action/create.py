@@ -143,7 +143,10 @@ def _create_and_upload_local_resource(context, resource):
         with open(path, 'r') as f:
             _create_and_upload_resource(context, resource, f)
     except IOError:
-        msg = {'datapackage': ['Couldn\'t create some of the resources']}
+        msg = {'datapackage': [(
+            "Couldn't create some of the resources."
+            " Please make sure that all resources' files are accessible."
+        )]}
         raise toolkit.ValidationError(msg)
 
 
