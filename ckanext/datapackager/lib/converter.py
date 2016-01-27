@@ -182,8 +182,8 @@ def _parse_author_and_source(dataset_dict):
         source['name'] = dataset_dict['author']
     if dataset_dict.get('author_email'):
         source['email'] = dataset_dict['author_email']
-    if dataset_dict.get('source'):
-        source['web'] = dataset_dict['source']
+    if dataset_dict.get('url'):
+        source['web'] = dataset_dict['url']
 
     if source:
         result['sources'] = [source]
@@ -266,7 +266,7 @@ def _datapackage_parse_sources(datapackage_dict):
         if author_email:
             result['author_email'] = author_email
         if source:
-            result['source'] = source
+            result['url'] = source
 
     return result
 

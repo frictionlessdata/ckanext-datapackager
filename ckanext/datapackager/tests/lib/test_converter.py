@@ -79,7 +79,7 @@ class TestConvertToDict(object):
         self.dataset_dict.update({
             'author': sources[0]['name'],
             'author_email': sources[0]['email'],
-            'source': sources[0]['web']
+            'url': sources[0]['web']
         })
         result = converter.dataset_to_datapackage(self.dataset_dict)
         nose.tools.assert_equals(result.get('sources'), sources)
@@ -330,7 +330,7 @@ class TestDataPackageToDatasetDict(object):
         nose.tools.assert_equals(result.get('author'), sources[0]['name'])
         nose.tools.assert_equals(result.get('author_email'),
                                  sources[0]['email'])
-        nose.tools.assert_equals(result.get('source'), sources[0]['web'])
+        nose.tools.assert_equals(result.get('url'), sources[0]['web'])
 
     def test_datapackage_author_as_string(self):
         # FIXME: Add author.web
