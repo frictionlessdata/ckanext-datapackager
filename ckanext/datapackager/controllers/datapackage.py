@@ -10,7 +10,7 @@ class DataPackageController(toolkit.BaseController):
         context = {
             'model': model,
             'session': model.Session,
-            'user': toolkit.c.user or toolkit.c.author,
+            'user': toolkit.c.user,
             'auth_user_obj': toolkit.c.userobj,
         }
         self._authorize_or_abort(context)
@@ -35,7 +35,7 @@ class DataPackageController(toolkit.BaseController):
         context = {
             'model': model,
             'session': model.Session,
-            'user': toolkit.c.user or toolkit.c.author,
+            'user': toolkit.c.user,
         }
         self._authorize_or_abort(context)
 
@@ -62,7 +62,7 @@ class DataPackageController(toolkit.BaseController):
         context = {
             'model': model,
             'session': model.Session,
-            'user': toolkit.c.user or toolkit.c.author,
+            'user': toolkit.c.user,
         }
         r = toolkit.response
         r.content_disposition = 'attachment; filename=datapackage.json'.format(

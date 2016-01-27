@@ -107,8 +107,8 @@ def _datapackage_resource_to_ckan_resource(resource):
         name = resource.metadata.get('title') or resource.metadata['name']
         resource_dict['name'] = name
 
-    if resource.metadata.get('url'):
-        resource_dict['url'] = resource.metadata['url']
+    if resource.remote_data_path:
+        resource_dict['url'] = resource.remote_data_path
 
     if resource.local_data_path:
         resource_dict['path'] = resource.local_data_path
@@ -182,8 +182,8 @@ def _parse_author_and_source(dataset_dict):
         source['name'] = dataset_dict['author']
     if dataset_dict.get('author_email'):
         source['email'] = dataset_dict['author_email']
-    if dataset_dict.get('source'):
-        source['web'] = dataset_dict['source']
+    if dataset_dict.get('url'):
+        source['web'] = dataset_dict['url']
 
     if source:
         result['sources'] = [source]
@@ -247,7 +247,7 @@ def _datapackage_parse_license(datapackage_dict):
                 result['license_title'] = license['title']
             if license.get('title'):
                 result['license_url'] = license['url']
-        elif isinstance(license, str):
+        elif isinstance(license, basestring):
             result['license_id'] = license
 
     return result
@@ -266,7 +266,7 @@ def _datapackage_parse_sources(datapackage_dict):
         if author_email:
             result['author_email'] = author_email
         if source:
-            result['source'] = source
+            result['url'] = source
 
     return result
 
@@ -281,7 +281,7 @@ def _datapackage_parse_author(datapackage_dict):
         if isinstance(author, dict):
             maintainer = author.get('name')
             maintainer_email = author.get('email')
-        elif isinstance(author, str):
+        elif isinstance(author, basestring):
             match = re.match(r'(?P<name>[^<]+)'
                              r'(?:<(?P<email>\S+)>)?',
                              author)

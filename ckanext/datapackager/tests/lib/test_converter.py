@@ -79,7 +79,7 @@ class TestConvertToDict(object):
         self.dataset_dict.update({
             'author': sources[0]['name'],
             'author_email': sources[0]['email'],
-            'source': sources[0]['web']
+            'url': sources[0]['web']
         })
         result = converter.dataset_to_datapackage(self.dataset_dict)
         nose.tools.assert_equals(result.get('sources'), sources)
@@ -294,6 +294,13 @@ class TestDataPackageToDatasetDict(object):
         result = converter.datapackage_to_dataset(self.datapackage)
         nose.tools.assert_equals(result.get('license_id'), 'cc-zero')
 
+    def test_datapackage_license_as_unicode(self):
+        self.datapackage.metadata.update({
+            'license': u'cc-zero'
+        })
+        result = converter.datapackage_to_dataset(self.datapackage)
+        nose.tools.assert_equals(result.get('license_id'), 'cc-zero')
+
     def test_datapackage_license_as_dict(self):
         license = {
             'type': 'cc-zero',
@@ -323,7 +330,7 @@ class TestDataPackageToDatasetDict(object):
         nose.tools.assert_equals(result.get('author'), sources[0]['name'])
         nose.tools.assert_equals(result.get('author_email'),
                                  sources[0]['email'])
-        nose.tools.assert_equals(result.get('source'), sources[0]['web'])
+        nose.tools.assert_equals(result.get('url'), sources[0]['web'])
 
     def test_datapackage_author_as_string(self):
         # FIXME: Add author.web
@@ -339,6 +346,17 @@ class TestDataPackageToDatasetDict(object):
         nose.tools.assert_equals(result.get('maintainer'), author['name'])
         nose.tools.assert_equals(result.get('maintainer_email'),
                                  author['email'])
+
+    def test_datapackage_author_as_unicode(self):
+        # FIXME: Add author.web
+        author = {
+            'name': u'John Smith',
+        }
+        self.datapackage.metadata.update({
+            'author': author['name'],
+        })
+        result = converter.datapackage_to_dataset(self.datapackage)
+        nose.tools.assert_equals(result.get('maintainer'), author['name'])
 
     def test_datapackage_author_as_string_without_email(self):
         # FIXME: Add author.web
@@ -431,6 +449,24 @@ class TestDataPackageToDatasetDict(object):
         result = converter.datapackage_to_dataset(self.datapackage)
         nose.tools.assert_equals(result.get('resources')[0].get('url'),
                                  resource['url'])
+
+    @httpretty.activate
+    def test_resource_url_is_set_to_its_remote_data_path(self):
+        url = 'http://www.somewhere.com/data.csv'
+        datapackage_dict = {
+            'name': 'gdp',
+            'title': 'Countries GDP',
+            'version': '1.0',
+            'resources': [
+                {'path': 'data.csv'}
+            ],
+            'base': 'http://www.somewhere.com',
+        }
+        httpretty.register_uri(httpretty.GET, url, body='')
+        dp = datapackage.DataPackage(datapackage_dict)
+        result = converter.datapackage_to_dataset(dp)
+        nose.tools.assert_equals(result.get('resources')[0].get('url'),
+                                 dp.resources[0].remote_data_path)
 
     def test_resource_description(self):
         resource = {

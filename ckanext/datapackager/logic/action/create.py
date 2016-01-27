@@ -29,7 +29,7 @@ def package_create_from_datapackage(context, data_dict):
     '''
     url = data_dict.get('url')
     upload = data_dict.get('upload')
-    if not url and upload is None:
+    if not url and not _upload_attribute_is_valid(upload):
         msg = {'url': ['you must define either a url or upload attribute']}
         raise toolkit.ValidationError(msg)
 
@@ -53,19 +53,28 @@ def package_create_from_datapackage(context, data_dict):
     if resources:
         del dataset_dict['resources']
 
+    # Create as draft by default so if there's any issue on creating the
+    # resources and we're unable to purge the dataset, at least it's not shown.
+    dataset_dict['state'] = 'draft'
     res = _package_create_with_unique_name(context, dataset_dict, name)
 
-    if resources:
-        dataset_id = res['id']
-        _create_resources(dataset_id, context, resources)
-        res = toolkit.get_action('package_show')(context, {'id': dataset_id})
+    dataset_id = res['id']
 
-    return res
+    if resources:
+        try:
+            _create_resources(dataset_id, context, resources)
+            res = toolkit.get_action('package_show')(context, {'id': dataset_id})
+        except Exception as e:
+            toolkit.get_action('package_delete')(context, {'id': dataset_id})
+            raise e
+
+    res['state'] = 'active'
+    return toolkit.get_action('package_update')(context, res)
 
 
 def _load_and_validate_datapackage(url=None, upload=None):
     try:
-        if upload is not None:
+        if _upload_attribute_is_valid(upload):
             dp = datapackage.DataPackage(upload.file)
         else:
             dp = datapackage.DataPackage(url)
@@ -98,7 +107,7 @@ def _package_create_with_unique_name(context, dataset_dict, name=None):
             dataset_dict['name'] = name
             res = toolkit.get_action('package_create')(context, dataset_dict)
         else:
-            raise e
+            raise
 
     return res
 
@@ -118,7 +127,7 @@ def _create_and_upload_resource_with_inline_data(context, resource):
     prefix = resource.get('name', 'tmp')
     data = resource['data']
     del resource['data']
-    if not isinstance(data, str):
+    if not isinstance(data, basestring):
         data = json.dumps(data, indent=2)
 
     with tempfile.NamedTemporaryFile(prefix=prefix) as f:
@@ -130,8 +139,15 @@ def _create_and_upload_resource_with_inline_data(context, resource):
 def _create_and_upload_local_resource(context, resource):
     path = resource['path']
     del resource['path']
-    with open(path, 'r') as f:
-        _create_and_upload_resource(context, resource, f)
+    try:
+        with open(path, 'r') as f:
+            _create_and_upload_resource(context, resource, f)
+    except IOError:
+        msg = {'datapackage': [(
+            "Couldn't create some of the resources."
+            " Please make sure that all resources' files are accessible."
+        )]}
+        raise toolkit.ValidationError(msg)
 
 
 def _create_and_upload_resource(context, resource, the_file):
@@ -139,6 +155,10 @@ def _create_and_upload_resource(context, resource, the_file):
     resource['url_type'] = 'upload'
     resource['upload'] = _UploadLocalFileStorage(the_file)
     toolkit.get_action('resource_create')(context, resource)
+
+
+def _upload_attribute_is_valid(upload):
+    return hasattr(upload, 'file') and hasattr(upload.file, 'read')
 
 
 class _UploadLocalFileStorage(cgi.FieldStorage):
