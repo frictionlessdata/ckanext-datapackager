@@ -21,6 +21,8 @@ def package_create_from_datapackage(context, data_dict):
         datapackage's name concatenated with a random string to avoid
         name collisions)
     :type name: string
+    :param private: the visibility of the new dataset
+    :type private: bool
     :param owner_org: the id of the dataset's owning organization, see
         :py:func:`~ckan.logic.action.get.organization_list` or
         :py:func:`~ckan.logic.action.get.organization_list_for_user` for
@@ -43,7 +45,7 @@ def package_create_from_datapackage(context, data_dict):
 
     private = data_dict.get('private')
     if private:
-        dataset_dict['private'] = private
+        dataset_dict['private'] = toolkit.asbool(private)
 
     name = data_dict.get('name')
     if name:

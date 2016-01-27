@@ -257,7 +257,7 @@ class TestPackageCreateFromDataPackage(custom_helpers.FunctionalTestBaseClass):
                                       context={'user': user['id']},
                                       url=url,
                                       owner_org=organization['id'],
-                                      private=True)
+                                      private='true')
         nose.tools.assert_true(dataset['private'])
 
     def test_it_allows_uploading_a_datapackage(self):
