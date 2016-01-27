@@ -22,10 +22,10 @@ To install `ckanext-datapackager` into a CKAN instance, do:
 
    Alternatively do a development install (with your virtualenv activated):
 
-     git clone https://github.com/ckan/ckanext-datapackager.git
-     cd ckanext-datapackager
-     python setup.py develop
-     pip install -r requirements.txt
+        git clone https://github.com/ckan/ckanext-datapackager.git
+        cd ckanext-datapackager
+        python setup.py develop
+        pip install -r requirements.txt
 
 
 3. Add `datapackager` to the `ckan.plugins` setting in your CKAN config file;
