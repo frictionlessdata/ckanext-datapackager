@@ -82,7 +82,9 @@ def _load_and_validate_datapackage(url=None, upload=None):
             dp = datapackage.DataPackage(url)
 
         dp.validate()
-    except datapackage.exceptions.DataPackageException as e:
+    except (datapackage.exceptions.DataPackageException,
+            datapackage.exceptions.SchemaError,
+            datapackage.exceptions.ValidationError) as e:
         msg = {'datapackage': [e.message]}
         raise toolkit.ValidationError(msg)
 
