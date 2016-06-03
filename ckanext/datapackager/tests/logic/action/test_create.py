@@ -1,7 +1,8 @@
 import json
-import httpretty
+
 import nose.tools
 import tempfile
+import requests_mock
 
 import ckan.tests.helpers as helpers
 import ckanext.datapackager.tests.helpers as custom_helpers
@@ -17,13 +18,11 @@ class TestPackageCreateFromDataPackage(custom_helpers.FunctionalTestBaseClass):
             'package_create_from_datapackage',
         )
 
-    @httpretty.activate
-    def test_it_raises_if_datapackage_is_invalid(self):
-        httpretty.HTTPretty.allow_net_connect = False
+    @requests_mock.Mocker(real_http=True)
+    def test_it_raises_if_datapackage_is_invalid(self, mock_requests):
         url = 'http://www.somewhere.com/datapackage.json'
         datapackage = {}
-        httpretty.register_uri(httpretty.GET, url,
-                               body=json.dumps(datapackage))
+        mock_requests.register_uri('GET', url, json=datapackage)
 
         nose.tools.assert_raises(
             toolkit.ValidationError,
@@ -32,9 +31,8 @@ class TestPackageCreateFromDataPackage(custom_helpers.FunctionalTestBaseClass):
             url=url,
         )
 
-    @httpretty.activate
-    def test_it_raises_if_datapackage_is_unsafe(self):
-        httpretty.HTTPretty.allow_net_connect = False
+    @requests_mock.Mocker(real_http=True)
+    def test_it_raises_if_datapackage_is_unsafe(self, mock_requests):
         url = 'http://www.somewhere.com/datapackage.json'
         datapackage = {
             'name': 'unsafe',
@@ -45,8 +43,7 @@ class TestPackageCreateFromDataPackage(custom_helpers.FunctionalTestBaseClass):
                 }
             ]
         }
-        httpretty.register_uri(httpretty.GET, url,
-                               body=json.dumps(datapackage))
+        mock_requests.register_uri('GET', url, json=datapackage)
 
         nose.tools.assert_raises(
             toolkit.ValidationError,
@@ -55,9 +52,8 @@ class TestPackageCreateFromDataPackage(custom_helpers.FunctionalTestBaseClass):
             url=url,
         )
 
-    @httpretty.activate
-    def test_it_creates_the_dataset(self):
-        httpretty.HTTPretty.allow_net_connect = False
+    @requests_mock.Mocker(real_http=True)
+    def test_it_creates_the_dataset(self, mock_requests):
         url = 'http://www.somewhere.com/datapackage.json'
         datapackage = {
             'name': 'foo',
@@ -69,12 +65,11 @@ class TestPackageCreateFromDataPackage(custom_helpers.FunctionalTestBaseClass):
             ],
             'some_extra_data': {'foo': 'bar'},
         }
-        httpretty.register_uri(httpretty.GET, url,
-                               body=json.dumps(datapackage))
+        mock_requests.register_uri('GET', url, json=datapackage)
         # FIXME: Remove this when
         # https://github.com/okfn/datapackage-py/issues/20 is done
-        httpretty.register_uri(httpretty.GET,
-                               datapackage['resources'][0]['url'])
+        mock_requests.register_uri('GET',
+                                   datapackage['resources'][0]['url'])
 
         dataset = helpers.call_action('package_create_from_datapackage',
                                       url=url)
@@ -91,15 +86,13 @@ class TestPackageCreateFromDataPackage(custom_helpers.FunctionalTestBaseClass):
         nose.tools.assert_equal(resource['url'],
                                 datapackage['resources'][0]['url'])
 
-    @httpretty.activate
-    def test_it_creates_a_dataset_without_resources(self):
-        httpretty.HTTPretty.allow_net_connect = False
+    @requests_mock.Mocker(real_http=True)
+    def test_it_creates_a_dataset_without_resources(self, mock_requests):
         url = 'http://www.somewhere.com/datapackage.json'
         datapackage = {
             'name': 'foo'
         }
-        httpretty.register_uri(httpretty.GET, url,
-                               body=json.dumps(datapackage))
+        mock_requests.register_uri('GET', url, json=datapackage)
 
         helpers.call_action('package_create_from_datapackage', url=url)
 
@@ -123,18 +116,17 @@ class TestPackageCreateFromDataPackage(custom_helpers.FunctionalTestBaseClass):
         new_datasets = helpers.call_action('package_list')
         nose.tools.assert_equal(original_datasets, new_datasets)
 
-    @httpretty.activate
-    def test_it_uploads_local_files(self):
-        httpretty.HTTPretty.allow_net_connect = False
+    @requests_mock.Mocker(real_http=True)
+    def test_it_uploads_local_files(self, mock_requests):
         url = 'http://www.somewhere.com/datapackage.zip'
         datapkg_path = custom_helpers.fixture_path('datetimes-datapackage.zip')
         with open(datapkg_path, 'rb') as f:
-            httpretty.register_uri(httpretty.GET, url, body=f.read())
+            mock_requests.register_uri('GET', url, content=f.read())
 
         # FIXME: Remove this when
         # https://github.com/okfn/datapackage-py/issues/20 is done
         timezones_url = 'https://www.somewhere.com/timezones.csv'
-        httpretty.register_uri(httpretty.GET, timezones_url, body='')
+        mock_requests.register_uri('GET', timezones_url, text='')
 
         helpers.call_action('package_create_from_datapackage', url=url)
 
@@ -144,9 +136,9 @@ class TestPackageCreateFromDataPackage(custom_helpers.FunctionalTestBaseClass):
         nose.tools.assert_equal(resources[0]['url_type'], 'upload')
         nose.tools.assert_regexp_matches(resources[0]['url'], 'datetimes.csv$')
 
-    @httpretty.activate
-    def test_it_uploads_resources_with_inline_strings_as_data(self):
-        httpretty.HTTPretty.allow_net_connect = False
+    @requests_mock.Mocker(real_http=True)
+    def test_it_uploads_resources_with_inline_strings_as_data(self,
+                                                              mock_requests):
         url = 'http://www.somewhere.com/datapackage.json'
         datapackage = {
             'name': 'foo',
@@ -157,8 +149,7 @@ class TestPackageCreateFromDataPackage(custom_helpers.FunctionalTestBaseClass):
                 }
             ]
         }
-        httpretty.register_uri(httpretty.GET, url,
-                               body=json.dumps(datapackage))
+        mock_requests.register_uri('GET', url, json=datapackage)
 
         helpers.call_action('package_create_from_datapackage', url=url)
 
@@ -168,9 +159,9 @@ class TestPackageCreateFromDataPackage(custom_helpers.FunctionalTestBaseClass):
         nose.tools.assert_equal(resources[0]['url_type'], 'upload')
         nose.tools.assert_true(resources[0]['name'] in resources[0]['url'])
 
-    @httpretty.activate
-    def test_it_uploads_resources_with_inline_dicts_as_data(self):
-        httpretty.HTTPretty.allow_net_connect = False
+    @requests_mock.Mocker(real_http=True)
+    def test_it_uploads_resources_with_inline_dicts_as_data(self,
+                                                            mock_requests):
         url = 'http://www.somewhere.com/datapackage.json'
         datapackage = {
             'name': 'foo',
@@ -181,8 +172,7 @@ class TestPackageCreateFromDataPackage(custom_helpers.FunctionalTestBaseClass):
                 }
             ]
         }
-        httpretty.register_uri(httpretty.GET, url,
-                               body=json.dumps(datapackage))
+        mock_requests.register_uri('GET', url, json=datapackage)
 
         helpers.call_action('package_create_from_datapackage', url=url)
 
@@ -192,45 +182,41 @@ class TestPackageCreateFromDataPackage(custom_helpers.FunctionalTestBaseClass):
         nose.tools.assert_equal(resources[0]['url_type'], 'upload')
         nose.tools.assert_true(resources[0]['name'] in resources[0]['url'])
 
-    @httpretty.activate
-    def test_it_allows_specifying_the_dataset_name(self):
-        httpretty.HTTPretty.allow_net_connect = False
+    @requests_mock.Mocker(real_http=True)
+    def test_it_allows_specifying_the_dataset_name(self, mock_requests):
         url = 'http://www.somewhere.com/datapackage.json'
         datapackage = {
             'name': 'foo',
         }
-        httpretty.register_uri(httpretty.GET, url,
-                               body=json.dumps(datapackage))
+        mock_requests.register_uri('GET', url, json=datapackage)
 
         dataset = helpers.call_action('package_create_from_datapackage',
                                       url=url,
                                       name='bar')
         nose.tools.assert_equal(dataset['name'], 'bar')
 
-    @httpretty.activate
-    def test_it_creates_unique_name_if_name_wasnt_specified(self):
-        httpretty.HTTPretty.allow_net_connect = False
+    @requests_mock.Mocker(real_http=True)
+    def test_it_creates_unique_name_if_name_wasnt_specified(self,
+                                                            mock_requests):
         url = 'http://www.somewhere.com/datapackage.json'
         datapackage = {
             'name': 'foo',
         }
-        httpretty.register_uri(httpretty.GET, url,
-                               body=json.dumps(datapackage))
+        mock_requests.register_uri('GET', url, json=datapackage)
 
         helpers.call_action('package_create', name=datapackage['name'])
         dataset = helpers.call_action('package_create_from_datapackage',
                                       url=url)
         nose.tools.assert_true(dataset['name'].startswith('foo'))
 
-    @httpretty.activate
-    def test_it_fails_if_specifying_name_that_already_exists(self):
-        httpretty.HTTPretty.allow_net_connect = False
+    @requests_mock.Mocker(real_http=True)
+    def test_it_fails_if_specifying_name_that_already_exists(self,
+                                                             mock_requests):
         url = 'http://www.somewhere.com/datapackage.json'
         datapackage = {
             'name': 'foo',
         }
-        httpretty.register_uri(httpretty.GET, url,
-                               body=json.dumps(datapackage))
+        mock_requests.register_uri('GET', url, json=datapackage)
 
         helpers.call_action('package_create', name=datapackage['name'])
         nose.tools.assert_raises(
@@ -241,15 +227,13 @@ class TestPackageCreateFromDataPackage(custom_helpers.FunctionalTestBaseClass):
             name=datapackage['name']
         )
 
-    @httpretty.activate
-    def test_it_allows_changing_dataset_visibility(self):
-        httpretty.HTTPretty.allow_net_connect = False
+    @requests_mock.Mocker(real_http=True)
+    def test_it_allows_changing_dataset_visibility(self, mock_requests):
         url = 'http://www.somewhere.com/datapackage.json'
         datapackage = {
             'name': 'foo',
         }
-        httpretty.register_uri(httpretty.GET, url,
-                               body=json.dumps(datapackage))
+        mock_requests.register_uri('GET', url, json=datapackage)
 
         user = factories.Sysadmin()
         organization = factories.Organization()
@@ -275,5 +259,6 @@ class TestPackageCreateFromDataPackage(custom_helpers.FunctionalTestBaseClass):
 
 class _UploadFile(object):
     '''Mock the parts from cgi.FileStorage we use.'''
+
     def __init__(self, fp):
         self.file = fp

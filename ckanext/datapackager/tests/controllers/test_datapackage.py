@@ -2,7 +2,7 @@
 import json
 
 import nose.tools
-import httpretty
+import requests_mock
 import ckanapi
 import datapackage
 
@@ -20,7 +20,6 @@ class TestDataPackageController(
         custom_helpers.FunctionalTestBaseClass):
     '''Functional tests for the DataPackageController class.'''
 
-    @httpretty.activate
     def test_download_datapackage(self):
         '''Test downloading a DataPackage file of a package.
 
@@ -97,9 +96,8 @@ class TestDataPackageController(
         response = self.app.get(url, extra_environ=env, status=[401])
         assert_true('Unauthorized to create a dataset' in response.body)
 
-    @httpretty.activate
-    def test_import_datapackage(self):
-        httpretty.HTTPretty.allow_net_connect = False
+    @requests_mock.Mocker(real_http=True)
+    def test_import_datapackage(self, mock_requests):
         datapackage_url = 'http://www.foo.com/datapackage.json'
         datapackage = {
             'name': 'foo',
@@ -110,8 +108,7 @@ class TestDataPackageController(
                 }
             ]
         }
-        httpretty.register_uri(httpretty.GET, datapackage_url,
-                               body=json.dumps(datapackage))
+        mock_requests.register_uri('GET', datapackage_url, json=datapackage)
 
         user = factories.User()
         env = {'REMOTE_USER': user['name'].encode('ascii')}
