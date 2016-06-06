@@ -39,7 +39,7 @@ setup(
     zip_safe=False,
     install_requires=[
         'python-slugify',
-        'datapackage'
+        'datapackage>=0.6.0'
     ],
     entry_points='''
         [ckan.plugins]
