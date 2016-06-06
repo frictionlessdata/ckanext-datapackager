@@ -1,0 +1,2 @@
+include README.markdown
+recursive-include ckanext/datapackager *.html *.json
