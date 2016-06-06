@@ -4,10 +4,6 @@ env:
     - CKANVERSION=master
     - CKANVERSION=2.4
     - CKANVERSION=2.5
-matrix:
-  include:
-    - python: 2.6
-      env: CKANVERSION=2.4
 install:
     - ./bin/travis-build.bash
     - pip install coveralls
