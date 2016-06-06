@@ -77,8 +77,8 @@ class TestPackageCreateFromDataPackage(custom_helpers.FunctionalTestBaseClass):
 
         extras = dataset['extras']
         nose.tools.assert_equal(extras[0]['key'], 'some_extra_data')
-        nose.tools.assert_dict_equal(json.loads(extras[0]['value']),
-                                     datapackage['some_extra_data'])
+        nose.tools.assert_equal(json.loads(extras[0]['value']),
+                                datapackage['some_extra_data'])
 
         resource = dataset.get('resources')[0]
         nose.tools.assert_equal(resource['name'],

@@ -163,7 +163,7 @@ class TestConvertToDict(object):
         resource = result.get('resources')[0]
         nose.tools.assert_equals(resource.get('url'),
                                  self.resource_dict['url'])
-        nose.tools.assert_not_in('path', resource)
+        assert 'path' not in resource
 
     def test_resource_description(self):
         self.resource_dict.update({
@@ -404,11 +404,11 @@ class TestDataPackageToDatasetDict(object):
             'location': {'country': 'China'},
         })
         result = converter.datapackage_to_dataset(self.datapackage)
-        nose.tools.assert_items_equal(result.get('extras'), [
-            {'key': 'title_cn', 'value': u'國內生產總值'},
-            {'key': 'years', 'value': '[2015, 2016]'},
+        nose.tools.assert_equal(sorted(result.get('extras')), [
             {'key': 'last_year', 'value': 2016},
             {'key': 'location', 'value': '{"country": "China"}'},
+            {'key': 'title_cn', 'value': u'國內生產總值'},
+            {'key': 'years', 'value': '[2015, 2016]'}
         ])
 
     def test_resource_name_is_used_if_theres_no_title(self):
