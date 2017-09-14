@@ -1,7 +1,9 @@
 import json
-
+import mock
 import nose.tools
 import tempfile
+import StringIO
+
 import requests_mock
 
 import ckan.tests.helpers as helpers
@@ -31,9 +33,7 @@ class TestPackageCreateFromDataPackage(custom_helpers.FunctionalTestBaseClass):
             url=url,
         )
 
-    @requests_mock.Mocker(real_http=True)
-    def test_it_raises_if_datapackage_is_unsafe(self, mock_requests):
-        url = 'http://www.example.com/datapackage.json'
+    def test_it_raises_if_datapackage_is_unsafe(self):
         datapackage = {
             'name': 'unsafe',
             'resources': [
@@ -43,13 +43,15 @@ class TestPackageCreateFromDataPackage(custom_helpers.FunctionalTestBaseClass):
                 }
             ]
         }
-        mock_requests.register_uri('GET', url, json=datapackage)
+
+        upload = mock.MagicMock()
+        upload.file = StringIO.StringIO(json.dumps(datapackage))
 
         nose.tools.assert_raises(
             toolkit.ValidationError,
             helpers.call_action,
             'package_create_from_datapackage',
-            url=url,
+            upload=upload,
         )
 
     @requests_mock.Mocker(real_http=True)
@@ -60,7 +62,7 @@ class TestPackageCreateFromDataPackage(custom_helpers.FunctionalTestBaseClass):
             'resources': [
                 {
                     'name': 'the-resource',
-                    'url': 'http://www.example.com/data.csv',
+                    'path': 'http://www.example.com/data.csv',
                 }
             ],
             'some_extra_data': {'foo': 'bar'},
@@ -69,7 +71,7 @@ class TestPackageCreateFromDataPackage(custom_helpers.FunctionalTestBaseClass):
         # FIXME: Remove this when
         # https://github.com/okfn/datapackage-py/issues/20 is done
         mock_requests.register_uri('GET',
-                                   datapackage['resources'][0]['url'])
+                                   datapackage['resources'][0]['path'])
 
         dataset = helpers.call_action('package_create_from_datapackage',
                                       url=url)
@@ -97,7 +99,7 @@ class TestPackageCreateFromDataPackage(custom_helpers.FunctionalTestBaseClass):
         nose.tools.assert_equal(resource['name'],
                                 datapackage['resources'][0]['name'])
         nose.tools.assert_equal(resource['url'],
-                                datapackage['resources'][0]['url'])
+                                datapackage['resources'][0]['path'])
 
     @requests_mock.Mocker(real_http=True)
     def test_it_creates_a_dataset_without_resources(self, mock_requests):
