@@ -8,7 +8,7 @@ import webtest
 
 
 def get_csv_file(relative_path):
-    csv_file = open(fixture_path(relative_path))
+    csv_file = open(fixture_path(relative_path), 'rb')
     return csv_file
 
 
