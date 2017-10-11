@@ -10,15 +10,11 @@ sudo apt-get install solr-jetty
 echo "Installing CKAN ($CKANVERSION) and its Python dependencies..."
 git clone https://github.com/ckan/ckan
 cd ckan
-if [ $CKANVERSION == '2.5' ]
+if [ $CKAN_VERSION != 'master' ]
 then
-    git checkout release-v2.5-latest
-elif [ $CKANVERSION == '2.4' ]
-then
-    git checkout release-v2.4-latest
-else
-    git checkout dev-v$CKANVERSION
+    git checkout $CKAN_VERSION
 fi
+
 python setup.py develop
 pip install -r requirements.txt --allow-all-external
 pip install -r dev-requirements.txt --allow-all-external
