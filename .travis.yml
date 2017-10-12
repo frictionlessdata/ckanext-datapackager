@@ -2,8 +2,13 @@ language: python
 python: 2.7
 env:
     - CKANVERSION=master
-    - CKANVERSION=2.4
-    - CKANVERSION=2.5
+    - CKANVERSION=release-v2.4-latest
+    - CKANVERSION=release-v2.5-latest
+    - CKANVERSION=dev-v2.6
+    - CKANVERSION=dev-v2.7
+services:
+    - redis-server
+    - postgresql
 install:
     - ./bin/travis-build.bash
     - pip install coveralls

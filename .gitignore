@@ -4,3 +4,4 @@
 cover/*
 .coverage
 test-custom.ini
+storage

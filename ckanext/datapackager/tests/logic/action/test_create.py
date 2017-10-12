@@ -1,7 +1,9 @@
 import json
-
+import mock
 import nose.tools
 import tempfile
+import StringIO
+
 import requests_mock
 
 import ckan.tests.helpers as helpers
@@ -20,7 +22,7 @@ class TestPackageCreateFromDataPackage(custom_helpers.FunctionalTestBaseClass):
 
     @requests_mock.Mocker(real_http=True)
     def test_it_raises_if_datapackage_is_invalid(self, mock_requests):
-        url = 'http://www.somewhere.com/datapackage.json'
+        url = 'http://www.example.com/datapackage.json'
         datapackage = {}
         mock_requests.register_uri('GET', url, json=datapackage)
 
@@ -31,9 +33,7 @@ class TestPackageCreateFromDataPackage(custom_helpers.FunctionalTestBaseClass):
             url=url,
         )
 
-    @requests_mock.Mocker(real_http=True)
-    def test_it_raises_if_datapackage_is_unsafe(self, mock_requests):
-        url = 'http://www.somewhere.com/datapackage.json'
+    def test_it_raises_if_datapackage_is_unsafe(self):
         datapackage = {
             'name': 'unsafe',
             'resources': [
@@ -43,24 +43,26 @@ class TestPackageCreateFromDataPackage(custom_helpers.FunctionalTestBaseClass):
                 }
             ]
         }
-        mock_requests.register_uri('GET', url, json=datapackage)
+
+        upload = mock.MagicMock()
+        upload.file = StringIO.StringIO(json.dumps(datapackage))
 
         nose.tools.assert_raises(
             toolkit.ValidationError,
             helpers.call_action,
             'package_create_from_datapackage',
-            url=url,
+            upload=upload,
         )
 
     @requests_mock.Mocker(real_http=True)
     def test_it_creates_the_dataset(self, mock_requests):
-        url = 'http://www.somewhere.com/datapackage.json'
+        url = 'http://www.example.com/datapackage.json'
         datapackage = {
             'name': 'foo',
             'resources': [
                 {
                     'name': 'the-resource',
-                    'url': 'http://www.somewhere.com/data.csv',
+                    'path': 'http://www.example.com/data.csv',
                 }
             ],
             'some_extra_data': {'foo': 'bar'},
@@ -69,28 +71,47 @@ class TestPackageCreateFromDataPackage(custom_helpers.FunctionalTestBaseClass):
         # FIXME: Remove this when
         # https://github.com/okfn/datapackage-py/issues/20 is done
         mock_requests.register_uri('GET',
-                                   datapackage['resources'][0]['url'])
+                                   datapackage['resources'][0]['path'])
 
         dataset = helpers.call_action('package_create_from_datapackage',
                                       url=url)
         nose.tools.assert_equal(dataset['state'], 'active')
 
         extras = dataset['extras']
-        nose.tools.assert_equal(extras[0]['key'], 'some_extra_data')
-        nose.tools.assert_dict_equal(json.loads(extras[0]['value']),
+
+        extra_profile = None
+        extra_data = None
+        for extra in extras:
+            if extra['key'] == 'profile':
+                extra_profile = extra
+            if extra['key'] == 'some_extra_data':
+                extra_data = extra
+
+        assert extra_profile is not None
+
+        assert extra_data is not None
+
+        nose.tools.assert_equal(extra_profile['value'], 'data-package')
+        nose.tools.assert_dict_equal(json.loads(extra_data['value']),
                                      datapackage['some_extra_data'])
 
         resource = dataset.get('resources')[0]
         nose.tools.assert_equal(resource['name'],
                                 datapackage['resources'][0]['name'])
         nose.tools.assert_equal(resource['url'],
-                                datapackage['resources'][0]['url'])
+                                datapackage['resources'][0]['path'])
 
     @requests_mock.Mocker(real_http=True)
     def test_it_creates_a_dataset_without_resources(self, mock_requests):
-        url = 'http://www.somewhere.com/datapackage.json'
+        url = 'http://www.example.com/datapackage.json'
         datapackage = {
-            'name': 'foo'
+            'name': 'foo',
+            'resources': [
+                {
+                    'name': 'the-resource',
+                    'data': 'inline data',
+                }
+            ]
         }
         mock_requests.register_uri('GET', url, json=datapackage)
 
@@ -118,14 +139,14 @@ class TestPackageCreateFromDataPackage(custom_helpers.FunctionalTestBaseClass):
 
     @requests_mock.Mocker(real_http=True)
     def test_it_uploads_local_files(self, mock_requests):
-        url = 'http://www.somewhere.com/datapackage.zip'
+        url = 'http://www.example.com/datapackage.zip'
         datapkg_path = custom_helpers.fixture_path('datetimes-datapackage.zip')
         with open(datapkg_path, 'rb') as f:
             mock_requests.register_uri('GET', url, content=f.read())
 
         # FIXME: Remove this when
         # https://github.com/okfn/datapackage-py/issues/20 is done
-        timezones_url = 'https://www.somewhere.com/timezones.csv'
+        timezones_url = 'https://www.example.com/timezones.csv'
         mock_requests.register_uri('GET', timezones_url, text='')
 
         helpers.call_action('package_create_from_datapackage', url=url)
@@ -139,7 +160,7 @@ class TestPackageCreateFromDataPackage(custom_helpers.FunctionalTestBaseClass):
     @requests_mock.Mocker(real_http=True)
     def test_it_uploads_resources_with_inline_strings_as_data(self,
                                                               mock_requests):
-        url = 'http://www.somewhere.com/datapackage.json'
+        url = 'http://www.example.com/datapackage.json'
         datapackage = {
             'name': 'foo',
             'resources': [
@@ -162,7 +183,7 @@ class TestPackageCreateFromDataPackage(custom_helpers.FunctionalTestBaseClass):
     @requests_mock.Mocker(real_http=True)
     def test_it_uploads_resources_with_inline_dicts_as_data(self,
                                                             mock_requests):
-        url = 'http://www.somewhere.com/datapackage.json'
+        url = 'http://www.example.com/datapackage.json'
         datapackage = {
             'name': 'foo',
             'resources': [
@@ -184,9 +205,13 @@ class TestPackageCreateFromDataPackage(custom_helpers.FunctionalTestBaseClass):
 
     @requests_mock.Mocker(real_http=True)
     def test_it_allows_specifying_the_dataset_name(self, mock_requests):
-        url = 'http://www.somewhere.com/datapackage.json'
+        url = 'http://www.example.com/datapackage.json'
         datapackage = {
             'name': 'foo',
+            'resources': [
+                {'name': 'bar',
+                 'path': 'http://example.com/some.csv'}
+            ]
         }
         mock_requests.register_uri('GET', url, json=datapackage)
 
@@ -198,9 +223,13 @@ class TestPackageCreateFromDataPackage(custom_helpers.FunctionalTestBaseClass):
     @requests_mock.Mocker(real_http=True)
     def test_it_creates_unique_name_if_name_wasnt_specified(self,
                                                             mock_requests):
-        url = 'http://www.somewhere.com/datapackage.json'
+        url = 'http://www.example.com/datapackage.json'
         datapackage = {
             'name': 'foo',
+            'resources': [
+                {'name': 'bar',
+                 'path': 'http://example.com/some.csv'}
+            ]
         }
         mock_requests.register_uri('GET', url, json=datapackage)
 
@@ -212,9 +241,13 @@ class TestPackageCreateFromDataPackage(custom_helpers.FunctionalTestBaseClass):
     @requests_mock.Mocker(real_http=True)
     def test_it_fails_if_specifying_name_that_already_exists(self,
                                                              mock_requests):
-        url = 'http://www.somewhere.com/datapackage.json'
+        url = 'http://www.example.com/datapackage.json'
         datapackage = {
             'name': 'foo',
+            'resources': [
+                {'name': 'bar',
+                 'path': 'http://example.com/some.csv'}
+            ]
         }
         mock_requests.register_uri('GET', url, json=datapackage)
 
@@ -229,9 +262,13 @@ class TestPackageCreateFromDataPackage(custom_helpers.FunctionalTestBaseClass):
 
     @requests_mock.Mocker(real_http=True)
     def test_it_allows_changing_dataset_visibility(self, mock_requests):
-        url = 'http://www.somewhere.com/datapackage.json'
+        url = 'http://www.example.com/datapackage.json'
         datapackage = {
             'name': 'foo',
+            'resources': [
+                {'name': 'bar',
+                 'path': 'http://example.com/some.csv'}
+            ]
         }
         mock_requests.register_uri('GET', url, json=datapackage)
 
@@ -247,6 +284,11 @@ class TestPackageCreateFromDataPackage(custom_helpers.FunctionalTestBaseClass):
     def test_it_allows_uploading_a_datapackage(self):
         datapackage = {
             'name': 'foo',
+            'resources': [
+                {'name': 'bar',
+                 'path': 'http://example.com/some.csv'}
+            ]
+
         }
         with tempfile.NamedTemporaryFile() as tmpfile:
             tmpfile.write(json.dumps(datapackage))

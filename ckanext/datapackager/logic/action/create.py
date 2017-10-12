@@ -143,6 +143,8 @@ def _create_and_upload_resource_with_inline_data(context, resource):
 def _create_and_upload_local_resource(context, resource):
     path = resource['path']
     del resource['path']
+    if isinstance(path, list):
+        path = path[0]
     try:
         with open(path, 'r') as f:
             _create_and_upload_resource(context, resource, f)

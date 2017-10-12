@@ -14,7 +14,8 @@ def _convert_to_datapackage_resource(resource_dict):
     resource = {}
 
     if resource_dict.get('url'):
-        resource['url'] = resource_dict['url']
+        resource['path'] = resource_dict['url']
+    # TODO: DataStore only resources?
 
     if resource_dict.get('description'):
         resource['description'] = resource_dict['description']
@@ -28,6 +29,8 @@ def _convert_to_datapackage_resource(resource_dict):
     if resource_dict.get('name'):
         resource['name'] = slugify.slugify(resource_dict['name']).lower()
         resource['title'] = resource_dict['name']
+    else:
+        resource['name'] = resource_dict['id']
 
     try:
         schema_string = resource_dict.get('schema', '')
@@ -68,6 +71,15 @@ def dataset_to_datapackage(dataset_dict):
         dp['resources'] = [_convert_to_datapackage_resource(r)
                            for r in resources]
 
+    # Ensure unique resource names
+    names = {}
+    for resource in dp['resources']:
+        if resource['name'] in names.keys():
+            resource['name'] = resource['name'] + str(names[resource['name']])
+            names[resource['name']] += 1
+        else:
+            names[resource['name']] = 0
+
     return dp
 
 
@@ -88,42 +100,43 @@ def datapackage_to_dataset(datapackage):
         _datapackage_parse_unknown_fields_as_extras,
     ]
     dataset_dict = {
-        'name': datapackage.metadata['name'].lower()
+        'name': datapackage.descriptor['name'].lower()
     }
 
     for parser in PARSERS:
-        dataset_dict.update(parser(datapackage.metadata))
+        dataset_dict.update(parser(datapackage.descriptor))
 
     if datapackage.resources:
         dataset_dict['resources'] = [_datapackage_resource_to_ckan_resource(r)
                                      for r in datapackage.resources]
+
     return dataset_dict
 
 
 def _datapackage_resource_to_ckan_resource(resource):
     resource_dict = {}
 
-    if resource.metadata.get('name'):
-        name = resource.metadata.get('title') or resource.metadata['name']
+    if resource.descriptor.get('name'):
+        name = resource.descriptor.get('title') or resource.descriptor['name']
         resource_dict['name'] = name
 
-    if resource.remote_data_path:
-        resource_dict['url'] = resource.remote_data_path
+    if resource.local:
+        resource_dict['path'] = resource.source
+    elif resource.remote:
+        resource_dict['url'] = resource.source
+    elif resource.inline:
+        resource_dict['data'] = resource.source
+    else:
+        raise NotImplemented('Multipart resources not yet supported')
 
-    if resource.local_data_path:
-        resource_dict['path'] = resource.local_data_path
+    if resource.descriptor.get('description'):
+        resource_dict['description'] = resource.descriptor['description']
 
-    if resource.metadata.get('data'):
-        resource_dict['data'] = resource.metadata['data']
+    if resource.descriptor.get('format'):
+        resource_dict['format'] = resource.descriptor['format']
 
-    if resource.metadata.get('description'):
-        resource_dict['description'] = resource.metadata['description']
-
-    if resource.metadata.get('format'):
-        resource_dict['format'] = resource.metadata['format']
-
-    if resource.metadata.get('hash'):
-        resource_dict['hash'] = resource.metadata['hash']
+    if resource.descriptor.get('hash'):
+        resource_dict['hash'] = resource.descriptor['hash']
 
     return resource_dict
 

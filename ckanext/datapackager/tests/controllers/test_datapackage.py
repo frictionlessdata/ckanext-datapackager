@@ -41,8 +41,8 @@ class TestDataPackageController(
         uploaded_resource = api.action.resource_create(
             package_id=dataset['id'],
             name='AllstarFull',
+            url='_needed_for_ckan<2.6',
             upload=csv_file,
-            url=''  # FIXME: See https://github.com/ckan/ckan/issues/2769
         )
 
         # Download the package's JSON file.
@@ -55,19 +55,22 @@ class TestDataPackageController(
         dp.validate()
 
         # Check the contents of the datapackage.json file.
-        nose.tools.assert_equals(dataset['name'], dp.metadata['name'])
+        nose.tools.assert_equals(dataset['name'], dp.descriptor['name'])
 
         resources = dp.resources
         nose.tools.assert_equals(len(resources), 2)
         nose.tools.assert_equals(linked_resource['url'],
-                                 resources[0].metadata['url'])
-        schema = resources[0].metadata['schema']
+                                 resources[0].descriptor['path'])
+        nose.tools.assert_equals(linked_resource['url'],
+                                 resources[0].source)
+        schema = resources[0].schema
         nose.tools.assert_equals(
-            {'fields': [{'type': 'string', 'name': 'col1'}]}, schema)
+            schema.descriptor['fields'][0]['name'], 'col1')
+        nose.tools.assert_equals(
+            schema.descriptor['fields'][0]['type'], 'string')
 
         nose.tools.assert_equals(uploaded_resource['url'],
-                                 resources[1].metadata['url'])
-        nose.tools.assert_not_in('path', resources[1].metadata)
+                                 resources[1].descriptor['path'])
 
     def test_that_download_button_is_on_page(self):
         '''Tests that the download button is shown on the dataset pages.'''

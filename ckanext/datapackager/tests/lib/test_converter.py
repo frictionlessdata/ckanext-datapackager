@@ -12,6 +12,8 @@ class TestConvertToDict(object):
 
     def setup(self):
         self.resource_dict = {
+            'id': '1234',
+            'name': 'data.csv',
             'url': 'http://someplace.com/data.csv'
         }
         self.dataset_dict = {
@@ -27,7 +29,13 @@ class TestConvertToDict(object):
     def test_dataset_only_requires_a_name_to_be_valid(self):
         invalid_dataset_dict = {}
         valid_dataset_dict = {
-            'name': 'gdp'
+            'name': 'gdp',
+            'resources': [
+                {
+                    'name': 'the-resource',
+                }
+            ]
+
         }
 
         converter.dataset_to_datapackage(valid_dataset_dict)
@@ -44,7 +52,9 @@ class TestConvertToDict(object):
             'version': '1.0',
         })
         result = converter.dataset_to_datapackage(self.dataset_dict)
-        nose.tools.assert_equals(result, self.dataset_dict)
+        nose.tools.assert_equals(result['title'], self.dataset_dict['title'])
+        nose.tools.assert_equals(result['name'], self.dataset_dict['name'])
+        nose.tools.assert_equals(result['version'], self.dataset_dict['version'])
 
     def test_dataset_notes(self):
         self.dataset_dict.update({
@@ -150,10 +160,10 @@ class TestConvertToDict(object):
         })
         result = converter.dataset_to_datapackage(self.dataset_dict)
         resource = result.get('resources')[0]
-        nose.tools.assert_equals(resource.get('url'),
+        nose.tools.assert_equals(resource.get('path'),
                                  self.resource_dict['url'])
 
-    def test_resource_path_isnt_set_even_for_uploaded_resources(self):
+    def test_resource_path_is_set_even_for_uploaded_resources(self):
         self.resource_dict.update({
             'id': 'foo',
             'url': 'http://www.somewhere.com/data.csv',
@@ -161,9 +171,8 @@ class TestConvertToDict(object):
         })
         result = converter.dataset_to_datapackage(self.dataset_dict)
         resource = result.get('resources')[0]
-        nose.tools.assert_equals(resource.get('url'),
+        nose.tools.assert_equals(resource.get('path'),
                                  self.resource_dict['url'])
-        nose.tools.assert_not_in('path', resource)
 
     def test_resource_description(self):
         self.resource_dict.update({
@@ -236,7 +245,10 @@ class TestDataPackageToDatasetDict(object):
             'title': 'Countries GDP',
             'version': '1.0',
             'resources': [
-                {'path': custom_helpers.fixture_path('datetimes.csv')}
+                {
+                    'name': 'datetimes.csv',
+                    'path': 'test-data/datetimes.csv'
+                }
             ],
         }
 
@@ -245,10 +257,16 @@ class TestDataPackageToDatasetDict(object):
     def test_basic_datapackage_in_setup_is_valid(self):
         converter.datapackage_to_dataset(self.datapackage)
 
-    def test_datapackage_only_requires_a_name_to_be_valid(self):
+    def test_datapackage_only_requires_some_fields_to_be_valid(self):
         invalid_datapackage = datapackage.DataPackage({})
         valid_datapackage = datapackage.DataPackage({
-            'name': 'gdp'
+            'name': 'gdp',
+            'resources': [
+                {
+                    'name': 'the-resource',
+                    'path': 'http://example.com/some-data.csv'
+                }
+            ]
         })
 
         converter.datapackage_to_dataset(valid_datapackage)
@@ -259,7 +277,7 @@ class TestDataPackageToDatasetDict(object):
         )
 
     def test_datapackage_name_title_and_version(self):
-        self.datapackage.metadata.update({
+        self.datapackage.descriptor.update({
             'name': 'gdp',
             'title': 'Countries GDP',
             'version': '1.0',
@@ -272,30 +290,30 @@ class TestDataPackageToDatasetDict(object):
                                  datapackage_dict['version'])
 
     def test_name_is_lowercased(self):
-        self.datapackage.metadata.update({
+        self.datapackage.descriptor.update({
             'name': 'ThEnAmE',
         })
         result = converter.datapackage_to_dataset(self.datapackage)
         nose.tools.assert_equals(result['name'],
-                                 self.datapackage.metadata['name'].lower())
+                                 self.datapackage.descriptor['name'].lower())
 
     def test_datapackage_description(self):
-        self.datapackage.metadata.update({
+        self.datapackage.descriptor.update({
             'description': 'Country, regional and world GDP in current USD.'
         })
         result = converter.datapackage_to_dataset(self.datapackage)
         nose.tools.assert_equals(result.get('notes'),
-                                 self.datapackage.metadata['description'])
+                                 self.datapackage.descriptor['description'])
 
     def test_datapackage_license_as_string(self):
-        self.datapackage.metadata.update({
+        self.datapackage.descriptor.update({
             'license': 'cc-zero'
         })
         result = converter.datapackage_to_dataset(self.datapackage)
         nose.tools.assert_equals(result.get('license_id'), 'cc-zero')
 
     def test_datapackage_license_as_unicode(self):
-        self.datapackage.metadata.update({
+        self.datapackage.descriptor.update({
             'license': u'cc-zero'
         })
         result = converter.datapackage_to_dataset(self.datapackage)
@@ -307,7 +325,7 @@ class TestDataPackageToDatasetDict(object):
             'title': 'Creative Commons CC Zero License (cc-zero)',
             'url': 'http://opendefinition.org/licenses/cc-zero/'
         }
-        self.datapackage.metadata.update({
+        self.datapackage.descriptor.update({
             'license': license
         })
         result = converter.datapackage_to_dataset(self.datapackage)
@@ -323,7 +341,7 @@ class TestDataPackageToDatasetDict(object):
                 'web': 'http://data.worldbank.org/indicator/NY.GDP.MKTP.CD',
             }
         ]
-        self.datapackage.metadata.update({
+        self.datapackage.descriptor.update({
             'sources': sources
         })
         result = converter.datapackage_to_dataset(self.datapackage)
@@ -338,7 +356,7 @@ class TestDataPackageToDatasetDict(object):
             'name': 'John Smith',
             'email': 'jsmith@email.com'
         }
-        self.datapackage.metadata.update({
+        self.datapackage.descriptor.update({
             'author': '{name} <{email}>'.format(name=author['name'],
                                                 email=author['email'])
         })
@@ -352,7 +370,7 @@ class TestDataPackageToDatasetDict(object):
         author = {
             'name': u'John Smith',
         }
-        self.datapackage.metadata.update({
+        self.datapackage.descriptor.update({
             'author': author['name'],
         })
         result = converter.datapackage_to_dataset(self.datapackage)
@@ -363,7 +381,7 @@ class TestDataPackageToDatasetDict(object):
         author = {
             'name': 'John Smith'
         }
-        self.datapackage.metadata.update({
+        self.datapackage.descriptor.update({
             'author': author['name']
         })
         result = converter.datapackage_to_dataset(self.datapackage)
@@ -375,7 +393,7 @@ class TestDataPackageToDatasetDict(object):
             'name': 'John Smith',
             'email': 'jsmith@email.com'
         }
-        self.datapackage.metadata.update({
+        self.datapackage.descriptor.update({
             'author': author
         })
         result = converter.datapackage_to_dataset(self.datapackage)
@@ -387,7 +405,7 @@ class TestDataPackageToDatasetDict(object):
         keywords = [
             'economy!!!', 'world bank',
         ]
-        self.datapackage.metadata.update({
+        self.datapackage.descriptor.update({
             'keywords': keywords
         })
         result = converter.datapackage_to_dataset(self.datapackage)
@@ -397,7 +415,7 @@ class TestDataPackageToDatasetDict(object):
         ])
 
     def test_datapackage_extras(self):
-        self.datapackage.metadata.update({
+        self.datapackage.descriptor.update({
             'title_cn': u'國內生產總值',
             'years': [2015, 2016],
             'last_year': 2016,
@@ -405,6 +423,7 @@ class TestDataPackageToDatasetDict(object):
         })
         result = converter.datapackage_to_dataset(self.datapackage)
         nose.tools.assert_items_equal(result.get('extras'), [
+            {'key': 'profile', 'value': u'data-package'},
             {'key': 'title_cn', 'value': u'國內生產總值'},
             {'key': 'years', 'value': '[2015, 2016]'},
             {'key': 'last_year', 'value': 2016},
@@ -416,9 +435,7 @@ class TestDataPackageToDatasetDict(object):
             'name': 'gdp',
             'title': None,
         }
-        self.datapackage.metadata.update({
-            'resources': [resource],
-        })
+        self.datapackage.resources[0].descriptor.update(resource)
         result = converter.datapackage_to_dataset(self.datapackage)
         resource = result.get('resources')[0]
         nose.tools.assert_equals(result.get('resources')[0].get('name'),
@@ -429,9 +446,8 @@ class TestDataPackageToDatasetDict(object):
             'name': 'gdp',
             'title': 'Gross domestic product',
         }
-        self.datapackage.metadata.update({
-            'resources': [resource],
-        })
+
+        self.datapackage.resources[0].descriptor.update(resource)
         result = converter.datapackage_to_dataset(self.datapackage)
         nose.tools.assert_equals(result.get('resources')[0].get('name'),
                                  resource['title'])
@@ -439,16 +455,20 @@ class TestDataPackageToDatasetDict(object):
     @httpretty.activate
     def test_resource_url(self):
         url = 'http://www.somewhere.com/data.csv'
-        resource = {
-            'url': url
+        datapackage_dict = {
+            'name': 'gdp',
+            'title': 'Countries GDP',
+            'version': '1.0',
+            'resources': [
+                {'path': url}
+            ],
         }
         httpretty.register_uri(httpretty.GET, url, body='')
-        self.datapackage.metadata.update({
-            'resources': [resource]
-        })
-        result = converter.datapackage_to_dataset(self.datapackage)
+
+        dp = datapackage.DataPackage(datapackage_dict)
+        result = converter.datapackage_to_dataset(dp)
         nose.tools.assert_equals(result.get('resources')[0].get('url'),
-                                 resource['url'])
+                                 datapackage_dict['resources'][0]['path'])
 
     @httpretty.activate
     def test_resource_url_is_set_to_its_remote_data_path(self):
@@ -460,21 +480,20 @@ class TestDataPackageToDatasetDict(object):
             'resources': [
                 {'path': 'data.csv'}
             ],
-            'base': 'http://www.somewhere.com',
         }
         httpretty.register_uri(httpretty.GET, url, body='')
-        dp = datapackage.DataPackage(datapackage_dict)
+        dp = datapackage.DataPackage(
+            datapackage_dict, base_path='http://www.somewhere.com')
         result = converter.datapackage_to_dataset(dp)
         nose.tools.assert_equals(result.get('resources')[0].get('url'),
-                                 dp.resources[0].remote_data_path)
+                                 dp.resources[0].source)
 
     def test_resource_description(self):
         resource = {
             'description': 'GDPs list'
         }
-        self.datapackage.metadata.update({
-            'resources': [resource]
-        })
+
+        self.datapackage.resources[0].descriptor.update(resource)
         result = converter.datapackage_to_dataset(self.datapackage)
         nose.tools.assert_equals(result.get('resources')[0].get('description'),
                                  resource['description'])
@@ -483,9 +502,8 @@ class TestDataPackageToDatasetDict(object):
         resource = {
             'format': 'CSV',
         }
-        self.datapackage.metadata.update({
-            'resources': [resource]
-        })
+
+        self.datapackage.resources[0].descriptor.update(resource)
         result = converter.datapackage_to_dataset(self.datapackage)
         nose.tools.assert_equals(result.get('resources')[0].get('format'),
                                  resource['format'])
@@ -494,16 +512,15 @@ class TestDataPackageToDatasetDict(object):
         resource = {
             'hash': 'e785c0883d7a104330e69aee73d4f235',
         }
-        self.datapackage.metadata.update({
-            'resources': [resource]
-        })
+
+        self.datapackage.resources[0].descriptor.update(resource)
         result = converter.datapackage_to_dataset(self.datapackage)
         nose.tools.assert_equals(result.get('resources')[0].get('hash'),
                                  resource['hash'])
 
     def test_resource_path_is_set_to_its_local_data_path(self):
         resource = {
-            'path': custom_helpers.fixture_path('datetimes.csv'),
+            'path': 'test-data/datetimes.csv',
         }
         dp = datapackage.DataPackage({
             'name': 'datetimes',
@@ -512,4 +529,4 @@ class TestDataPackageToDatasetDict(object):
 
         result = converter.datapackage_to_dataset(dp)
         nose.tools.assert_equals(result.get('resources')[0].get('path'),
-                                 dp.resources[0].local_data_path)
+                                 dp.resources[0].source)
