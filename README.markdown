@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/ckan/ckanext-datapackager.png)](https://travis-ci.org/ckan/ckanext-datapackager) [![Coverage Status](https://coveralls.io/repos/ckan/ckanext-datapackager/badge.png?branch=master)](https://coveralls.io/r/ckan/ckanext-datapackager?branch=master)
+[![Build Status](https://travis-ci.org/frictionlessdata/ckanext-datapackager.png)](https://travis-ci.org/frictionlessdata/ckanext-datapackager) [![Coverage Status](https://coveralls.io/repos/frictionlessdata/ckanext-datapackager/badge.png?branch=master)](https://coveralls.io/r/frictionlessdata/ckanext-datapackager?branch=master)
 
 # CKAN Data Packager
 
@@ -23,7 +23,7 @@ To install `ckanext-datapackager` into a CKAN instance, do:
 
    Alternatively do a development install (with your virtualenv activated):
 
-        git clone https://github.com/ckan/ckanext-datapackager.git
+        git clone https://github.com/frictionlessdata/ckanext-datapackager.git
         cd ckanext-datapackager
         python setup.py develop
         pip install -r requirements.txt
@@ -152,7 +152,7 @@ parts of its functionality and improves them, supporting the current CKAN
 version (2.4).
 
 If you still need the old Data Packager, checkout this repository's commit
-[57cff1f](https://github.com/ckan/ckanext-datapackager/commit/57cff1f5112504091891195a097433579275f968).
+[57cff1f](https://github.com/frictionlessdata/ckanext-datapackager/commit/57cff1f5112504091891195a097433579275f968).
 
 [ckan]: http://ckan.org
 [data-packages]: http://dataprotocols.org/data-packages/
