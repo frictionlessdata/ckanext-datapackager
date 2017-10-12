@@ -41,6 +41,7 @@ class TestDataPackageController(
         uploaded_resource = api.action.resource_create(
             package_id=dataset['id'],
             name='AllstarFull',
+            url='_needed_for_ckan<2.6',
             upload=csv_file,
         )
 
