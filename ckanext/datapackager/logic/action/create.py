@@ -3,9 +3,9 @@ import cgi
 import json
 import tempfile
 import ckan.plugins.toolkit as toolkit
+from ckan_datapackage_tools import converter
 
 import datapackage
-import ckanext.datapackager.lib.converter as converter
 
 
 def package_create_from_datapackage(context, data_dict):

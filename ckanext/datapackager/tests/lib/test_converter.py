@@ -3,9 +3,9 @@
 import nose.tools
 import httpretty
 
+from ckan_datapackage_tools import converter
 import datapackage
 import ckanext.datapackager.tests.helpers as custom_helpers
-import ckanext.datapackager.lib.converter as converter
 
 
 class TestConvertToDict(object):

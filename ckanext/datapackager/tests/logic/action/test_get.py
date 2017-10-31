@@ -6,7 +6,7 @@ import nose.tools
 import ckan.tests.factories as factories
 import ckan.tests.helpers as helpers
 import ckanext.datapackager.tests.helpers as custom_helpers
-import ckanext.datapackager.lib.converter as converter
+from ckan_datapackage_tools import converter
 import ckan.plugins.toolkit as toolkit
 
 
