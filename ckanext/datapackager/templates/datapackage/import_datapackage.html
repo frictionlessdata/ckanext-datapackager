@@ -13,11 +13,21 @@
     <div class="module-content">
       <p>
         {% trans %}
-        A <a href="http://dataprotocols.org/data-packages/">Data Package</a> is
-        a coherent collection of data and possibly other assets in a single
-        'package'.
+        A <a href="https://frictionlessdata.io/data-packages/">Data Package</a> is
+        a simple container format used to describe and package a collection of data.
         {% endtrans %}
       </p>
+
+      <p>
+        {% trans %}You can import Data Packages to create CKAN datasets. The options supported are:{% endtrans %}
+      </p>
+        <ul>
+            <li>{% trans %}Upload or link to a Data Package descriptor (<i>datapackage.json</i> file) that references data files hosted elsewhere.{% endtrans %}</li>
+
+
+            <li>{% trans %}Upload a zipped Data Package that includes the data files, plus a Data Package descriptor (<i>datapackage.json</i> file) in the root of the ZIP file.{% endtrans %}</li>
+        </ul>
+
     </div>
   </section>
 {% endblock %}
