@@ -156,5 +156,5 @@ If you still need the old Data Packager, checkout this repository's commit
 [57cff1f](https://github.com/frictionlessdata/ckanext-datapackager/commit/57cff1f5112504091891195a097433579275f968).
 
 [ckan]: http://ckan.org
-[data-packages]: http://dataprotocols.org/data-packages/
+[data-packages]: https://frictionlessdata.io/data-packages/
 [ckanapi]: https://github.com/ckan/ckanapi
