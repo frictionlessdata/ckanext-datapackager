@@ -1,4 +1,5 @@
-[![Build Status](https://travis-ci.org/frictionlessdata/ckanext-datapackager.png)](https://travis-ci.org/frictionlessdata/ckanext-datapackager) [![Coverage Status](https://coveralls.io/repos/frictionlessdata/ckanext-datapackager/badge.png?branch=master)](https://coveralls.io/r/frictionlessdata/ckanext-datapackager?branch=master)
+[![Build Status](https://travis-ci.org/frictionlessdata/ckanext-datapackager.png)](https://travis-ci.org/frictionlessdata/ckanext-datapackager)
+[![Coverage Status](https://coveralls.io/repos/github/frictionlessdata/ckanext-datapackager/badge.svg?branch=master)](https://coveralls.io/github/frictionlessdata/ckanext-datapackager?branch=master)
 
 # CKAN Data Packager
 
