@@ -2,6 +2,9 @@ import random
 import cgi
 import json
 import tempfile
+
+import six
+
 import ckan.plugins.toolkit as toolkit
 from ckan_datapackage_tools import converter
 
@@ -65,10 +68,16 @@ def package_create_from_datapackage(context, data_dict):
     if resources:
         try:
             _create_resources(dataset_id, context, resources)
-            res = toolkit.get_action('package_show')(context, {'id': dataset_id})
+            res = toolkit.get_action('package_show')(
+                context, {'id': dataset_id})
         except Exception as e:
-            toolkit.get_action('package_delete')(context, {'id': dataset_id})
-            raise e
+            try:
+                toolkit.get_action('package_delete')(
+                    context, {'id': dataset_id})
+            except Exception as e2:
+                six.raise_from(e, e2)
+            else:
+                raise e
 
     res['state'] = 'active'
     return toolkit.get_action('package_update')(context, res)
