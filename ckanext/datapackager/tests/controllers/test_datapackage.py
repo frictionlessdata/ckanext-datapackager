@@ -5,6 +5,7 @@ import nose.tools
 import requests_mock
 import ckanapi
 import datapackage
+import pytest
 
 import ckan.tests.factories as factories
 import ckan.tests.helpers as helpers
@@ -16,8 +17,9 @@ assert_true = nose.tools.assert_true
 assert_regexp_matches = nose.tools.assert_regexp_matches
 
 
-class TestDataPackageController(
-        custom_helpers.FunctionalTestBaseClass):
+@pytest.mark.ckan_config('ckan.plugins', 'datapackager')
+@pytest.mark.usefixtures('clean_db', 'with_plugins', 'with_request_context')
+class TestDataPackageController():
     '''Functional tests for the DataPackageController class.'''
 
     def test_download_datapackage(self):

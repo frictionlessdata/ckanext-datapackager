@@ -2,6 +2,7 @@ import os
 
 import nose.tools
 import ckanapi as ckanapi
+import pytest
 
 import ckan.tests.factories as factories
 
@@ -9,8 +10,9 @@ import ckanext.datapackager.lib.util as util
 import ckanext.datapackager.tests.helpers as custom_helpers
 import ckanext.datapackager.exceptions as exceptions
 
-
-class TestResourceSchemaFieldCreate(custom_helpers.FunctionalTestBaseClass):
+@pytest.mark.ckan_config('ckan.plugins', 'datapackager')
+@pytest.mark.usefixtures('clean_db', 'with_plugins', 'with_request_context')
+class TestResourceSchemaFieldCreate():
 
     def test_get_path_to_resource_file_with_uploaded_file(self):
 

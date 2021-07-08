@@ -2,15 +2,18 @@
 
 '''
 import nose.tools
+import pytest
 
 import ckan.tests.factories as factories
 import ckan.tests.helpers as helpers
-import ckanext.datapackager.tests.helpers as custom_helpers
+
 from ckan_datapackage_tools import converter
 import ckan.plugins.toolkit as toolkit
 
 
-class TestGet(custom_helpers.FunctionalTestBaseClass):
+@pytest.mark.ckan_config('ckan.plugins', 'datapackager')
+@pytest.mark.usefixtures('clean_db', 'with_plugins', 'with_request_context')
+class TestGet():
 
     def test_package_show_as_datapackage(self):
 

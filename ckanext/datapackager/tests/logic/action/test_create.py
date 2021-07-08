@@ -2,9 +2,10 @@ import json
 import mock
 import nose.tools
 import tempfile
-import StringIO
+from io import StringIO
 
 import requests_mock
+import pytest
 
 import ckan.tests.helpers as helpers
 import ckanext.datapackager.tests.helpers as custom_helpers
@@ -12,7 +13,9 @@ import ckan.plugins.toolkit as toolkit
 import ckan.tests.factories as factories
 
 
-class TestPackageCreateFromDataPackage(custom_helpers.FunctionalTestBaseClass):
+@pytest.mark.ckan_config('ckan.plugins', 'datapackager')
+@pytest.mark.usefixtures('clean_db', 'with_plugins', 'with_request_context')
+class TestPackageCreateFromDataPackage():
     def test_it_requires_a_url_if_theres_no_upload_param(self):
         nose.tools.assert_raises(
             toolkit.ValidationError,
