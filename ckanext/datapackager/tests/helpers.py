@@ -2,8 +2,8 @@
 
 import os
 
-import ckan.config.middleware
-import webtest
+# import ckan.config.middleware
+# import webtest
 from ckan.plugins.toolkit import config
 
 def get_csv_file(relative_path):

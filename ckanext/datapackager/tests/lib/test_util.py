@@ -14,11 +14,11 @@ import ckanext.datapackager.exceptions as exceptions
 @pytest.mark.usefixtures('clean_db', 'with_plugins', 'with_request_context')
 class TestResourceSchemaFieldCreate():
 
-    def test_get_path_to_resource_file_with_uploaded_file(self):
+    def test_get_path_to_resource_file_with_uploaded_file(self, app):
 
         user = factories.User()
         package = factories.Dataset(user=user)
-        api = ckanapi.TestAppCKAN(self.app, apikey=user['apikey'])
+        api = ckanapi.TestAppCKAN(app, apikey=user['apikey'])
         csv_file = custom_helpers.get_csv_file('datetimes.csv')
         resource = api.action.resource_create(
             package_id=package['id'],
