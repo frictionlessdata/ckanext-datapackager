@@ -140,7 +140,7 @@ def _create_and_upload_resource_with_inline_data(context, resource):
     prefix = resource.get('name', 'tmp')
     data = resource['data']
     del resource['data']
-    if not isinstance(data, basestring):
+    if not isinstance(data, six.string_types):
         data = json.dumps(data, indent=2)
 
     with tempfile.NamedTemporaryFile(prefix=prefix) as f:
