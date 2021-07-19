@@ -93,7 +93,7 @@ class TestDataPackageController():
         env = {'REMOTE_USER': user['name'].encode('ascii')}
         url = toolkit.url_for('import_datapackage')
         response = app.get(url, extra_environ=env)
-        assert_equals(200, response.status_int)
+        assert 200 == response.status_int
 
     @helpers.change_config('ckan.auth.create_unowned_dataset', False)
     def test_new_requires_user_to_be_able_to_create_packages(self, app):
@@ -101,7 +101,7 @@ class TestDataPackageController():
         env = {'REMOTE_USER': user['name'].encode('ascii')}
         url = toolkit.url_for('import_datapackage')
         response = app.get(url, extra_environ=env, status=[401])
-        assert_true('Unauthorized to create a dataset' in response.body)
+        assert 'Unauthorized to create a dataset' in response.body
 
     def test_import_datapackage(self, requests_mock, app):
         datapackage_url = 'http://www.foo.com/datapackage.json'
@@ -124,13 +124,13 @@ class TestDataPackageController():
             extra_environ=env,
         )
         # Should redirect to dataset's page
-        assert_equals(response.status_int, 302)
+        assert response.status_int == 302
         assert_regexp_matches(response.headers['Location'], '/dataset/foo$')
 
         # Should create the dataset
         dataset = helpers.call_action('package_show', id=datapackage['name'])
-        assert_equals(dataset['name'], 'foo')
-        assert_equals(len(dataset.get('resources', [])), 1)
-        assert_equals(dataset['resources'][0].get('name'), 'the-resource')
-        assert_equals(dataset['resources'][0].get('url'),
+        assert dataset['name'] == 'foo'
+        assert len(dataset.get('resources', [])) == 1
+        assert dataset['resources'][0].get('name') == 'the-resource'
+        assert (dataset['resources'][0].get('url') ==
                       datapackage['resources'][0]['url'])
