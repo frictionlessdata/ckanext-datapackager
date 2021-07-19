@@ -46,7 +46,9 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Install requirements
+      # cython is needed to fix cchardet gcc issue in containers/on GH actions https://github.com/PyYoshi/cChardet/issues/11
       run: |
+        pip install cython
         pip install -r requirements.txt
         pip install -r dev-requirements.txt
         pip install -e .

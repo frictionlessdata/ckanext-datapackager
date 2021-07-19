@@ -2,5 +2,3 @@ python-slugify==1.2.4
 datapackage==1.1.3
 ckan-datapackage-tools==0.1.0
 six
-# Needed to fix cchardet gcc issue in containers/on GH actions https://github.com/PyYoshi/cChardet/issues/11
-cython
