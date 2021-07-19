@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import nose.tools
-import httpretty
+import responses
 
 from ckan_datapackage_tools import converter
 import datapackage
@@ -452,7 +452,7 @@ class TestDataPackageToDatasetDict(object):
         nose.tools.assert_equals(result.get('resources')[0].get('name'),
                                  resource['title'])
 
-    @httpretty.activate
+    @responses.activate
     def test_resource_url(self):
         url = 'http://www.somewhere.com/data.csv'
         datapackage_dict = {
@@ -463,14 +463,14 @@ class TestDataPackageToDatasetDict(object):
                 {'path': url}
             ],
         }
-        httpretty.register_uri(httpretty.GET, url, body='')
+        responses.add(responses.GET, url, body='')
 
         dp = datapackage.DataPackage(datapackage_dict)
         result = converter.datapackage_to_dataset(dp)
         nose.tools.assert_equals(result.get('resources')[0].get('url'),
                                  datapackage_dict['resources'][0]['path'])
 
-    @httpretty.activate
+    @responses.activate
     def test_resource_url_is_set_to_its_remote_data_path(self):
         url = 'http://www.somewhere.com/data.csv'
         datapackage_dict = {
@@ -481,7 +481,7 @@ class TestDataPackageToDatasetDict(object):
                 {'path': 'data.csv'}
             ],
         }
-        httpretty.register_uri(httpretty.GET, url, body='')
+        responses.add(responses.GET, url, body='')
         dp = datapackage.DataPackage(
             datapackage_dict, base_path='http://www.somewhere.com')
         result = converter.datapackage_to_dataset(dp)

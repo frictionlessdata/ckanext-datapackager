@@ -1,11 +1,12 @@
 import os
 
 import nose.tools
-import ckanapi as ckanapi
 import pytest
 
 import ckan.tests.factories as factories
 
+
+import ckan.tests.helpers as helpers
 import ckanext.datapackager.lib.util as util
 import ckanext.datapackager.tests.helpers as custom_helpers
 import ckanext.datapackager.exceptions as exceptions
@@ -18,9 +19,8 @@ class TestResourceSchemaFieldCreate():
 
         user = factories.User()
         package = factories.Dataset(user=user)
-        api = ckanapi.TestAppCKAN(app, apikey=user['apikey'])
         csv_file = custom_helpers.get_csv_file('datetimes.csv')
-        resource = api.action.resource_create(
+        resource = helpers.call_action('resource_create', {},
             package_id=package['id'],
             upload=csv_file,
             url=''  # FIXME: See https://github.com/ckan/ckan/issues/2769
