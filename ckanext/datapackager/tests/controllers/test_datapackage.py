@@ -24,7 +24,6 @@ class TestDataPackageController():
 
         '''
         user = factories.Sysadmin()
-        api = ckanapi.TestAppCKAN(app, apikey=user['apikey'])
         dataset = factories.Dataset()
 
         # Add a resource with a linked-to, not uploaded, data file.
@@ -37,7 +36,7 @@ class TestDataPackageController():
         # Add a resource with an uploaded data file.
         csv_path = 'lahmans-baseball-database/AllstarFull.csv'
         csv_file = custom_helpers.get_csv_file(csv_path)
-        uploaded_resource = api.action.resource_create(
+        uploaded_resource = helpers.call_action('resource_create', {},
             package_id=dataset['id'],
             name='AllstarFull',
             url='_needed_for_ckan<2.6',

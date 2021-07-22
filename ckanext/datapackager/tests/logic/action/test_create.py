@@ -6,11 +6,15 @@ import tempfile
 from io import StringIO
 
 import pytest
+import responses
 
 import ckan.tests.helpers as helpers
 import ckanext.datapackager.tests.helpers as custom_helpers
-import ckan.plugins.toolkit as toolkit
+import ckantoolkit as toolkit
 import ckan.tests.factories as factories
+
+
+responses.add_passthru(toolkit.config['solr_url'])
 
 
 @pytest.mark.ckan_config('ckan.plugins', 'datapackager')
@@ -21,10 +25,10 @@ class TestPackageCreateFromDataPackage(unittest.TestCase):
             helpers.call_action('package_create_from_datapackage')
 
 
-    def test_it_raises_if_datapackage_is_invalid(self, requests_mock):
+    def test_it_raises_if_datapackage_is_invalid(self):
         url = 'http://www.example.com/datapackage.json'
         datapackage = {}
-        requests_mock.register_uri('GET', url, json=datapackage)
+        responses.add(responses.GET, url, json=datapackage)
 
         with self.assertRaises(toolkit.ValidationError):
             helpers.call_action('package_create_from_datapackage', url=url)
@@ -48,7 +52,7 @@ class TestPackageCreateFromDataPackage(unittest.TestCase):
         with self.assertRaises(toolkit.ValidationError):
             helpers.call_action('package_create_from_datapackage', upload=upload)
 
-    def test_it_creates_the_dataset(self, requests_mock):
+    def test_it_creates_the_dataset(self):
         url = 'http://www.example.com/datapackage.json'
         datapackage = {
             'name': 'foo',
@@ -60,10 +64,10 @@ class TestPackageCreateFromDataPackage(unittest.TestCase):
             ],
             'some_extra_data': {'foo': 'bar'},
         }
-        requests_mock.register_uri('GET', url, json=datapackage)
+        responses.add(responses.GET, url, json=datapackage)
         # FIXME: Remove this when
         # https://github.com/okfn/datapackage-py/issues/20 is done
-        requests_mock.register_uri('GET',
+        responses.add(responses.GET,
                                    datapackage['resources'][0]['path'])
 
         dataset = helpers.call_action('package_create_from_datapackage',
@@ -94,7 +98,8 @@ class TestPackageCreateFromDataPackage(unittest.TestCase):
         nose.tools.assert_equal(resource['url'],
                                 datapackage['resources'][0]['path'])
 
-    def test_it_creates_a_dataset_without_resources(self, requests_mock):
+    @responses.activate
+    def test_it_creates_a_dataset_without_resources(self):
         url = 'http://www.example.com/datapackage.json'
         datapackage = {
             'name': 'foo',
@@ -105,7 +110,7 @@ class TestPackageCreateFromDataPackage(unittest.TestCase):
                 }
             ]
         }
-        requests_mock.register_uri('GET', url, json=datapackage)
+        responses.add(responses.GET, url, json=datapackage)
 
         helpers.call_action('package_create_from_datapackage', url=url)
 
@@ -127,16 +132,16 @@ class TestPackageCreateFromDataPackage(unittest.TestCase):
         new_datasets = helpers.call_action('package_list')
         nose.tools.assert_equal(original_datasets, new_datasets)
 
-    def test_it_uploads_local_files(self, requests_mock):
+    def test_it_uploads_local_files(self):
         url = 'http://www.example.com/datapackage.zip'
         datapkg_path = custom_helpers.fixture_path('datetimes-datapackage.zip')
         with open(datapkg_path, 'rb') as f:
-            requests_mock.register_uri('GET', url, content=f.read())
+            responses.add(responses.GET, url, content=f.read())
 
         # FIXME: Remove this when
         # https://github.com/okfn/datapackage-py/issues/20 is done
         timezones_url = 'https://www.example.com/timezones.csv'
-        requests_mock.register_uri('GET', timezones_url, text='')
+        responses.add(responses.GET, timezones_url, text='')
 
         helpers.call_action('package_create_from_datapackage', url=url)
 
@@ -146,8 +151,7 @@ class TestPackageCreateFromDataPackage(unittest.TestCase):
         nose.tools.assert_equal(resources[0]['url_type'], 'upload')
         nose.tools.assert_regexp_matches(resources[0]['url'], 'datetimes.csv$')
 
-    def test_it_uploads_resources_with_inline_strings_as_data(self,
-                                                              requests_mock):
+    def test_it_uploads_resources_with_inline_strings_as_data(self):
         url = 'http://www.example.com/datapackage.json'
         datapackage = {
             'name': 'foo',
@@ -158,7 +162,7 @@ class TestPackageCreateFromDataPackage(unittest.TestCase):
                 }
             ]
         }
-        requests_mock.register_uri('GET', url, json=datapackage)
+        responses.add(responses.GET, url, json=datapackage)
 
         helpers.call_action('package_create_from_datapackage', url=url)
 
@@ -168,8 +172,7 @@ class TestPackageCreateFromDataPackage(unittest.TestCase):
         nose.tools.assert_equal(resources[0]['url_type'], 'upload')
         nose.tools.assert_true(resources[0]['name'] in resources[0]['url'])
 
-    def test_it_uploads_resources_with_inline_dicts_as_data(self,
-                                                            requests_mock):
+    def test_it_uploads_resources_with_inline_dicts_as_data(self):
         url = 'http://www.example.com/datapackage.json'
         datapackage = {
             'name': 'foo',
@@ -180,7 +183,7 @@ class TestPackageCreateFromDataPackage(unittest.TestCase):
                 }
             ]
         }
-        requests_mock.register_uri('GET', url, json=datapackage)
+        responses.add(responses.GET, url, json=datapackage)
 
         helpers.call_action('package_create_from_datapackage', url=url)
 
@@ -190,7 +193,7 @@ class TestPackageCreateFromDataPackage(unittest.TestCase):
         nose.tools.assert_equal(resources[0]['url_type'], 'upload')
         nose.tools.assert_true(resources[0]['name'] in resources[0]['url'])
 
-    def test_it_allows_specifying_the_dataset_name(self, requests_mock):
+    def test_it_allows_specifying_the_dataset_name(self):
         url = 'http://www.example.com/datapackage.json'
         datapackage = {
             'name': 'foo',
@@ -199,15 +202,14 @@ class TestPackageCreateFromDataPackage(unittest.TestCase):
                  'path': 'http://example.com/some.csv'}
             ]
         }
-        requests_mock.register_uri('GET', url, json=datapackage)
+        responses.add(responses.GET, url, json=datapackage)
 
         dataset = helpers.call_action('package_create_from_datapackage',
                                       url=url,
                                       name='bar')
         nose.tools.assert_equal(dataset['name'], 'bar')
 
-    def test_it_creates_unique_name_if_name_wasnt_specified(self,
-                                                            requests_mock):
+    def test_it_creates_unique_name_if_name_wasnt_specified(self):
         url = 'http://www.example.com/datapackage.json'
         datapackage = {
             'name': 'foo',
@@ -216,15 +218,14 @@ class TestPackageCreateFromDataPackage(unittest.TestCase):
                  'path': 'http://example.com/some.csv'}
             ]
         }
-        requests_mock.register_uri('GET', url, json=datapackage)
+        responses.add(responses.GET, url, json=datapackage)
 
         helpers.call_action('package_create', name=datapackage['name'])
         dataset = helpers.call_action('package_create_from_datapackage',
                                       url=url)
         nose.tools.assert_true(dataset['name'].startswith('foo'))
 
-    def test_it_fails_if_specifying_name_that_already_exists(self,
-                                                             requests_mock):
+    def test_it_fails_if_specifying_name_that_already_exists(self):
         url = 'http://www.example.com/datapackage.json'
         datapackage = {
             'name': 'foo',
@@ -233,14 +234,14 @@ class TestPackageCreateFromDataPackage(unittest.TestCase):
                  'path': 'http://example.com/some.csv'}
             ]
         }
-        requests_mock.register_uri('GET', url, json=datapackage)
+        responses.add(responses.GET, url, json=datapackage)
 
         helpers.call_action('package_create', name=datapackage['name'])
         
         with self.assertRaises(toolkit.ValidationError):
             helpers.call_action('package_create_from_datapackage', url=url, name=datapackage['name'])
 
-    def test_it_allows_changing_dataset_visibility(self, requests_mock):
+    def test_it_allows_changing_dataset_visibility(self):
         url = 'http://www.example.com/datapackage.json'
         datapackage = {
             'name': 'foo',
@@ -249,7 +250,7 @@ class TestPackageCreateFromDataPackage(unittest.TestCase):
                  'path': 'http://example.com/some.csv'}
             ]
         }
-        requests_mock.register_uri('GET', url, json=datapackage)
+        responses.add(responses.GET, url, json=datapackage)
 
         user = factories.Sysadmin()
         organization = factories.Organization()

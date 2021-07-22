@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import unittest
-import httpretty
+import responses
 
 from ckan_datapackage_tools import converter
 import datapackage
@@ -430,7 +430,7 @@ class TestDataPackageToDatasetDict(unittest.TestCase, object):
         result = converter.datapackage_to_dataset(self.datapackage)
         assert result.get("resources")[0].get("name") == resource["title"]
 
-    @httpretty.activate
+    @responses.activate
     def test_resource_url(self):
         url = "http://www.somewhere.com/data.csv"
         datapackage_dict = {
@@ -440,6 +440,7 @@ class TestDataPackageToDatasetDict(unittest.TestCase, object):
             "resources": [{"path": url}],
         }
         httpretty.register_uri(httpretty.GET, url, body="")
+        responses.add(responses.GET, url, body='')
 
         dp = datapackage.DataPackage(datapackage_dict)
         result = converter.datapackage_to_dataset(dp)
@@ -448,7 +449,7 @@ class TestDataPackageToDatasetDict(unittest.TestCase, object):
             == datapackage_dict["resources"][0]["path"]
         )
 
-    @httpretty.activate
+    @responses.activate
     def test_resource_url_is_set_to_its_remote_data_path(self):
         url = "http://www.somewhere.com/data.csv"
         datapackage_dict = {
