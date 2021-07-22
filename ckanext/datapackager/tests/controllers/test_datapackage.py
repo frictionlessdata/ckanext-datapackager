@@ -44,7 +44,9 @@ class TestDataPackageController():
         )
 
         # Download the package's JSON file.
-        url = toolkit.url_for('export_datapackage',
+        endpoint = ('datapackager.export_datapackage' if
+            toolkit.check_ckan_version(min_version='2.9') else 'export_datapackge')
+        url = toolkit.url_for(endpoint,
                               package_id=dataset['name'])
         response = app.get(url)
 
