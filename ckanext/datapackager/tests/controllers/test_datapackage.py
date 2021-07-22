@@ -1,7 +1,6 @@
 '''Functional tests for controllers/package.py.'''
 import json
 
-import ckanapi
 import datapackage
 import pytest
 
@@ -114,7 +113,7 @@ class TestDataPackageController():
         )
         # Should redirect to dataset's page
         assert response.status_int == 302
-        assert_regexp_matches(response.headers['Location'], '/dataset/foo$')
+        assert '/dataset/foo' in response.headers['Location']
 
         # Should create the dataset
         dataset = helpers.call_action('package_show', id=datapackage['name'])

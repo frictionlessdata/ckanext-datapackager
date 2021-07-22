@@ -37,7 +37,6 @@ class TestConvertToDict(unittest.TestCase, object):
         converter.dataset_to_datapackage(valid_dataset_dict)
         with self.assertRaises(KeyError):
             converter.dataset_to_datapackage(invalid_dataset_dict)
-        
 
     def test_dataset_name_title_and_version(self):
         self.dataset_dict.update(
@@ -439,7 +438,6 @@ class TestDataPackageToDatasetDict(unittest.TestCase, object):
             "version": "1.0",
             "resources": [{"path": url}],
         }
-        httpretty.register_uri(httpretty.GET, url, body="")
         responses.add(responses.GET, url, body='')
 
         dp = datapackage.DataPackage(datapackage_dict)
@@ -458,7 +456,8 @@ class TestDataPackageToDatasetDict(unittest.TestCase, object):
             "version": "1.0",
             "resources": [{"path": "data.csv"}],
         }
-        httpretty.register_uri(httpretty.GET, url, body="")
+
+        responses.add(responses.GET, url, body='')
         dp = datapackage.DataPackage(
             datapackage_dict, base_path="http://www.somewhere.com"
         )
