@@ -3,7 +3,7 @@ import json
 import ckan.model as model
 import ckan.plugins.toolkit as toolkit
 
-def _authorize_or_abort(self, context):
+def _authorize_or_abort(context):
         try:
             toolkit.check_access('package_create', context)
         except toolkit.NotAuthorized:
@@ -82,7 +82,7 @@ def export_datapackage(package_id):
         toolkit.abort(404, 'Dataset not found')
 
     return json.dumps(datapackage_dict, indent=2)
-    
+
 if not toolkit.check_ckan_version(u'2.9'):
     class DataPackageController(toolkit.BaseController):
         def new(self, data=None, errors=None, error_summary=None):
@@ -92,4 +92,4 @@ if not toolkit.check_ckan_version(u'2.9'):
         def export_datapackage(self, package_id):
             export_datapackage(package_id)
 
-        
+

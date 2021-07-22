@@ -3,6 +3,7 @@ import json
 
 import datapackage
 import pytest
+import responses
 
 import ckan.tests.factories as factories
 import ckan.tests.helpers as helpers
@@ -83,7 +84,7 @@ class TestDataPackageController():
         response = app.get(url, extra_environ=env)
         assert 200 == response.status_int
 
-    @helpers.change_config('ckan.auth.create_unowned_dataset', False)
+    @pytest.mark.ckan_config('ckan.auth.create_unowned_dataset', False)
     def test_new_requires_user_to_be_able_to_create_packages(self, app):
         user = factories.User()
         env = {'REMOTE_USER': user['name'].encode('ascii')}
@@ -91,7 +92,8 @@ class TestDataPackageController():
         response = app.get(url, extra_environ=env, status=[401])
         assert 'Unauthorized to create a dataset' in response.body
 
-    def test_import_datapackage(self, requests_mock, app):
+    @responses.activate
+    def test_import_datapackage(self, app):
         datapackage_url = 'http://www.foo.com/datapackage.json'
         datapackage = {
             'name': 'foo',
@@ -102,7 +104,9 @@ class TestDataPackageController():
                 }
             ]
         }
-        requests_mock.register_uri('GET', datapackage_url, json=datapackage)
+
+        responses.add_passthru(toolkit.config['solr_url'])
+        responses.add(responses.GET, datapackage_url, json=datapackage)
 
         user = factories.User()
         env = {'REMOTE_USER': user['name'].encode('ascii')}
