@@ -1,7 +1,8 @@
 '''Functional tests for logic/action/get.py.
 
 '''
-import nose.tools
+
+import unittest
 import pytest
 
 import ckan.tests.factories as factories
@@ -10,10 +11,9 @@ import ckan.tests.helpers as helpers
 from ckan_datapackage_tools import converter
 import ckan.plugins.toolkit as toolkit
 
-
 @pytest.mark.ckan_config('ckan.plugins', 'datapackager')
 @pytest.mark.usefixtures('clean_db', 'with_plugins', 'with_request_context')
-class TestGet():
+class TestGet(unittest.TestCase):
 
     def test_package_show_as_datapackage(self):
 
@@ -30,11 +30,8 @@ class TestGet():
         datapackage_dict = helpers.call_action('package_show_as_datapackage',
                                                id=dataset['name'])
 
-        nose.tools.assert_items_equal(expected_output, datapackage_dict)
+        self.assertItemsEqual(expected_output, datapackage_dict)
 
     def test_package_show_as_datapackage_with_missing_id(self):
-        nose.tools.assert_raises(
-            toolkit.ValidationError,
-            helpers.call_action,
-            'package_show_as_datapackage',
-        )
+        with self.assertRaises(toolkit.ValidationError):
+            helpers.call_action('package_show_as_datapackage')

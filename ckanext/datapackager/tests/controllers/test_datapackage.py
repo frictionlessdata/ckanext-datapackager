@@ -1,7 +1,6 @@
 '''Functional tests for controllers/package.py.'''
 import json
 
-import nose.tools
 import ckanapi
 import datapackage
 import pytest
@@ -13,10 +12,6 @@ import ckanext.datapackager.tests.helpers as custom_helpers
 
 
 from bs4 import BeautifulSoup
-
-assert_equals = nose.tools.assert_equals
-assert_true = nose.tools.assert_true
-assert_regexp_matches = nose.tools.assert_regexp_matches
 
 
 @pytest.mark.ckan_config('ckan.plugins', 'datapackager')
@@ -59,22 +54,17 @@ class TestDataPackageController():
         dp.validate()
 
         # Check the contents of the datapackage.json file.
-        nose.tools.assert_equals(dataset['name'], dp.descriptor['name'])
+        assert dataset['name'] == dp.descriptor['name']
 
         resources = dp.resources
-        nose.tools.assert_equals(len(resources), 2)
-        nose.tools.assert_equals(linked_resource['url'],
-                                 resources[0].descriptor['path'])
-        nose.tools.assert_equals(linked_resource['url'],
-                                 resources[0].source)
+        assert len(resources) == 2
+        assert linked_resource['url'] == resources[0].descriptor['path']
+        assert linked_resource['url'] == resources[0].source
         schema = resources[0].schema
-        nose.tools.assert_equals(
-            schema.descriptor['fields'][0]['name'], 'col1')
-        nose.tools.assert_equals(
-            schema.descriptor['fields'][0]['type'], 'string')
+        assert schema.descriptor['fields'][0]['name'] == 'col1'
+        assert schema.descriptor['fields'][0]['type'] == 'string'
 
-        nose.tools.assert_equals(uploaded_resource['url'],
-                                 resources[1].descriptor['path'])
+        assert uploaded_resource['url'] == resources[1].descriptor['path']
 
     def test_that_download_button_is_on_page(self, app):
         '''Tests that the download button is shown on the dataset pages.'''
@@ -132,5 +122,4 @@ class TestDataPackageController():
         assert dataset['name'] == 'foo'
         assert len(dataset.get('resources', [])) == 1
         assert dataset['resources'][0].get('name') == 'the-resource'
-        assert (dataset['resources'][0].get('url') ==
-                      datapackage['resources'][0]['url'])
+        assert (dataset['resources'][0].get('url') == datapackage['resources'][0]['url'])

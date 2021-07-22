@@ -1,4 +1,5 @@
 import json
+import unittest
 import mock
 import nose.tools
 import tempfile
@@ -14,13 +15,10 @@ import ckan.tests.factories as factories
 
 @pytest.mark.ckan_config('ckan.plugins', 'datapackager')
 @pytest.mark.usefixtures('clean_db', 'with_plugins', 'with_request_context')
-class TestPackageCreateFromDataPackage():
+class TestPackageCreateFromDataPackage(unittest.TestCase):
     def test_it_requires_a_url_if_theres_no_upload_param(self):
-        nose.tools.assert_raises(
-            toolkit.ValidationError,
-            helpers.call_action,
-            'package_create_from_datapackage',
-        )
+        with self.assertRaises(toolkit.ValidationError):
+            helpers.call_action('package_create_from_datapackage')
 
 
     def test_it_raises_if_datapackage_is_invalid(self, requests_mock):
@@ -28,12 +26,9 @@ class TestPackageCreateFromDataPackage():
         datapackage = {}
         requests_mock.register_uri('GET', url, json=datapackage)
 
-        nose.tools.assert_raises(
-            toolkit.ValidationError,
-            helpers.call_action,
-            'package_create_from_datapackage',
-            url=url,
-        )
+        with self.assertRaises(toolkit.ValidationError):
+            helpers.call_action('package_create_from_datapackage', url=url)
+        
 
     def test_it_raises_if_datapackage_is_unsafe(self):
         datapackage = {
@@ -47,14 +42,11 @@ class TestPackageCreateFromDataPackage():
         }
 
         upload = mock.MagicMock()
-        upload.file = StringIO.StringIO(json.dumps(datapackage))
+        upload.file = StringIO(json.dumps(datapackage))
 
-        nose.tools.assert_raises(
-            toolkit.ValidationError,
-            helpers.call_action,
-            'package_create_from_datapackage',
-            upload=upload,
-        )
+        
+        with self.assertRaises(toolkit.ValidationError):
+            helpers.call_action('package_create_from_datapackage', upload=upload)
 
     def test_it_creates_the_dataset(self, requests_mock):
         url = 'http://www.example.com/datapackage.json'
@@ -127,12 +119,10 @@ class TestPackageCreateFromDataPackage():
         original_datasets = helpers.call_action('package_list')
 
         with open(datapkg_path, 'rb') as datapkg:
-            nose.tools.assert_raises(
-                toolkit.ValidationError,
-                helpers.call_action,
-                'package_create_from_datapackage',
-                upload=_UploadFile(datapkg),
-            )
+            
+            with self.assertRaises(toolkit.ValidationError):
+                helpers.call_action('package_create_from_datapackage',
+                    upload=_UploadFile(datapkg))
 
         new_datasets = helpers.call_action('package_list')
         nose.tools.assert_equal(original_datasets, new_datasets)
@@ -246,13 +236,9 @@ class TestPackageCreateFromDataPackage():
         requests_mock.register_uri('GET', url, json=datapackage)
 
         helpers.call_action('package_create', name=datapackage['name'])
-        nose.tools.assert_raises(
-            toolkit.ValidationError,
-            helpers.call_action,
-            'package_create_from_datapackage',
-            url=url,
-            name=datapackage['name']
-        )
+        
+        with self.assertRaises(toolkit.ValidationError):
+            helpers.call_action('package_create_from_datapackage', url=url, name=datapackage['name'])
 
     def test_it_allows_changing_dataset_visibility(self, requests_mock):
         url = 'http://www.example.com/datapackage.json'

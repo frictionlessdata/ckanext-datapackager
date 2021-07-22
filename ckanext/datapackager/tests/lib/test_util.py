@@ -1,6 +1,6 @@
 import os
+import unittest
 
-import nose.tools
 import ckanapi as ckanapi
 import pytest
 
@@ -12,7 +12,7 @@ import ckanext.datapackager.exceptions as exceptions
 
 @pytest.mark.ckan_config('ckan.plugins', 'datapackager')
 @pytest.mark.usefixtures('clean_db', 'with_plugins', 'with_request_context')
-class TestResourceSchemaFieldCreate():
+class TestResourceSchemaFieldCreate(unittest.TestCase):
 
     def test_get_path_to_resource_file_with_uploaded_file(self, app):
 
@@ -39,5 +39,6 @@ class TestResourceSchemaFieldCreate():
         resource = factories.Resource(dataset=factories.Dataset(),
                                       url='http://example.com/foo.csv')
 
-        nose.tools.assert_raises(exceptions.ResourceFileDoesNotExistException,
-            util.get_path_to_resource_file, resource)
+        
+        with self.assertRaises(exceptions.ResourceFileDoesNotExistException):
+            util.get_path_to_resource_file(resource)
