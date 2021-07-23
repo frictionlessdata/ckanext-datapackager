@@ -40,6 +40,5 @@ class TestResourceSchemaFieldCreate():
         resource = factories.Resource(dataset=factories.Dataset(),
                                       url='http://example.com/foo.csv')
 
-
-        with self.assertRaises(exceptions.ResourceFileDoesNotExistException):
+        with pytest.raises(exceptions.ResourceFileDoesNotExistException):
             util.get_path_to_resource_file(resource)

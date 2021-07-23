@@ -94,7 +94,7 @@ def _load_and_validate_datapackage(url=None, upload=None):
     except (datapackage.exceptions.DataPackageException,
             datapackage.exceptions.SchemaError,
             datapackage.exceptions.ValidationError) as e:
-        msg = {'datapackage': [e.message]}
+        msg = {'datapackage': [str(e)]}
         raise toolkit.ValidationError(msg)
 
     if not dp.safe():
@@ -142,6 +142,9 @@ def _create_and_upload_resource_with_inline_data(context, resource):
     del resource['data']
     if not isinstance(data, six.string_types):
         data = json.dumps(data, indent=2)
+
+    if six.PY3:
+        data = data.encode()
 
     with tempfile.NamedTemporaryFile(prefix=prefix) as f:
         f.write(data)

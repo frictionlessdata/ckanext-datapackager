@@ -21,18 +21,19 @@ responses.add_passthru(toolkit.config['solr_url'])
 @pytest.mark.usefixtures('clean_db', 'with_plugins', 'with_request_context')
 class TestPackageCreateFromDataPackage(unittest.TestCase):
     def test_it_requires_a_url_if_theres_no_upload_param(self):
-        with self.assertRaises(toolkit.ValidationError):
+        with pytest.raises(toolkit.ValidationError):
             helpers.call_action('package_create_from_datapackage')
 
 
+    @responses.activate
     def test_it_raises_if_datapackage_is_invalid(self):
         url = 'http://www.example.com/datapackage.json'
         datapackage = {}
         responses.add(responses.GET, url, json=datapackage)
 
-        with self.assertRaises(toolkit.ValidationError):
+        with pytest.raises(toolkit.ValidationError):
             helpers.call_action('package_create_from_datapackage', url=url)
-        
+
 
     def test_it_raises_if_datapackage_is_unsafe(self):
         datapackage = {
@@ -48,10 +49,10 @@ class TestPackageCreateFromDataPackage(unittest.TestCase):
         upload = mock.MagicMock()
         upload.file = StringIO(json.dumps(datapackage))
 
-        
-        with self.assertRaises(toolkit.ValidationError):
+        with pytest.raises(toolkit.ValidationError):
             helpers.call_action('package_create_from_datapackage', upload=upload)
 
+    @responses.activate
     def test_it_creates_the_dataset(self):
         url = 'http://www.example.com/datapackage.json'
         datapackage = {
@@ -124,14 +125,15 @@ class TestPackageCreateFromDataPackage(unittest.TestCase):
         original_datasets = helpers.call_action('package_list')
 
         with open(datapkg_path, 'rb') as datapkg:
-            
-            with self.assertRaises(toolkit.ValidationError):
+
+            with pytest.raises(toolkit.ValidationError):
                 helpers.call_action('package_create_from_datapackage',
                     upload=_UploadFile(datapkg))
 
         new_datasets = helpers.call_action('package_list')
         nose.tools.assert_equal(original_datasets, new_datasets)
 
+    @responses.activate
     def test_it_uploads_local_files(self):
         url = 'http://www.example.com/datapackage.zip'
         datapkg_path = custom_helpers.fixture_path('datetimes-datapackage.zip')
@@ -151,6 +153,7 @@ class TestPackageCreateFromDataPackage(unittest.TestCase):
         nose.tools.assert_equal(resources[0]['url_type'], 'upload')
         nose.tools.assert_regexp_matches(resources[0]['url'], 'datetimes.csv$')
 
+    @responses.activate
     def test_it_uploads_resources_with_inline_strings_as_data(self):
         url = 'http://www.example.com/datapackage.json'
         datapackage = {
@@ -172,6 +175,7 @@ class TestPackageCreateFromDataPackage(unittest.TestCase):
         nose.tools.assert_equal(resources[0]['url_type'], 'upload')
         nose.tools.assert_true(resources[0]['name'] in resources[0]['url'])
 
+    @responses.activate
     def test_it_uploads_resources_with_inline_dicts_as_data(self):
         url = 'http://www.example.com/datapackage.json'
         datapackage = {
@@ -193,6 +197,7 @@ class TestPackageCreateFromDataPackage(unittest.TestCase):
         nose.tools.assert_equal(resources[0]['url_type'], 'upload')
         nose.tools.assert_true(resources[0]['name'] in resources[0]['url'])
 
+    @responses.activate
     def test_it_allows_specifying_the_dataset_name(self):
         url = 'http://www.example.com/datapackage.json'
         datapackage = {
@@ -209,6 +214,7 @@ class TestPackageCreateFromDataPackage(unittest.TestCase):
                                       name='bar')
         nose.tools.assert_equal(dataset['name'], 'bar')
 
+    @responses.activate
     def test_it_creates_unique_name_if_name_wasnt_specified(self):
         url = 'http://www.example.com/datapackage.json'
         datapackage = {
@@ -225,6 +231,7 @@ class TestPackageCreateFromDataPackage(unittest.TestCase):
                                       url=url)
         nose.tools.assert_true(dataset['name'].startswith('foo'))
 
+    @responses.activate
     def test_it_fails_if_specifying_name_that_already_exists(self):
         url = 'http://www.example.com/datapackage.json'
         datapackage = {
@@ -237,8 +244,8 @@ class TestPackageCreateFromDataPackage(unittest.TestCase):
         responses.add(responses.GET, url, json=datapackage)
 
         helpers.call_action('package_create', name=datapackage['name'])
-        
-        with self.assertRaises(toolkit.ValidationError):
+
+        with pytest.raises(toolkit.ValidationError):
             helpers.call_action('package_create_from_datapackage', url=url, name=datapackage['name'])
 
     def test_it_allows_changing_dataset_visibility(self):
