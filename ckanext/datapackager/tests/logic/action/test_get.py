@@ -2,7 +2,6 @@
 
 '''
 
-import unittest
 import pytest
 
 import ckan.tests.factories as factories
@@ -13,7 +12,7 @@ import ckan.plugins.toolkit as toolkit
 
 @pytest.mark.ckan_config('ckan.plugins', 'datapackager')
 @pytest.mark.usefixtures('clean_db', 'with_plugins', 'with_request_context')
-class TestGet(unittest.TestCase):
+class TestGet():
 
     def test_package_show_as_datapackage(self):
 
@@ -30,8 +29,8 @@ class TestGet(unittest.TestCase):
         datapackage_dict = helpers.call_action('package_show_as_datapackage',
                                                id=dataset['name'])
 
-        self.assertItemsEqual(expected_output, datapackage_dict)
+        assert expected_output == datapackage_dict
 
     def test_package_show_as_datapackage_with_missing_id(self):
-        with self.assertRaises(toolkit.ValidationError):
+        with pytest.raises(toolkit.ValidationError):
             helpers.call_action('package_show_as_datapackage')

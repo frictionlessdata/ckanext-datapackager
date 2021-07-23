@@ -1,24 +1,24 @@
 # -*- coding: utf-8 -*-
 
-import unittest
+import pytest
 import responses
 
 from ckan_datapackage_tools import converter
 import datapackage
 
-class TestConvertToDict(unittest.TestCase, object):
-    def setup(self):
-        self.resource_dict = {
-            "id": "1234",
-            "name": "data.csv",
-            "url": "http://someplace.com/data.csv",
-        }
-        self.dataset_dict = {
-            "name": "gdp",
-            "title": "Countries GDP",
-            "version": "1.0",
-            "resources": [self.resource_dict],
-        }
+
+class TestConvertToDict(object):
+    resource_dict = {
+        "id": "1234",
+        "name": "data.csv",
+        "url": "http://someplace.com/data.csv",
+    }
+    dataset_dict = {
+        "name": "gdp",
+        "title": "Countries GDP",
+        "version": "1.0",
+        "resources": [resource_dict],
+    }
 
     def test_basic_dataset_in_setup_is_valid(self):
         converter.dataset_to_datapackage(self.dataset_dict)
@@ -35,7 +35,7 @@ class TestConvertToDict(unittest.TestCase, object):
         }
 
         converter.dataset_to_datapackage(valid_dataset_dict)
-        with self.assertRaises(KeyError):
+        with pytest.raises(KeyError):
             converter.dataset_to_datapackage(invalid_dataset_dict)
 
     def test_dataset_name_title_and_version(self):
@@ -239,16 +239,16 @@ class TestConvertToDict(unittest.TestCase, object):
         assert resource.get("title") == self.resource_dict["name"]
 
 
-class TestDataPackageToDatasetDict(unittest.TestCase, object):
-    def setup(self):
-        datapackage_dict = {
-            "name": "gdp",
-            "title": "Countries GDP",
-            "version": "1.0",
-            "resources": [{"name": "datetimes.csv", "path": "test-data/datetimes.csv"}],
-        }
+class TestDataPackageToDatasetDict(object):
 
-        self.datapackage = datapackage.DataPackage(datapackage_dict)
+    datapackage_dict = {
+        "name": "gdp",
+        "title": "Countries GDP",
+        "version": "1.0",
+        "resources": [{"name": "datetimes.csv", "path": "test-data/datetimes.csv"}],
+    }
+
+    datapackage = datapackage.DataPackage(datapackage_dict)
 
     def test_basic_datapackage_in_setup_is_valid(self):
         converter.datapackage_to_dataset(self.datapackage)
@@ -265,8 +265,8 @@ class TestDataPackageToDatasetDict(unittest.TestCase, object):
         )
 
         converter.datapackage_to_dataset(valid_datapackage)
-        with self.assertRaises(KeyError):
-            converter.dataset_to_datapackage(invalid_datapackage)
+        with pytest.raises(KeyError):
+            converter.datapackage_to_dataset(invalid_datapackage)
 
     def test_datapackage_name_title_and_version(self):
         self.datapackage.descriptor.update(
@@ -384,9 +384,9 @@ class TestDataPackageToDatasetDict(unittest.TestCase, object):
         self.datapackage.descriptor.update({"keywords": keywords})
         result = converter.datapackage_to_dataset(self.datapackage)
         assert result.get("tags") == [
-                {"name": "economy"},
-                {"name": "world-bank"},
-            ]
+            {"name": "economy"},
+            {"name": "world-bank"},
+        ]
 
     def test_datapackage_extras(self):
         self.datapackage.descriptor.update(
@@ -398,16 +398,13 @@ class TestDataPackageToDatasetDict(unittest.TestCase, object):
             }
         )
         result = converter.datapackage_to_dataset(self.datapackage)
-        self.assertItemsEqual(
-            result.get("extras"),
-            [
-                {"key": "profile", "value": u"data-package"},
-                {"key": "title_cn", "value": u"國內生產總值"},
-                {"key": "years", "value": "[2015, 2016]"},
-                {"key": "last_year", "value": 2016},
-                {"key": "location", "value": '{"country": "China"}'},
-            ],
-        )
+        assert result.get("extras") == [
+            {"key": "profile", "value": u"data-package"},
+            {"key": "title_cn", "value": u"國內生產總值"},
+            {"key": "years", "value": "[2015, 2016]"},
+            {"key": "last_year", "value": 2016},
+            {"key": "location", "value": '{"country": "China"}'},
+        ]
 
     def test_resource_name_is_used_if_theres_no_title(self):
         resource = {
