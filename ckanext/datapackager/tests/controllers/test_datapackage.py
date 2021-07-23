@@ -23,7 +23,6 @@ class TestDataPackageController():
         '''Test downloading a DataPackage file of a package.
 
         '''
-        user = factories.Sysadmin()
         dataset = factories.Dataset()
 
         # Add a resource with a linked-to, not uploaded, data file.
@@ -44,8 +43,7 @@ class TestDataPackageController():
         )
 
         # Download the package's JSON file.
-        endpoint = ('datapackager.export_datapackage' if
-            toolkit.check_ckan_version(min_version='2.9') else 'export_datapackge')
+        endpoint = 'datapackager_export'
         url = toolkit.url_for(endpoint,
                               package_id=dataset['name'])
         response = app.get(url)
@@ -76,13 +74,13 @@ class TestDataPackageController():
         soup = BeautifulSoup(response.body)
         download_button = soup.find(id='export_datapackage_button')
         download_url = download_button['href']
-        assert download_url == toolkit.url_for('export_datapackage',
+        assert download_url == toolkit.url_for('datapackager_export',
                                                package_id=dataset['name'])
 
     def test_new_renders(self, app):
         user = factories.User()
         env = {'REMOTE_USER': user['name'].encode('ascii')}
-        url = toolkit.url_for('import_datapackage')
+        url = toolkit.url_for('datapackager_import')
         response = app.get(url, extra_environ=env)
         assert 200 == response.status_int
 
@@ -90,7 +88,7 @@ class TestDataPackageController():
     def test_new_requires_user_to_be_able_to_create_packages(self, app):
         user = factories.User()
         env = {'REMOTE_USER': user['name'].encode('ascii')}
-        url = toolkit.url_for('import_datapackage')
+        url = toolkit.url_for('datapackager_import')
         response = app.get(url, extra_environ=env, status=[401])
         assert 'Unauthorized to create a dataset' in response.body
 
@@ -112,7 +110,7 @@ class TestDataPackageController():
 
         user = factories.User()
         env = {'REMOTE_USER': user['name'].encode('ascii')}
-        url = toolkit.url_for('import_datapackage', url=datapackage_url)
+        url = toolkit.url_for('datapackager_import', url=datapackage_url)
         response = app.post(
             url,
             extra_environ=env,

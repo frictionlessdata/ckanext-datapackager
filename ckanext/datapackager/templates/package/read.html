@@ -2,7 +2,7 @@
 
 {% block package_resources %}
   <div style="float:right; margin-right: -7px;">
-    <a href="{% url_for 'export_datapackage', id=pkg.name %}"
+      <a href="{{ h.url_for('datapackager_export', package_id=pkg.name) }}"
        class='btn' id='export_datapackage_button'>
        <i class='icon-download'></i>Download Data Package
     </a>

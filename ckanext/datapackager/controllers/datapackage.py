@@ -8,10 +8,10 @@ from ckanext.datapackager import utils
 
 class DataPackageController(toolkit.BaseController):
     def new(self, data=None, errors=None, error_summary=None):
-        return utils.new(data, errors, error_summary)
-
-    def import_datapackage(self):
-        return utils.import_datapackage()
+        if toolkit.request.method == 'GET':
+            return utils.new(data, errors, error_summary)
+        else:
+            return utils.import_datapackage()
 
     def export_datapackage(self, package_id):
         '''Return the given dataset as a Data Package JSON file.
