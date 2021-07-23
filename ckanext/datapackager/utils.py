@@ -31,6 +31,7 @@ def new(data=None, errors=None, error_summary=None):
             'data': data,
             'errors': errors,
             'error_summary': error_summary,
+            'pkg_dict': {'type': ''}
         }
     )
 

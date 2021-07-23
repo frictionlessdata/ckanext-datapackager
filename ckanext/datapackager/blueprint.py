@@ -31,9 +31,16 @@ def export_datapackage(package_id):
     return r
 
 
+def import_datapackage(data=None, errors=None, error_summary=None):
+    if toolkit.request.method == 'GET':
+        return utils.new(data=None, errors=None, error_summary=None)
+    else:
+        utils.import_datapackage()
+
+
 blueprint.add_url_rule(
     "/import_datapackage",
-    view_func=utils.import_datapackage,
+    view_func=import_datapackage,
     endpoint="import",
     methods=["GET", "POST"],
 )
