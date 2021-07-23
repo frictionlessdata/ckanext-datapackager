@@ -1,7 +1,6 @@
 import json
 import unittest
 import mock
-import nose.tools
 import tempfile
 from io import StringIO
 
@@ -13,6 +12,7 @@ import ckanext.datapackager.tests.helpers as custom_helpers
 import ckantoolkit as toolkit
 import ckan.tests.factories as factories
 
+import re
 
 responses.add_passthru(toolkit.config['solr_url'])
 
@@ -72,7 +72,7 @@ class TestPackageCreateFromDataPackage(unittest.TestCase):
 
         dataset = helpers.call_action('package_create_from_datapackage',
                                       url=url)
-        nose.tools.assert_equal(dataset['state'], 'active')
+        assert dataset['state'] == 'active'
 
         extras = dataset['extras']
 
@@ -88,15 +88,12 @@ class TestPackageCreateFromDataPackage(unittest.TestCase):
 
         assert extra_data is not None
 
-        nose.tools.assert_equal(extra_profile['value'], 'data-package')
-        nose.tools.assert_dict_equal(json.loads(extra_data['value']),
-                                     datapackage['some_extra_data'])
+        assert extra_profile['value'] == 'data-package'
+        assert json.loads(extra_data['value']) == datapackage['some_extra_data']
 
         resource = dataset.get('resources')[0]
-        nose.tools.assert_equal(resource['name'],
-                                datapackage['resources'][0]['name'])
-        nose.tools.assert_equal(resource['url'],
-                                datapackage['resources'][0]['path'])
+        assert resource['name'] == datapackage['resources'][0]['name']
+        assert resource['url'] == datapackage['resources'][0]['path']
 
     @responses.activate
     def test_it_creates_a_dataset_without_resources(self):
@@ -130,7 +127,7 @@ class TestPackageCreateFromDataPackage(unittest.TestCase):
                     upload=_UploadFile(datapkg))
 
         new_datasets = helpers.call_action('package_list')
-        nose.tools.assert_equal(original_datasets, new_datasets)
+        assert original_datasets == new_datasets
 
     def test_it_uploads_local_files(self):
         url = 'http://www.example.com/datapackage.zip'
@@ -148,8 +145,8 @@ class TestPackageCreateFromDataPackage(unittest.TestCase):
         dataset = helpers.call_action('package_show', id='datetimes')
         resources = dataset.get('resources')
 
-        nose.tools.assert_equal(resources[0]['url_type'], 'upload')
-        nose.tools.assert_regexp_matches(resources[0]['url'], 'datetimes.csv$')
+        assert resources[0]['url_type'] == 'upload'
+        assert re.match('datetimes.csv$', resources[0]['url'])
 
     def test_it_uploads_resources_with_inline_strings_as_data(self):
         url = 'http://www.example.com/datapackage.json'
@@ -169,8 +166,8 @@ class TestPackageCreateFromDataPackage(unittest.TestCase):
         dataset = helpers.call_action('package_show', id='foo')
         resources = dataset.get('resources')
 
-        nose.tools.assert_equal(resources[0]['url_type'], 'upload')
-        nose.tools.assert_true(resources[0]['name'] in resources[0]['url'])
+        assert resources[0]['url_type'] == 'upload'
+        assert resources[0]['name'] in resources[0]['url']
 
     def test_it_uploads_resources_with_inline_dicts_as_data(self):
         url = 'http://www.example.com/datapackage.json'
@@ -190,8 +187,8 @@ class TestPackageCreateFromDataPackage(unittest.TestCase):
         dataset = helpers.call_action('package_show', id='foo')
         resources = dataset.get('resources')
 
-        nose.tools.assert_equal(resources[0]['url_type'], 'upload')
-        nose.tools.assert_true(resources[0]['name'] in resources[0]['url'])
+        assert resources[0]['url_type'] == 'upload'
+        assert resources[0]['name'] in resources[0]['url']
 
     def test_it_allows_specifying_the_dataset_name(self):
         url = 'http://www.example.com/datapackage.json'
@@ -207,7 +204,7 @@ class TestPackageCreateFromDataPackage(unittest.TestCase):
         dataset = helpers.call_action('package_create_from_datapackage',
                                       url=url,
                                       name='bar')
-        nose.tools.assert_equal(dataset['name'], 'bar')
+        assert dataset['name'] == 'bar'
 
     def test_it_creates_unique_name_if_name_wasnt_specified(self):
         url = 'http://www.example.com/datapackage.json'
@@ -223,7 +220,7 @@ class TestPackageCreateFromDataPackage(unittest.TestCase):
         helpers.call_action('package_create', name=datapackage['name'])
         dataset = helpers.call_action('package_create_from_datapackage',
                                       url=url)
-        nose.tools.assert_true(dataset['name'].startswith('foo'))
+        assert dataset['name'].startswith('foo')
 
     def test_it_fails_if_specifying_name_that_already_exists(self):
         url = 'http://www.example.com/datapackage.json'
@@ -259,7 +256,7 @@ class TestPackageCreateFromDataPackage(unittest.TestCase):
                                       url=url,
                                       owner_org=organization['id'],
                                       private='true')
-        nose.tools.assert_true(dataset['private'])
+        assert dataset['private']
 
     def test_it_allows_uploading_a_datapackage(self):
         datapackage = {
@@ -276,7 +273,7 @@ class TestPackageCreateFromDataPackage(unittest.TestCase):
 
             dataset = helpers.call_action('package_create_from_datapackage',
                                           upload=_UploadFile(tmpfile))
-            nose.tools.assert_equal(dataset['name'], 'foo')
+            assert dataset['name'] == 'foo'
 
 
 class _UploadFile(object):

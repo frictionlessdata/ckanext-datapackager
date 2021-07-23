@@ -12,6 +12,7 @@ import ckanext.datapackager.tests.helpers as custom_helpers
 
 
 from bs4 import BeautifulSoup
+import re
 
 
 @pytest.mark.ckan_config('ckan.plugins', 'datapackager')
@@ -114,7 +115,7 @@ class TestDataPackageController():
         )
         # Should redirect to dataset's page
         assert response.status_int == 302
-        assert_regexp_matches(response.headers['Location'], '/dataset/foo$')
+        assert re.match('/dataset/foo$', response.headers['Location'])
 
         # Should create the dataset
         dataset = helpers.call_action('package_show', id=datapackage['name'])
