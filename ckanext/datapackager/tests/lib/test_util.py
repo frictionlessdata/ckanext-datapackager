@@ -1,7 +1,6 @@
 import os
 import unittest
 
-import ckanapi as ckanapi
 import pytest
 
 import ckan.tests.factories as factories
@@ -11,6 +10,7 @@ import ckan.tests.helpers as helpers
 import ckanext.datapackager.lib.util as util
 import ckanext.datapackager.tests.helpers as custom_helpers
 import ckanext.datapackager.exceptions as exceptions
+
 
 @pytest.mark.ckan_config('ckan.plugins', 'datapackager')
 @pytest.mark.usefixtures('clean_db', 'with_plugins', 'with_request_context')
@@ -40,6 +40,6 @@ class TestResourceSchemaFieldCreate(unittest.TestCase):
         resource = factories.Resource(dataset=factories.Dataset(),
                                       url='http://example.com/foo.csv')
 
-        
+
         with self.assertRaises(exceptions.ResourceFileDoesNotExistException):
             util.get_path_to_resource_file(resource)
