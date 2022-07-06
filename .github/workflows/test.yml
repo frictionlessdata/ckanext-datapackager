@@ -64,4 +64,4 @@ jobs:
       run: |
         paster --plugin=ckan db init -c test.ini
     - name: Run tests
-      run: pytest --ckan-ini=test.ini --disable-warnings ckanext/geoview/tests
+      run: pytest --disable-warnings ckanext/datapackager/tests
