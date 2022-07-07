@@ -3,7 +3,7 @@
 import os
 
 import ckan.config.middleware
-import pylons.config as config
+import ckan.plugins.toolkit.config as config
 import webtest
 
 
