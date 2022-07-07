@@ -122,7 +122,7 @@ class TestDataPackageController(
         )
         # Should redirect to dataset's page
         assert_equals(response.status_int, 302)
-        assert_regexp_matches(response.headers['Location'], '/dataset/foo$')
+        assert_regexp_matches(response.headers['Location'], '/dataset/foo(\?__no_cache__=True)$')
 
         # Should create the dataset
         dataset = helpers.call_action('package_show', id=datapackage['name'])
