@@ -2,7 +2,7 @@ import json
 import mock
 import nose.tools
 import tempfile
-import StringIO
+from six import StringIO
 
 import requests_mock
 
