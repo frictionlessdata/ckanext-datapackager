@@ -3,9 +3,10 @@
 import os
 
 import ckan.config.middleware
-import ckan.plugins.toolkit.config as config
+import ckan.plugins.toolkit as t
 import webtest
 
+config = t.config
 
 def get_csv_file(relative_path):
     csv_file = open(fixture_path(relative_path), 'rb')
