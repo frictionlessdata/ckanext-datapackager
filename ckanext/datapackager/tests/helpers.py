@@ -26,7 +26,7 @@ def _get_test_app():
 
     '''
     config['ckan.legacy_templates'] = False
-    app = ckan.config.middleware.make_app(config['global_conf'], **config)
+    app = ckan.config.middleware.make_app(config)
     app = webtest.TestApp(app)
     return app
 
