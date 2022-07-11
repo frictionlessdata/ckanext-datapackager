@@ -99,7 +99,7 @@ class TestDataPackageController(
         response = self.app.get(url, extra_environ=env, status=[401])
         assert_true('Unauthorized to create a dataset' in response.body)
 
-    @requests_mock.Mocker(real_http=True)
+    #@requests_mock.Mocker(real_http=True)
     def test_import_datapackage(self, mock_requests):
         datapackage_url = 'http://www.foo.com/datapackage.json'
         datapackage = {

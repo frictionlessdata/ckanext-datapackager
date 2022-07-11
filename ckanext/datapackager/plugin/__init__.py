@@ -9,7 +9,7 @@ class DataPackagerPlugin(plugins.SingletonPlugin):
     '''
     plugins.implements(plugins.IActions)
     plugins.implements(plugins.IConfigurer)
-    plugins.implements(plugins.IRoutes, inherit=True)
+    #plugins.implements(plugins.IRoutes, inherit=True)
 
     def update_config(self, config):
         toolkit.add_template_directory(config, 'templates')

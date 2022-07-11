@@ -1,10 +1,11 @@
 import json
 
 import ckan.model as model
-import ckan.plugins.toolkit as toolkit
+import ckan.lib.base as base
+import ckan.plugins as p
 
 
-class DataPackageController(toolkit.BaseController):
+class DataPackageController(p.toolkit.BaseController):
 
     def new(self, data=None, errors=None, error_summary=None):
         context = {
