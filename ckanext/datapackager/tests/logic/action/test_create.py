@@ -148,6 +148,7 @@ class TestPackageCreateFromDataPackage(unittest.TestCase):
         assert resources[0]['url_type'] == 'upload'
         assert re.match('datetimes.csv$', resources[0]['url'])
 
+    @responses.activate
     def test_it_uploads_resources_with_inline_strings_as_data(self):
         url = 'http://www.example.com/datapackage.json'
         datapackage = {
