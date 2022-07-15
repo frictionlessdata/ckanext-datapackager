@@ -34,6 +34,7 @@ def package_create_from_datapackage(context, data_dict):
     '''
     url = data_dict.get('url')
     upload = data_dict.get('upload')
+
     if not url and not _upload_attribute_is_valid(upload):
         msg = {'url': ['you must define either a url or upload attribute']}
         raise toolkit.ValidationError(msg)
