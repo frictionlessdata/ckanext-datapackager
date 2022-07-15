@@ -45,7 +45,7 @@ class TestDataPackageController():
         )
 
         # Download the package's JSON file.
-        url = toolkit.url_for('export_datapackage',
+        url = toolkit.url_for('datapackager.export_datapackage',
                               package_id=dataset['name'])
         response = app.get(url)
 
@@ -75,22 +75,22 @@ class TestDataPackageController():
         soup = BeautifulSoup(response.body)
         download_button = soup.find(id='export_datapackage_button')
         download_url = download_button['href']
-        assert download_url == toolkit.url_for('export_datapackage',
-                                               package_id=dataset['name'])
+        assert download_url == toolkit.url_for('datapackager.export_datapackage',
+                                               package_id=dataset['id'])
 
     def test_new_renders(self, app):
         user = factories.User()
         env = {'REMOTE_USER': user['name'].encode('ascii')}
-        url = toolkit.url_for('import_datapackage')
+        url = toolkit.url_for('datapackager.import_datapackage')
         response = app.get(url, extra_environ=env)
-        assert 200 == response.status_int
+        assert 200 == response.status_code
 
     @helpers.change_config('ckan.auth.create_unowned_dataset', False)
     def test_new_requires_user_to_be_able_to_create_packages(self, app):
         user = factories.User()
         env = {'REMOTE_USER': user['name'].encode('ascii')}
-        url = toolkit.url_for('import_datapackage')
-        response = app.get(url, extra_environ=env, status=[401])
+        url = toolkit.url_for('datapackager.import_datapackage')
+        response = app.get(url, extra_environ=env, status=401)
         assert 'Unauthorized to create a dataset' in response.body
 
     def test_import_datapackage(self, requests_mock, app):
@@ -108,13 +108,13 @@ class TestDataPackageController():
 
         user = factories.User()
         env = {'REMOTE_USER': user['name'].encode('ascii')}
-        url = toolkit.url_for('import_datapackage', url=datapackage_url)
+        url = toolkit.url_for('datapackager.import_datapackage', url=datapackage_url)
         response = app.post(
             url,
             extra_environ=env,
         )
         # Should redirect to dataset's page
-        assert response.status_int == 302
+        assert response.status_code == 302
         assert re.match('/dataset/foo$', response.headers['Location'])
 
         # Should create the dataset

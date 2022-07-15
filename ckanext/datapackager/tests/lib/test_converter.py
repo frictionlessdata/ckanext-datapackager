@@ -1,13 +1,14 @@
 # -*- coding: utf-8 -*-
 
 import unittest
+import pytest
 import responses
 
 from ckan_datapackage_tools import converter
 import datapackage
 
 class TestConvertToDict(unittest.TestCase, object):
-    def setup(self):
+    def setUp(self):
         self.resource_dict = {
             "id": "1234",
             "name": "data.csv",
@@ -241,7 +242,7 @@ class TestConvertToDict(unittest.TestCase, object):
 
 
 class TestDataPackageToDatasetDict(unittest.TestCase, object):
-    def setup(self):
+    def setUp(self):
         datapackage_dict = {
             "name": "gdp",
             "title": "Countries GDP",
@@ -266,7 +267,8 @@ class TestDataPackageToDatasetDict(unittest.TestCase, object):
         )
 
         converter.datapackage_to_dataset(valid_datapackage)
-        with self.assertRaises(KeyError):
+
+        with pytest.raises(TypeError):
             converter.dataset_to_datapackage(invalid_datapackage)
 
     def test_datapackage_name_title_and_version(self):
@@ -399,16 +401,14 @@ class TestDataPackageToDatasetDict(unittest.TestCase, object):
             }
         )
         result = converter.datapackage_to_dataset(self.datapackage)
-        self.assertItemsEqual(
-            result.get("extras"),
+        assert result.get("extras") == \
             [
                 {"key": "profile", "value": u"data-package"},
                 {"key": "title_cn", "value": u"國內生產總值"},
                 {"key": "years", "value": "[2015, 2016]"},
                 {"key": "last_year", "value": 2016},
                 {"key": "location", "value": '{"country": "China"}'},
-            ],
-        )
+            ]
 
     def test_resource_name_is_used_if_theres_no_title(self):
         resource = {
