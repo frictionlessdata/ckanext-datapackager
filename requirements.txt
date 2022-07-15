@@ -1,5 +1,5 @@
 ckantoolkit
 python-slugify==1.2.4
-datapackage==1.1.3
-ckan-datapackage-tools==0.1.0
+datapackage==1.15.2
 six
+ckan-datapackage-tools==0.1.0

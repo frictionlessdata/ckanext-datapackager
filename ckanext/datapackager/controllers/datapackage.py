@@ -5,10 +5,10 @@ import ckan.plugins.toolkit as toolkit
 from flask import make_response
 
 def _authorize_or_abort(context):
-        try:
-            toolkit.check_access('package_create', context)
-        except toolkit.NotAuthorized:
-            toolkit.abort(401, toolkit._('Unauthorized to create a dataset'))
+    try:
+        toolkit.check_access('package_create', context)
+    except toolkit.NotAuthorized:
+        toolkit.abort(401, toolkit._('Unauthorized to create a dataset'))
 
 def new(data=None, errors=None, error_summary=None):
     context = {

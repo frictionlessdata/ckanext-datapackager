@@ -401,14 +401,13 @@ class TestDataPackageToDatasetDict(unittest.TestCase, object):
             }
         )
         result = converter.datapackage_to_dataset(self.datapackage)
-        assert result.get("extras") == \
-            [
-                {"key": "profile", "value": u"data-package"},
-                {"key": "title_cn", "value": u"國內生產總值"},
-                {"key": "years", "value": "[2015, 2016]"},
-                {"key": "last_year", "value": 2016},
-                {"key": "location", "value": '{"country": "China"}'},
-            ]
+        assert result.get('extras') == [
+            {'key': 'profile', 'value': u'data-package'},
+            {'key': 'title_cn', 'value': u'國內生產總值'},
+            {'key': 'years', 'value': '[2015, 2016]'},
+            {'key': 'last_year', 'value': 2016},
+            {'key': 'location', 'value': '{"country": "China"}'},
+        ]
 
     def test_resource_name_is_used_if_theres_no_title(self):
         resource = {

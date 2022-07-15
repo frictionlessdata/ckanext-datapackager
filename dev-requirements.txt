@@ -1,6 +1,9 @@
 -r requirements.txt
-beautifulsoup4
-requests-mock
 responses
 pytest-ckan
 pytest-cov
+ckanapi==3.5
+webtest
+httpretty
+beautifulsoup4==4.5.1
+requests-mock==1.0.0

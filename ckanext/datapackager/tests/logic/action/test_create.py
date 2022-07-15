@@ -2,7 +2,7 @@ import json
 import unittest
 import mock
 import tempfile
-from io import StringIO
+from six import StringIO
 
 import pytest
 import responses

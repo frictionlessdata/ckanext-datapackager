@@ -11,13 +11,13 @@ jobs:
       - name: Install requirements
         run: pip install flake8 pycodestyle
       - name: Check syntax
-        run: flake8 . --count --select=E901,E999,F821,F822,F823 --show-source --statistics --exclude ckan
+        run: flake8 . --count --select=E901,E999,F821,F822,F823 --show-source --statistics --builtins basestring --exclude ckan
 
   test:
     needs: lint
     strategy:
       matrix:
-        ckan-version: [2.9, 2.9-py2, 2.8, 2.7]
+        ckan-version: [2.9]
       fail-fast: false
 
     name: CKAN ${{ matrix.ckan-version }}
@@ -26,7 +26,7 @@ jobs:
       image: openknowledge/ckan-dev:${{ matrix.ckan-version }}
     services:
       solr:
-        image: ckan/ckan-solr-dev:${{ matrix.ckan-version }}
+        image: ckan/ckan-solr:${{ matrix.ckan-version }}
       postgres:
         image: ckan/ckan-postgres-dev:${{ matrix.ckan-version }}
         env:
@@ -45,13 +45,14 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+    - uses: actions/setup-python@v4
+      with:
+        python-version: '3.x'
     - name: Install requirements
-      # cython is needed to fix cchardet gcc issue in containers/on GH actions https://github.com/PyYoshi/cChardet/issues/11
       run: |
-        pip install cython
+        python3 setup.py develop
         pip install -r requirements.txt
         pip install -r dev-requirements.txt
-        pip install -e .
         # Replace default path to CKAN core config file with the one on the container
         sed -i -e 's/use = config:.*/use = config:\/srv\/app\/src\/ckan\/test-core.ini/' test.ini
     - name: Setup extension (CKAN >= 2.9)
@@ -64,8 +65,3 @@ jobs:
         paster --plugin=ckan db init -c test.ini
     - name: Run tests
       run: pytest --ckan-ini=test.ini --cov=ckanext.datapackager --cov-report=xml --cov-append --disable-warnings ckanext/datapackager/tests
-
-    # - name: Upload coverage report to codecov
-    #   uses: codecov/codecov-action@v1
-    #   with:
-    #     file: ./coverage.xml

@@ -1,8 +1,22 @@
 import ckan.plugins as plugins
 
+<<<<<<<< HEAD:ckanext/datapackager/plugin/pylons_plugin.py
 class MixinPlugin(plugins.SingletonPlugin):
     plugins.implements(plugins.IRoutes, inherit=True)
     
+========
+
+class DataPackagerPlugin(plugins.SingletonPlugin):
+    '''Plugin that adds importing/exporting datasets as Data Packages.
+    '''
+    plugins.implements(plugins.IActions)
+    plugins.implements(plugins.IConfigurer)
+    #plugins.implements(plugins.IRoutes, inherit=True)
+
+    def update_config(self, config):
+        toolkit.add_template_directory(config, 'templates')
+
+>>>>>>>> 5d0de0697d000efcab4888edda8751845e49f2d2:ckanext/datapackager/plugin/__init__.py
     def before_map(self, map_):
         map_.connect(
             'import_datapackage',

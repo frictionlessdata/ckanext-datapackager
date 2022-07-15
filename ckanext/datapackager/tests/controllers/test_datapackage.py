@@ -1,18 +1,17 @@
 '''Functional tests for controllers/package.py.'''
 import json
+import pytest
+import responses
+from bs4 import BeautifulSoup
+import re
 
 import ckanapi
 import datapackage
-import pytest
-
 import ckan.tests.factories as factories
 import ckan.tests.helpers as helpers
 import ckan.plugins.toolkit as toolkit
 import ckanext.datapackager.tests.helpers as custom_helpers
 
-
-from bs4 import BeautifulSoup
-import re
 
 
 @pytest.mark.ckan_config('ckan.plugins', 'datapackager')
@@ -93,7 +92,8 @@ class TestDataPackageController():
         response = app.get(url, extra_environ=env, status=401)
         assert 'Unauthorized to create a dataset' in response.body
 
-    def test_import_datapackage(self, requests_mock, app):
+    @responses.activate
+    def test_import_datapackage(self, mock_requests):
         datapackage_url = 'http://www.foo.com/datapackage.json'
         datapackage = {
             'name': 'foo',
