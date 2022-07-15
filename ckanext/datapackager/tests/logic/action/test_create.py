@@ -9,7 +9,7 @@ import responses
 
 import ckan.tests.helpers as helpers
 import ckanext.datapackager.tests.helpers as custom_helpers
-import ckantoolkit as toolkit
+import ckan.plugins.toolkit as toolkit
 import ckan.tests.factories as factories
 
 import re
