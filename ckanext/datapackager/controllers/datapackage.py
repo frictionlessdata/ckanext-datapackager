@@ -2,8 +2,9 @@ import json
 
 import ckan.model as model
 import ckan.plugins.toolkit as toolkit
+from flask import make_response
 
-def _authorize_or_abort(self, context):
+def _authorize_or_abort(context):
         try:
             toolkit.check_access('package_create', context)
         except toolkit.NotAuthorized:
@@ -28,6 +29,7 @@ def new(data=None, errors=None, error_summary=None):
     return toolkit.render(
         'datapackage/import_datapackage.html',
         extra_vars={
+            'pkg_dict': {},
             'data': data,
             'errors': errors,
             'error_summary': error_summary,
@@ -43,14 +45,14 @@ def import_datapackage():
     _authorize_or_abort(context)
 
     try:
-        params = toolkit.request.params
+        params = toolkit.request.form
         dataset = toolkit.get_action('package_create_from_datapackage')(
             context,
             params,
         )
-        toolkit.redirect_to(controller='package',
+        return toolkit.redirect_to(controller='dataset',
                             action='read',
-                            id=dataset['name'])
+                            id=dataset['id'])
     except toolkit.ValidationError as e:
         errors = e.error_dict
         error_summary = e.error_summary
@@ -67,7 +69,7 @@ def export_datapackage(package_id):
         'session': model.Session,
         'user': toolkit.c.user,
     }
-    r = toolkit.response
+    r = make_response()
     r.content_disposition = 'attachment; filename=datapackage.json'.format(
         package_id)
     r.content_type = 'application/json'
@@ -81,7 +83,8 @@ def export_datapackage(package_id):
     except toolkit.ObjectNotFound:
         toolkit.abort(404, 'Dataset not found')
 
-    return json.dumps(datapackage_dict, indent=2)
+    r.data = json.dumps(datapackage_dict, indent=2)
+    return r
     
 if not toolkit.check_ckan_version(u'2.9'):
     class DataPackageController(toolkit.BaseController):
