@@ -93,7 +93,7 @@ class TestDataPackageController():
         assert 'Unauthorized to create a dataset' in response.body
 
     @responses.activate
-    def test_import_datapackage(self, mock_requests):
+    def test_import_datapackage(self, app):
         datapackage_url = 'http://www.foo.com/datapackage.json'
         datapackage = {
             'name': 'foo',
@@ -104,7 +104,7 @@ class TestDataPackageController():
                 }
             ]
         }
-        requests_mock.register_uri('GET', datapackage_url, json=datapackage)
+        responses.add('GET', datapackage_url, json=datapackage)
 
         user = factories.User()
         env = {'REMOTE_USER': user['name'].encode('ascii')}
