@@ -12,7 +12,7 @@ import ckan.tests.helpers as helpers
 import ckan.plugins.toolkit as toolkit
 import ckanext.datapackager.tests.helpers as custom_helpers
 
-
+responses.add_passthru(toolkit.config['solr_url'])
 
 @pytest.mark.ckan_config('ckan.plugins', 'datapackager')
 @pytest.mark.usefixtures('clean_db', 'with_plugins', 'with_request_context')
@@ -112,12 +112,13 @@ class TestDataPackageController():
         response = app.post(
             url,
             extra_environ=env,
+            follow_redirects=False
         )
         # Should redirect to dataset's page
-        assert response.status_code == 302
-        assert re.match('/dataset/foo$', response.headers['Location'])
+        assert response.status_code == 302 
+        assert re.match('.*/dataset/foo$', response.headers['Location'])
 
-        # Should create the dataset
+        ## Should create the dataset
         dataset = helpers.call_action('package_show', id=datapackage['name'])
         assert dataset['name'] == 'foo'
         assert len(dataset.get('resources', [])) == 1

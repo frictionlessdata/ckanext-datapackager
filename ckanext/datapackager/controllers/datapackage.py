@@ -45,14 +45,19 @@ def import_datapackage():
     _authorize_or_abort(context)
 
     try:
-        params = toolkit.request.form
+        if len(toolkit.request.form.keys()) > 0:
+            params = toolkit.request.form
+        else:
+            params = toolkit.request.params
+
         dataset = toolkit.get_action('package_create_from_datapackage')(
             context,
             params,
         )
+
         return toolkit.redirect_to(controller='dataset',
                             action='read',
-                            id=dataset['id'])
+                            id=dataset['name'])
     except toolkit.ValidationError as e:
         errors = e.error_dict
         error_summary = e.error_summary

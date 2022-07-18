@@ -98,7 +98,6 @@ class TestPackageCreateFromDataPackage(unittest.TestCase):
 
     @responses.activate
     def test_it_creates_a_dataset_without_resources(self):
-        responses.add_passthru(re.compile("{}\\w+".format(toolkit.config['solr_url'])))
 
         url = 'http://www.example.com/datapackage.json'
         datapackage = {
@@ -114,7 +113,7 @@ class TestPackageCreateFromDataPackage(unittest.TestCase):
 
         helpers.call_action('package_create_from_datapackage', url=url)
 
-        helpers.call_action('package_show', id=datapackage['id'])
+        helpers.call_action('package_show', id=datapackage['name'])
 
     #def test_it_deletes_dataset_on_error_when_creating_resources(self):
     #    datapkg_path = custom_helpers.fixture_path(

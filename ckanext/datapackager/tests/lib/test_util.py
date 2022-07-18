@@ -1,12 +1,11 @@
 import os
 import unittest
 
-import ckanapi as ckanapi
 import pytest
+from werkzeug.datastructures import FileStorage
 
 import ckan.tests.factories as factories
-
-
+import ckanapi as ckanapi
 import ckan.tests.helpers as helpers
 import ckanext.datapackager.lib.util as util
 import ckanext.datapackager.tests.helpers as custom_helpers
@@ -20,7 +19,7 @@ class TestResourceSchemaFieldCreate(unittest.TestCase):
 
         user = factories.User()
         package = factories.Dataset(user=user)
-        csv_file = custom_helpers.get_csv_file('datetimes.csv')
+        csv_file = FileStorage(custom_helpers.get_csv_file('datetimes.csv'))
         resource = helpers.call_action('resource_create', {},
             package_id=package['id'],
             upload=csv_file,

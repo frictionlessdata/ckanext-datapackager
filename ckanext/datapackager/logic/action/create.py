@@ -7,6 +7,7 @@ import six
 
 import ckan.plugins.toolkit as toolkit
 from ckan_datapackage_tools import converter
+from werkzeug.datastructures import FileStorage
 
 import datapackage
 
@@ -174,8 +175,7 @@ def _create_and_upload_local_resource(context, resource):
 def _create_and_upload_resource(context, resource, the_file):
     resource['url'] = 'url'
     resource['url_type'] = 'upload'
-    resource['upload'] = _UploadLocalFileStorage(the_file)
-
+    resource['upload'] = FileStorage(the_file, the_file.name, the_file.name)
 
     toolkit.get_action('resource_create')(context, resource)
 
@@ -184,7 +184,7 @@ def _upload_attribute_is_valid(upload):
     return hasattr(upload, 'file') and hasattr(upload.file, 'read')
 
 
-class _UploadLocalFileStorage(cgi.FieldStorage):
+class _UploadLocalFileStorage(FileStorage):
     def __init__(self, fp, *args, **kwargs):
         self.name = fp.name
         self.filename = fp.name
