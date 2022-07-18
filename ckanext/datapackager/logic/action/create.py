@@ -86,16 +86,19 @@ def package_create_from_datapackage(context, data_dict):
 
 def _load_and_validate_datapackage(url=None, upload=None):
     try:
+
         if _upload_attribute_is_valid(upload):
             dp = datapackage.DataPackage(upload.file)
         else:
+
             dp = datapackage.DataPackage(url)
 
         dp.validate()
     except (datapackage.exceptions.DataPackageException,
             datapackage.exceptions.SchemaError,
             datapackage.exceptions.ValidationError) as e:
-        msg = {'datapackage': [e.args[0]]}
+
+        msg = {'datapackage': e}
         raise toolkit.ValidationError(msg)
 
     if not dp.safe():
@@ -148,6 +151,7 @@ def _create_and_upload_resource_with_inline_data(context, resource):
     with tempfile.NamedTemporaryFile(prefix=prefix) as f:
         f.write(six.binary_type(data, 'utf-8'))
         f.seek(0)
+
         _create_and_upload_resource(context, resource, f)
 
 
@@ -171,6 +175,8 @@ def _create_and_upload_resource(context, resource, the_file):
     resource['url'] = 'url'
     resource['url_type'] = 'upload'
     resource['upload'] = _UploadLocalFileStorage(the_file)
+
+
     toolkit.get_action('resource_create')(context, resource)
 
 

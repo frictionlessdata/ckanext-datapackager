@@ -1,5 +1,6 @@
 -r requirements.txt
 responses
+requests
 pytest-ckan
 pytest-cov
 ckanapi==3.5
