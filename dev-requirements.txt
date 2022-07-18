@@ -3,6 +3,7 @@ responses
 requests
 pytest-ckan
 pytest-cov
+pytest-mock
 ckanapi==3.5
 webtest
 httpretty
