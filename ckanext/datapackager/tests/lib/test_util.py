@@ -16,7 +16,7 @@ import ckanext.datapackager.exceptions as exceptions
 @pytest.mark.usefixtures('clean_db', 'with_plugins', 'with_request_context')
 class TestResourceSchemaFieldCreate(unittest.TestCase):
 
-    def test_get_path_to_resource_file_with_uploaded_file(self, app):
+    def test_get_path_to_resource_file_with_uploaded_file(self):
 
         user = factories.User()
         package = factories.Dataset(user=user)

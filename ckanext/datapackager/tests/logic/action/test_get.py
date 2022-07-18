@@ -30,7 +30,7 @@ class TestGet(unittest.TestCase):
         datapackage_dict = helpers.call_action('package_show_as_datapackage',
                                                id=dataset['name'])
 
-        self.assertItemsEqual(expected_output, datapackage_dict)
+        assert expected_output == datapackage_dict
 
     def test_package_show_as_datapackage_with_missing_id(self):
         with self.assertRaises(toolkit.ValidationError):
