@@ -3,7 +3,10 @@ import unittest
 import tempfile
 from six import StringIO
 import six
-import mock
+try:
+    from unittest import mock
+except ImportError:
+    import mock
 
 import pytest
 import responses
@@ -32,7 +35,7 @@ class TestPackageCreateFromDataPackage(unittest.TestCase):
 
         with self.assertRaises(toolkit.ValidationError):
             helpers.call_action('package_create_from_datapackage', url=url)
-        
+
 
     def test_it_raises_if_datapackage_is_unsafe(self):
         datapackage = {
@@ -48,7 +51,7 @@ class TestPackageCreateFromDataPackage(unittest.TestCase):
         upload = mock.MagicMock()
         upload.file = StringIO(json.dumps(datapackage))
 
-        
+
         with self.assertRaises(toolkit.ValidationError):
             helpers.call_action('package_create_from_datapackage', upload=upload)
 
@@ -124,7 +127,7 @@ class TestPackageCreateFromDataPackage(unittest.TestCase):
     #    original_datasets = helpers.call_action('package_list')
 
     #    with open(datapkg_path, 'rb') as datapkg:
-    #        
+    #
     #        with pytest.raises(toolkit.ValidationError):
     #            helpers.call_action('package_create_from_datapackage',
     #                upload=_UploadFile(datapkg))
@@ -244,7 +247,7 @@ class TestPackageCreateFromDataPackage(unittest.TestCase):
         responses.add(responses.GET, url, json=datapackage)
 
         helpers.call_action('package_create', name=datapackage['name'])
-        
+
         with self.assertRaises(toolkit.ValidationError):
             helpers.call_action('package_create_from_datapackage', url=url, name=datapackage['name'])
 
