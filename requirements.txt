@@ -3,3 +3,4 @@ python-slugify==1.2.4
 datapackage==1.15.2
 six
 ckan-datapackage-tools==0.1.0
+pytest==6.0
