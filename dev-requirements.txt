@@ -4,7 +4,6 @@ requests
 pytest-ckan
 pytest-cov
 pytest-mock
-pytest-rerunfailures
 ckanapi==3.5
 webtest
 httpretty
