@@ -1,5 +1,4 @@
 import json
-import unittest
 import tempfile
 from six import StringIO
 import six
@@ -22,9 +21,9 @@ responses.add_passthru(toolkit.config['solr_url'])
 
 @pytest.mark.ckan_config('ckan.plugins', 'datapackager')
 @pytest.mark.usefixtures('clean_db', 'with_plugins', 'with_request_context')
-class TestPackageCreateFromDataPackage(unittest.TestCase):
+class TestPackageCreateFromDataPackage():
     def test_it_requires_a_url_if_theres_no_upload_param(self):
-        with self.assertRaises(toolkit.ValidationError):
+        with pytest.raises(toolkit.ValidationError):
             helpers.call_action('package_create_from_datapackage')
 
     @responses.activate
@@ -33,7 +32,7 @@ class TestPackageCreateFromDataPackage(unittest.TestCase):
         datapackage = {}
         responses.add(responses.GET, url, json=datapackage)
 
-        with self.assertRaises(toolkit.ValidationError):
+        with pytest.raises(toolkit.ValidationError):
             helpers.call_action('package_create_from_datapackage', url=url)
 
 
@@ -52,7 +51,7 @@ class TestPackageCreateFromDataPackage(unittest.TestCase):
         upload.file = StringIO(json.dumps(datapackage))
 
 
-        with self.assertRaises(toolkit.ValidationError):
+        with pytest.raises(toolkit.ValidationError):
             helpers.call_action('package_create_from_datapackage', upload=upload)
 
     @responses.activate
