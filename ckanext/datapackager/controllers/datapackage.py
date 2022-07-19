@@ -45,7 +45,7 @@ def import_datapackage():
     _authorize_or_abort(context)
 
     try:
-        if len(toolkit.request.form.keys()) > 0:
+        if len(list(toolkit.request.form.keys())) > 0:
             params = toolkit.request.form
         else:
             params = toolkit.request.params
