@@ -38,7 +38,6 @@ class TestConvertToDict(unittest.TestCase, object):
         converter.dataset_to_datapackage(valid_dataset_dict)
         with self.assertRaises(KeyError):
             converter.dataset_to_datapackage(invalid_dataset_dict)
-        
 
     def test_dataset_name_title_and_version(self):
         self.dataset_dict.update(
@@ -401,12 +400,12 @@ class TestDataPackageToDatasetDict(unittest.TestCase, object):
             }
         )
         result = converter.datapackage_to_dataset(self.datapackage)
-        assert result.get('extras') == [
+        assert sorted(result.get('extras'), key=lambda e: e["key"]) == [
+            {'key': 'last_year', 'value': 2016},
+            {'key': 'location', 'value': '{"country": "China"}'},
             {'key': 'profile', 'value': u'data-package'},
             {'key': 'title_cn', 'value': u'國內生產總值'},
             {'key': 'years', 'value': '[2015, 2016]'},
-            {'key': 'last_year', 'value': 2016},
-            {'key': 'location', 'value': '{"country": "China"}'},
         ]
 
     def test_resource_name_is_used_if_theres_no_title(self):

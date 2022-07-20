@@ -282,7 +282,10 @@ class TestPackageCreateFromDataPackage(unittest.TestCase):
 
         }
         with tempfile.NamedTemporaryFile() as tmpfile:
-            tmpfile.write(six.binary_type(json.dumps(datapackage),'utf-8'))
+            if six.PY3:
+                tmpfile.write(six.binary_type(json.dumps(datapackage), 'utf-8'))
+            else:
+                tmpfile.write(six.binary_type(json.dumps(datapackage)))
             tmpfile.flush()
 
             dataset = helpers.call_action('package_create_from_datapackage',

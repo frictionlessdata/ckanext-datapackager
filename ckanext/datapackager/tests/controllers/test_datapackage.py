@@ -84,7 +84,7 @@ class TestDataPackageController():
         response = app.get(url, extra_environ=env)
         assert 200 == response.status_code
 
-    @helpers.change_config('ckan.auth.create_unowned_dataset', False)
+    @pytest.mark.ckan_config('ckan.auth.create_unowned_dataset', False)
     def test_new_requires_user_to_be_able_to_create_packages(self, app):
         user = factories.User()
         env = {'REMOTE_USER': user['name'].encode('ascii')}
@@ -115,7 +115,7 @@ class TestDataPackageController():
             follow_redirects=False
         )
         # Should redirect to dataset's page
-        assert response.status_code == 302 
+        assert response.status_code == 302
         assert re.match('.*/dataset/foo$', response.headers['Location'])
 
         ## Should create the dataset
