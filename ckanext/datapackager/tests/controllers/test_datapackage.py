@@ -93,7 +93,10 @@ class TestDataPackageController():
         env = {'REMOTE_USER': user['name'].encode('ascii')}
         url = _url_for('datapackager.import_datapackage')
         response = app.get(url, extra_environ=env)
-        assert 200 == response.status_code
+        if toolkit.check_ckan_version(min_version="2.9"):
+            assert 200 == response.status_code
+        else:
+            assert 200 == response.status_int
 
     @pytest.mark.ckan_config('ckan.auth.create_unowned_dataset', False)
     def test_new_requires_user_to_be_able_to_create_packages(self, app):
@@ -120,13 +123,22 @@ class TestDataPackageController():
         user = factories.User()
         env = {'REMOTE_USER': user['name'].encode('ascii')}
         url = _url_for('datapackager.import_datapackage', url=datapackage_url)
-        response = app.post(
-            url,
-            extra_environ=env,
-            follow_redirects=False
-        )
+        if toolkit.check_ckan_version(min_version="2.9"):
+            response = app.post(
+                url,
+                extra_environ=env,
+                follow_redirects=False
+            )
+
+            assert response.status_code == 302
+        else:
+            response = app.post(
+                url,
+                extra_environ=env,
+            )
+            assert response.status_int == 302
+
         # Should redirect to dataset's page
-        assert response.status_code == 302
         assert re.match('.*/dataset/foo$', response.headers['Location'])
 
         ## Should create the dataset

@@ -45,7 +45,7 @@ def import_datapackage():
     _authorize_or_abort(context)
 
     try:
-        if len(list(toolkit.request.form.keys())) > 0:
+        if hasattr(toolkit.request, "form") and len(list(toolkit.request.form.keys())) > 0:
             params = toolkit.request.form
         else:
             params = toolkit.request.params
@@ -55,9 +55,11 @@ def import_datapackage():
             params,
         )
 
-        return toolkit.redirect_to(controller='dataset',
-                            action='read',
-                            id=dataset['name'])
+        if toolkit.check_ckan_version(min_version="2.9"):
+            return toolkit.redirect_to('dataset.read', id=dataset['name'])
+        else:
+            return toolkit.redirect_to('dataset_read', id=dataset['name'])
+
     except toolkit.ValidationError as e:
         errors = e.error_dict
         error_summary = e.error_summary
@@ -90,7 +92,7 @@ def export_datapackage(package_id):
 
     r.data = json.dumps(datapackage_dict, indent=2)
     return r
-    
+
 if not toolkit.check_ckan_version(u'2.9'):
     class DataPackageController(toolkit.BaseController):
         def new(self, data=None, errors=None, error_summary=None):
@@ -100,4 +102,4 @@ if not toolkit.check_ckan_version(u'2.9'):
         def export_datapackage(self, package_id):
             export_datapackage(package_id)
 
-        
+
