@@ -44,9 +44,6 @@ setup(
         'ckan.plugins': [
             'datapackager=ckanext.datapackager.plugin:DataPackagerPlugin'
         ],
-        'pytest11': [
-            'requests_mock = requests_mock.pytest_plugin',
-        ]
     }
     ,
 )
