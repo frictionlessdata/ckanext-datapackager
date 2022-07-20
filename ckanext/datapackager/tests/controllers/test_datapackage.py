@@ -14,6 +14,17 @@ import ckanext.datapackager.tests.helpers as custom_helpers
 
 responses.add_passthru(toolkit.config['solr_url'])
 
+def _url_for(*args, **kwargs):
+
+    if toolkit.check_ckan_version(max_version="2.9"):
+        if args[0] == "datapackager.export_datapackage":
+            args = ("export_datapackage", )
+        elif args[0] == "datapackager.import_datapackage":
+            args = ("import_datapackage", )
+
+    return toolkit.url_for(*args, **kwargs)
+
+
 @pytest.mark.ckan_config('ckan.plugins', 'datapackager')
 @pytest.mark.usefixtures('clean_db', 'with_plugins', 'with_request_context')
 class TestDataPackageController():
@@ -44,7 +55,7 @@ class TestDataPackageController():
         )
 
         # Download the package's JSON file.
-        url = toolkit.url_for('datapackager.export_datapackage',
+        url = _url_for('datapackager.export_datapackage',
                               package_id=dataset['name'])
         response = app.get(url)
 
@@ -74,13 +85,13 @@ class TestDataPackageController():
         soup = BeautifulSoup(response.body)
         download_button = soup.find(id='export_datapackage_button')
         download_url = download_button['href']
-        assert download_url == toolkit.url_for('datapackager.export_datapackage',
+        assert download_url == _url_for('datapackager.export_datapackage',
                                                package_id=dataset['id'])
 
     def test_new_renders(self, app):
         user = factories.User()
         env = {'REMOTE_USER': user['name'].encode('ascii')}
-        url = toolkit.url_for('datapackager.import_datapackage')
+        url = _url_for('datapackager.import_datapackage')
         response = app.get(url, extra_environ=env)
         assert 200 == response.status_code
 
@@ -88,7 +99,7 @@ class TestDataPackageController():
     def test_new_requires_user_to_be_able_to_create_packages(self, app):
         user = factories.User()
         env = {'REMOTE_USER': user['name'].encode('ascii')}
-        url = toolkit.url_for('datapackager.import_datapackage')
+        url = _url_for('datapackager.import_datapackage')
         response = app.get(url, extra_environ=env, status=401)
         assert 'Unauthorized to create a dataset' in response.body
 
@@ -108,7 +119,7 @@ class TestDataPackageController():
 
         user = factories.User()
         env = {'REMOTE_USER': user['name'].encode('ascii')}
-        url = toolkit.url_for('datapackager.import_datapackage', url=datapackage_url)
+        url = _url_for('datapackager.import_datapackage', url=datapackage_url)
         response = app.post(
             url,
             extra_environ=env,
