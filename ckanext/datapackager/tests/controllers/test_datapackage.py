@@ -1,31 +1,40 @@
 '''Functional tests for controllers/package.py.'''
 import json
+import pytest
+import responses
+from bs4 import BeautifulSoup
+import re
 
-import nose.tools
-import requests_mock
 import ckanapi
 import datapackage
-
 import ckan.tests.factories as factories
 import ckan.tests.helpers as helpers
 import ckan.plugins.toolkit as toolkit
 import ckanext.datapackager.tests.helpers as custom_helpers
 
-assert_equals = nose.tools.assert_equals
-assert_true = nose.tools.assert_true
-assert_regexp_matches = nose.tools.assert_regexp_matches
+responses.add_passthru(toolkit.config['solr_url'])
+
+def _url_for(*args, **kwargs):
+
+    if toolkit.check_ckan_version(max_version="2.9"):
+        if args[0] == "datapackager.export_datapackage":
+            args = ("export_datapackage", )
+        elif args[0] == "datapackager.import_datapackage":
+            args = ("import_datapackage", )
+
+    return toolkit.url_for(*args, **kwargs)
 
 
-class TestDataPackageController(
-        custom_helpers.FunctionalTestBaseClass):
+@pytest.mark.ckan_config('ckan.plugins', 'datapackager')
+@pytest.mark.usefixtures('clean_db', 'with_plugins', 'with_request_context')
+class TestDataPackageController():
     '''Functional tests for the DataPackageController class.'''
 
-    def test_download_datapackage(self):
+    def test_download_datapackage(self, app):
         '''Test downloading a DataPackage file of a package.
 
         '''
         user = factories.Sysadmin()
-        api = ckanapi.TestAppCKAN(self.app, apikey=user['apikey'])
         dataset = factories.Dataset()
 
         # Add a resource with a linked-to, not uploaded, data file.
@@ -38,7 +47,7 @@ class TestDataPackageController(
         # Add a resource with an uploaded data file.
         csv_path = 'lahmans-baseball-database/AllstarFull.csv'
         csv_file = custom_helpers.get_csv_file(csv_path)
-        uploaded_resource = api.action.resource_create(
+        uploaded_resource = helpers.call_action('resource_create', {},
             package_id=dataset['id'],
             name='AllstarFull',
             url='_needed_for_ckan<2.6',
@@ -46,61 +55,59 @@ class TestDataPackageController(
         )
 
         # Download the package's JSON file.
-        url = toolkit.url_for('export_datapackage',
+        url = _url_for('datapackager.export_datapackage',
                               package_id=dataset['name'])
-        response = self.app.get(url)
+        response = app.get(url)
 
         # Open and validate the response as a JSON.
         dp = datapackage.DataPackage(json.loads(response.body))
         dp.validate()
 
         # Check the contents of the datapackage.json file.
-        nose.tools.assert_equals(dataset['name'], dp.descriptor['name'])
+        assert dataset['name'] == dp.descriptor['name']
 
         resources = dp.resources
-        nose.tools.assert_equals(len(resources), 2)
-        nose.tools.assert_equals(linked_resource['url'],
-                                 resources[0].descriptor['path'])
-        nose.tools.assert_equals(linked_resource['url'],
-                                 resources[0].source)
+        assert len(resources) == 2
+        assert linked_resource['url'] == resources[0].descriptor['path']
+        assert linked_resource['url'] == resources[0].source
         schema = resources[0].schema
-        nose.tools.assert_equals(
-            schema.descriptor['fields'][0]['name'], 'col1')
-        nose.tools.assert_equals(
-            schema.descriptor['fields'][0]['type'], 'string')
+        assert schema.descriptor['fields'][0]['name'] == 'col1'
+        assert schema.descriptor['fields'][0]['type'] == 'string'
 
-        nose.tools.assert_equals(uploaded_resource['url'],
-                                 resources[1].descriptor['path'])
+        assert uploaded_resource['url'] == resources[1].descriptor['path']
 
-    def test_that_download_button_is_on_page(self):
+    def test_that_download_button_is_on_page(self, app):
         '''Tests that the download button is shown on the dataset pages.'''
 
         dataset = factories.Dataset()
 
-        response = self.app.get('/dataset/{0}'.format(dataset['name']))
-        soup = response.html
+        response = app.get('/dataset/{0}'.format(dataset['name']))
+        soup = BeautifulSoup(response.body)
         download_button = soup.find(id='export_datapackage_button')
         download_url = download_button['href']
-        assert download_url == toolkit.url_for('export_datapackage',
-                                               package_id=dataset['name'])
+        assert download_url == _url_for('datapackager.export_datapackage',
+                                               package_id=dataset['id'])
 
-    def test_new_renders(self):
+    def test_new_renders(self, app):
         user = factories.User()
         env = {'REMOTE_USER': user['name'].encode('ascii')}
-        url = toolkit.url_for('import_datapackage')
-        response = self.app.get(url, extra_environ=env)
-        assert_equals(200, response.status_int)
+        url = _url_for('datapackager.import_datapackage')
+        response = app.get(url, extra_environ=env)
+        if toolkit.check_ckan_version(min_version="2.9"):
+            assert 200 == response.status_code
+        else:
+            assert 200 == response.status_int
 
-    @helpers.change_config('ckan.auth.create_unowned_dataset', False)
-    def test_new_requires_user_to_be_able_to_create_packages(self):
+    @pytest.mark.ckan_config('ckan.auth.create_unowned_dataset', False)
+    def test_new_requires_user_to_be_able_to_create_packages(self, app):
         user = factories.User()
         env = {'REMOTE_USER': user['name'].encode('ascii')}
-        url = toolkit.url_for('import_datapackage')
-        response = self.app.get(url, extra_environ=env, status=[401])
-        assert_true('Unauthorized to create a dataset' in response.body)
+        url = _url_for('datapackager.import_datapackage')
+        response = app.get(url, extra_environ=env, status=401)
+        assert 'Unauthorized to create a dataset' in response.body
 
-    @requests_mock.Mocker(real_http=True)
-    def test_import_datapackage(self, mock_requests):
+    @responses.activate
+    def test_import_datapackage(self, app):
         datapackage_url = 'http://www.foo.com/datapackage.json'
         datapackage = {
             'name': 'foo',
@@ -111,23 +118,32 @@ class TestDataPackageController(
                 }
             ]
         }
-        mock_requests.register_uri('GET', datapackage_url, json=datapackage)
+        responses.add('GET', datapackage_url, json=datapackage)
 
         user = factories.User()
         env = {'REMOTE_USER': user['name'].encode('ascii')}
-        url = toolkit.url_for('import_datapackage', url=datapackage_url)
-        response = self.app.post(
-            url,
-            extra_environ=env,
-        )
-        # Should redirect to dataset's page
-        assert_equals(response.status_int, 302)
-        assert_regexp_matches(response.headers['Location'], '/dataset/foo(\?__no_cache__=True)$')
+        url = _url_for('datapackager.import_datapackage', url=datapackage_url)
+        if toolkit.check_ckan_version(min_version="2.9"):
+            response = app.post(
+                url,
+                extra_environ=env,
+                follow_redirects=False
+            )
 
-        # Should create the dataset
+            assert response.status_code == 302
+        else:
+            response = app.post(
+                url,
+                extra_environ=env,
+            )
+            assert response.status_int == 302
+
+        # Should redirect to dataset's page
+        assert re.match('.*/dataset/foo$', response.headers['Location'])
+
+        ## Should create the dataset
         dataset = helpers.call_action('package_show', id=datapackage['name'])
-        assert_equals(dataset['name'], 'foo')
-        assert_equals(len(dataset.get('resources', [])), 1)
-        assert_equals(dataset['resources'][0].get('name'), 'the-resource')
-        assert_equals(dataset['resources'][0].get('url'),
-                      datapackage['resources'][0]['url'])
+        assert dataset['name'] == 'foo'
+        assert len(dataset.get('resources', [])) == 1
+        assert dataset['resources'][0].get('name') == 'the-resource'
+        assert (dataset['resources'][0].get('url') == datapackage['resources'][0]['url'])

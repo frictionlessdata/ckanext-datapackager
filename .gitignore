@@ -5,3 +5,4 @@ cover/*
 .coverage
 test-custom.ini
 storage
+test*.log

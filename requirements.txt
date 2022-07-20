@@ -1,5 +1,6 @@
+datapackage
 jsonschema==2.6.0
 python-slugify==1.2.4
-datapackage==1.1.3
-ckan-datapackage-tools==0.1.0
+chardet==4.0.0
 six
+ckan-datapackage-tools==0.1.0

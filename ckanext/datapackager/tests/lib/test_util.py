@@ -1,24 +1,26 @@
 import os
+import unittest
 
-import nose.tools
-import ckanapi as ckanapi
+import pytest
+from werkzeug.datastructures import FileStorage
 
 import ckan.tests.factories as factories
-
+import ckanapi as ckanapi
+import ckan.tests.helpers as helpers
 import ckanext.datapackager.lib.util as util
 import ckanext.datapackager.tests.helpers as custom_helpers
 import ckanext.datapackager.exceptions as exceptions
 
-
-class TestResourceSchemaFieldCreate(custom_helpers.FunctionalTestBaseClass):
+@pytest.mark.ckan_config('ckan.plugins', 'datapackager')
+@pytest.mark.usefixtures('clean_db', 'with_plugins', 'with_request_context')
+class TestResourceSchemaFieldCreate(unittest.TestCase):
 
     def test_get_path_to_resource_file_with_uploaded_file(self):
 
         user = factories.User()
         package = factories.Dataset(user=user)
-        api = ckanapi.TestAppCKAN(self.app, apikey=user['apikey'])
-        csv_file = custom_helpers.get_csv_file('datetimes.csv')
-        resource = api.action.resource_create(
+        csv_file = FileStorage(custom_helpers.get_csv_file('datetimes.csv'))
+        resource = helpers.call_action('resource_create', {},
             package_id=package['id'],
             upload=csv_file,
             url=''  # FIXME: See https://github.com/ckan/ckan/issues/2769
@@ -37,5 +39,6 @@ class TestResourceSchemaFieldCreate(custom_helpers.FunctionalTestBaseClass):
         resource = factories.Resource(dataset=factories.Dataset(),
                                       url='http://example.com/foo.csv')
 
-        nose.tools.assert_raises(exceptions.ResourceFileDoesNotExistException,
-            util.get_path_to_resource_file, resource)
+        
+        with self.assertRaises(exceptions.ResourceFileDoesNotExistException):
+            util.get_path_to_resource_file(resource)

@@ -7,6 +7,7 @@ import six
 
 import ckan.plugins.toolkit as toolkit
 from ckan_datapackage_tools import converter
+from werkzeug.datastructures import FileStorage
 
 import datapackage
 
@@ -34,6 +35,7 @@ def package_create_from_datapackage(context, data_dict):
     '''
     url = data_dict.get('url')
     upload = data_dict.get('upload')
+
     if not url and not _upload_attribute_is_valid(upload):
         msg = {'url': ['you must define either a url or upload attribute']}
         raise toolkit.ValidationError(msg)
@@ -85,16 +87,19 @@ def package_create_from_datapackage(context, data_dict):
 
 def _load_and_validate_datapackage(url=None, upload=None):
     try:
+
         if _upload_attribute_is_valid(upload):
             dp = datapackage.DataPackage(upload.file)
         else:
+
             dp = datapackage.DataPackage(url)
 
         dp.validate()
     except (datapackage.exceptions.DataPackageException,
             datapackage.exceptions.SchemaError,
             datapackage.exceptions.ValidationError) as e:
-        msg = {'datapackage': [e.message]}
+
+        msg = {'datapackage': e}
         raise toolkit.ValidationError(msg)
 
     if not dp.safe():
@@ -139,13 +144,18 @@ def _create_resources(dataset_id, context, resources):
 def _create_and_upload_resource_with_inline_data(context, resource):
     prefix = resource.get('name', 'tmp')
     data = resource['data']
+
     del resource['data']
-    if not isinstance(data, basestring):
+    if not isinstance(data, six.string_types):
         data = json.dumps(data, indent=2)
 
     with tempfile.NamedTemporaryFile(prefix=prefix) as f:
-        f.write(data)
+        if six.PY3:
+            f.write(six.binary_type(data, 'utf-8'))
+        else:
+            f.write(six.binary_type(data))
         f.seek(0)
+
         _create_and_upload_resource(context, resource, f)
 
 
@@ -168,7 +178,8 @@ def _create_and_upload_local_resource(context, resource):
 def _create_and_upload_resource(context, resource, the_file):
     resource['url'] = 'url'
     resource['url_type'] = 'upload'
-    resource['upload'] = _UploadLocalFileStorage(the_file)
+    resource['upload'] = FileStorage(the_file, the_file.name, the_file.name)
+
     toolkit.get_action('resource_create')(context, resource)
 
 
@@ -176,7 +187,7 @@ def _upload_attribute_is_valid(upload):
     return hasattr(upload, 'file') and hasattr(upload.file, 'read')
 
 
-class _UploadLocalFileStorage(cgi.FieldStorage):
+class _UploadLocalFileStorage(FileStorage):
     def __init__(self, fp, *args, **kwargs):
         self.name = fp.name
         self.filename = fp.name

@@ -1,18 +1,7 @@
 import ckan.plugins as plugins
-import ckan.plugins.toolkit as toolkit
-import ckanext.datapackager.logic.action.create
-import ckanext.datapackager.logic.action.get
 
-
-class DataPackagerPlugin(plugins.SingletonPlugin):
-    '''Plugin that adds importing/exporting datasets as Data Packages.
-    '''
-    plugins.implements(plugins.IActions)
-    plugins.implements(plugins.IConfigurer)
+class MixinPlugin(plugins.SingletonPlugin):
     plugins.implements(plugins.IRoutes, inherit=True)
-
-    def update_config(self, config):
-        toolkit.add_template_directory(config, 'templates')
 
     def before_map(self, map_):
         map_.connect(
@@ -36,11 +25,3 @@ class DataPackagerPlugin(plugins.SingletonPlugin):
             action='export_datapackage'
         )
         return map_
-
-    def get_actions(self):
-        return {
-            'package_create_from_datapackage':
-                ckanext.datapackager.logic.action.create.package_create_from_datapackage,
-            'package_show_as_datapackage':
-                ckanext.datapackager.logic.action.get.package_show_as_datapackage,
-        }
