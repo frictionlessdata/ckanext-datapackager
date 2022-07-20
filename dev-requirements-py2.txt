@@ -2,7 +2,7 @@ responses
 requests
 pytest==4.6.*
 pytest-ckan
-pytest-covg
+pytest-cov
 pytest-mock
 ckanapi
 beautifulsoup4
