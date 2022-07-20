@@ -1,5 +1,6 @@
+datapackage
 jsonschema==2.6.0
-ckantoolkit
 python-slugify==1.2.4
+chardet==4.0.0
 six
 ckan-datapackage-tools==0.1.0

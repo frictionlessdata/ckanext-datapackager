@@ -150,7 +150,10 @@ def _create_and_upload_resource_with_inline_data(context, resource):
         data = json.dumps(data, indent=2)
 
     with tempfile.NamedTemporaryFile(prefix=prefix) as f:
-        f.write(six.binary_type(data, 'utf-8'))
+        if six.PY3:
+            f.write(six.binary_type(data, 'utf-8'))
+        else:
+            f.write(six.binary_type(data))
         f.seek(0)
 
         _create_and_upload_resource(context, resource, f)
