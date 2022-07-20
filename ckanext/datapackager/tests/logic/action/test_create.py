@@ -101,6 +101,7 @@ class TestPackageCreateFromDataPackage(unittest.TestCase):
 
     @responses.activate
     def test_it_creates_a_dataset_without_resources(self):
+        responses.add_passthru(toolkit.config['solr_url'])
 
         url = 'http://www.example.com/datapackage.json'
         datapackage = {
@@ -158,6 +159,8 @@ class TestPackageCreateFromDataPackage(unittest.TestCase):
 
     @responses.activate
     def test_it_uploads_resources_with_inline_strings_as_data(self):
+        responses.add_passthru(toolkit.config['solr_url'])
+
         url = 'http://www.example.com/datapackage.json'
         datapackage = {
             'name': 'foo',
@@ -180,6 +183,8 @@ class TestPackageCreateFromDataPackage(unittest.TestCase):
 
     @responses.activate
     def test_it_uploads_resources_with_inline_dicts_as_data(self):
+        responses.add_passthru(toolkit.config['solr_url'])
+
         url = 'http://www.example.com/datapackage.json'
         datapackage = {
             'name': 'foo',
