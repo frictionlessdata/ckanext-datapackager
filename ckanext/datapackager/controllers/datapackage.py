@@ -76,11 +76,11 @@ def export_datapackage(package_id):
         'session': model.Session,
         'user': toolkit.c.user,
     }
-    r = make_response()
+
+    r = make_response() if toolkit.check_ckan_version(min_version="2.9") else toolkit.response
     r.content_disposition = 'attachment; filename=datapackage.json'.format(
         package_id)
     r.content_type = 'application/json'
-
     try:
         datapackage_dict = toolkit.get_action(
             'package_show_as_datapackage')(
@@ -88,18 +88,22 @@ def export_datapackage(package_id):
             {'id': package_id}
         )
     except toolkit.ObjectNotFound:
-        toolkit.abort(404, 'Dataset not found')
+        return toolkit.abort(404, 'Dataset not found')
 
-    r.data = json.dumps(datapackage_dict, indent=2)
-    return r
+    if toolkit.check_ckan_version(min_version="2.9"):
+        r.data = json.dumps(datapackage_dict, indent=2)
+        return r
+    else:
+        return json.dumps(datapackage_dict, indent=2)
+
 
 if not toolkit.check_ckan_version(u'2.9'):
     class DataPackageController(toolkit.BaseController):
         def new(self, data=None, errors=None, error_summary=None):
-            new(data, errors, error_summary)
+            return new(data, errors, error_summary)
         def import_datapackage(self):
-            import_datapackage()
+            return import_datapackage()
         def export_datapackage(self, package_id):
-            export_datapackage(package_id)
+            return export_datapackage(package_id)
 
 
