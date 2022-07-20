@@ -1,5 +1,4 @@
 import json
-import unittest
 import tempfile
 from six import StringIO
 import six
@@ -18,13 +17,12 @@ import ckan.tests.factories as factories
 
 import re
 
-responses.add_passthru(toolkit.config['solr_url'])
 
 @pytest.mark.ckan_config('ckan.plugins', 'datapackager')
 @pytest.mark.usefixtures('clean_db', 'with_plugins', 'with_request_context')
-class TestPackageCreateFromDataPackage(unittest.TestCase):
+class TestPackageCreateFromDataPackage():
     def test_it_requires_a_url_if_theres_no_upload_param(self):
-        with self.assertRaises(toolkit.ValidationError):
+        with pytest.raises(toolkit.ValidationError):
             helpers.call_action('package_create_from_datapackage')
 
     @responses.activate
@@ -35,7 +33,7 @@ class TestPackageCreateFromDataPackage(unittest.TestCase):
         datapackage = {}
         responses.add(responses.GET, url, json=datapackage)
 
-        with self.assertRaises(toolkit.ValidationError):
+        with pytest.raises(toolkit.ValidationError):
             helpers.call_action('package_create_from_datapackage', url=url)
 
 
@@ -54,13 +52,12 @@ class TestPackageCreateFromDataPackage(unittest.TestCase):
         upload.file = StringIO(json.dumps(datapackage))
 
 
-        with self.assertRaises(toolkit.ValidationError):
+        with pytest.raises(toolkit.ValidationError):
             helpers.call_action('package_create_from_datapackage', upload=upload)
 
     @responses.activate
     def test_it_creates_the_dataset(self):
         responses.add_passthru(toolkit.config['solr_url'])
-
         url = 'http://www.example.com/datapackage.json'
         datapackage = {
             'name': 'foo',
@@ -107,6 +104,7 @@ class TestPackageCreateFromDataPackage(unittest.TestCase):
     def test_it_creates_a_dataset_without_resources(self):
         responses.add_passthru(toolkit.config['solr_url'])
 
+        responses.add_passthru(toolkit.config['solr_url'])
         url = 'http://www.example.com/datapackage.json'
         datapackage = {
             'name': 'foo',
@@ -164,7 +162,6 @@ class TestPackageCreateFromDataPackage(unittest.TestCase):
     @responses.activate
     def test_it_uploads_resources_with_inline_strings_as_data(self):
         responses.add_passthru(toolkit.config['solr_url'])
-
         url = 'http://www.example.com/datapackage.json'
         datapackage = {
             'name': 'foo',
@@ -188,7 +185,6 @@ class TestPackageCreateFromDataPackage(unittest.TestCase):
     @responses.activate
     def test_it_uploads_resources_with_inline_dicts_as_data(self):
         responses.add_passthru(toolkit.config['solr_url'])
-
         url = 'http://www.example.com/datapackage.json'
         datapackage = {
             'name': 'foo',
@@ -212,7 +208,6 @@ class TestPackageCreateFromDataPackage(unittest.TestCase):
     @responses.activate
     def test_it_allows_specifying_the_dataset_name(self):
         responses.add_passthru(toolkit.config['solr_url'])
-        
         url = 'http://www.example.com/datapackage.json'
         datapackage = {
             'name': 'foo',
@@ -231,7 +226,6 @@ class TestPackageCreateFromDataPackage(unittest.TestCase):
     @responses.activate
     def test_it_creates_unique_name_if_name_wasnt_specified(self):
         responses.add_passthru(toolkit.config['solr_url'])
-
         url = 'http://www.example.com/datapackage.json'
         datapackage = {
             'name': 'foo',
@@ -250,7 +244,6 @@ class TestPackageCreateFromDataPackage(unittest.TestCase):
     @responses.activate
     def test_it_fails_if_specifying_name_that_already_exists(self):
         responses.add_passthru(toolkit.config['solr_url'])
-
         url = 'http://www.example.com/datapackage.json'
         datapackage = {
             'name': 'foo',
@@ -263,13 +256,12 @@ class TestPackageCreateFromDataPackage(unittest.TestCase):
 
         helpers.call_action('package_create', name=datapackage['name'])
 
-        with self.assertRaises(toolkit.ValidationError):
+        with pytest.raises(toolkit.ValidationError):
             helpers.call_action('package_create_from_datapackage', url=url, name=datapackage['name'])
 
     @responses.activate
     def test_it_allows_changing_dataset_visibility(self):
         responses.add_passthru(toolkit.config['solr_url'])
-
         url = 'http://www.example.com/datapackage.json'
         datapackage = {
             'name': 'foo',
@@ -290,7 +282,7 @@ class TestPackageCreateFromDataPackage(unittest.TestCase):
         assert dataset['private']
 
     def test_it_allows_uploading_a_datapackage(self):
-
+        responses.add_passthru(toolkit.config['solr_url'])
         datapackage = {
             'name': 'foo',
             'resources': [
