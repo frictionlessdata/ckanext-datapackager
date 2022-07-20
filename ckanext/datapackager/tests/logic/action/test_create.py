@@ -29,6 +29,8 @@ class TestPackageCreateFromDataPackage(unittest.TestCase):
 
     @responses.activate
     def test_it_raises_if_datapackage_is_invalid(self):
+        responses.add_passthru(toolkit.config['solr_url'])
+
         url = 'http://www.example.com/datapackage.json'
         datapackage = {}
         responses.add(responses.GET, url, json=datapackage)
@@ -57,6 +59,8 @@ class TestPackageCreateFromDataPackage(unittest.TestCase):
 
     @responses.activate
     def test_it_creates_the_dataset(self):
+        responses.add_passthru(toolkit.config['solr_url'])
+
         url = 'http://www.example.com/datapackage.json'
         datapackage = {
             'name': 'foo',
@@ -207,6 +211,8 @@ class TestPackageCreateFromDataPackage(unittest.TestCase):
 
     @responses.activate
     def test_it_allows_specifying_the_dataset_name(self):
+        responses.add_passthru(toolkit.config['solr_url'])
+        
         url = 'http://www.example.com/datapackage.json'
         datapackage = {
             'name': 'foo',
@@ -224,6 +230,8 @@ class TestPackageCreateFromDataPackage(unittest.TestCase):
 
     @responses.activate
     def test_it_creates_unique_name_if_name_wasnt_specified(self):
+        responses.add_passthru(toolkit.config['solr_url'])
+
         url = 'http://www.example.com/datapackage.json'
         datapackage = {
             'name': 'foo',
@@ -241,6 +249,8 @@ class TestPackageCreateFromDataPackage(unittest.TestCase):
 
     @responses.activate
     def test_it_fails_if_specifying_name_that_already_exists(self):
+        responses.add_passthru(toolkit.config['solr_url'])
+
         url = 'http://www.example.com/datapackage.json'
         datapackage = {
             'name': 'foo',
@@ -258,6 +268,8 @@ class TestPackageCreateFromDataPackage(unittest.TestCase):
 
     @responses.activate
     def test_it_allows_changing_dataset_visibility(self):
+        responses.add_passthru(toolkit.config['solr_url'])
+
         url = 'http://www.example.com/datapackage.json'
         datapackage = {
             'name': 'foo',
@@ -278,6 +290,7 @@ class TestPackageCreateFromDataPackage(unittest.TestCase):
         assert dataset['private']
 
     def test_it_allows_uploading_a_datapackage(self):
+
         datapackage = {
             'name': 'foo',
             'resources': [
