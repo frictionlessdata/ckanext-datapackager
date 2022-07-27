@@ -205,44 +205,38 @@ class TestConvertToDict(unittest.TestCase, object):
         resource = result.get("resources")[0]
         assert resource.get("hash") == self.resource_dict["hash"]
 
-    # TODO: See https://github.com/frictionlessdata/frictionless-ckan-mapper/issues/48
-    #def test_resource_name_lowercases_the_name(self):
-    #    self.resource_dict.update(
-    #        {
-    #            "name": "ThE-nAmE",
-    #        }
-    #    )
-    #    expected_name = "the-name"
-    #    result = converter.dataset(self.dataset_dict)
-    #    resource = result.get("resources")[0]
-    #    assert resource.get("name") == expected_name
-    #    assert resource.get("title") == self.resource_dict["name"]
+    def test_resource_name_lowercases_the_name(self):
+        self.resource_dict.update(
+            {
+                "name": "ThE-nAmE",
+            }
+        )
+        expected_name = "the-name"
+        result = converter.dataset(self.dataset_dict)
+        resource = result.get("resources")[0]
+        assert resource.get("name") == expected_name
 
-    # TODO: See https://github.com/frictionlessdata/frictionless-ckan-mapper/issues/48
-    #def test_resource_name_slugifies_the_name(self):
-    #    self.resource_dict.update(
-    #        {
-    #            "name": "Lista de PIBs dos países!   51",
-    #        }
-    #    )
-    #    expected_name = "lista-de-pibs-dos-paises-51"
-    #    result = converter.dataset(self.dataset_dict)
-    #    resource = result.get("resources")[0]
-    #    assert resource.get("name") == expected_name
-    #    assert resource.get("title") == self.resource_dict["name"]
+    def test_resource_name_slugifies_the_name(self):
+        self.resource_dict.update(
+            {
+                "name": "Lista de PIBs dos países!   51",
+            }
+        )
+        expected_name = "lista-de-pibs-dos-paises-51"
+        result = converter.dataset(self.dataset_dict)
+        resource = result.get("resources")[0]
+        assert resource.get("name") == expected_name
 
-    # TODO: See https://github.com/frictionlessdata/frictionless-ckan-mapper/issues/48
-    #def test_resource_name_converts_unicode_characters(self):
-    #    self.resource_dict.update(
-    #        {
-    #            "name": u"万事开头难",
-    #        }
-    #    )
-    #    expected_name = "mo-shi-kai-tou-nan"
-    #    result = converter.dataset(self.dataset_dict)
-    #    resource = result.get("resources")[0]
-    #    assert resource.get("name") == expected_name
-    #    assert resource.get("title") == self.resource_dict["name"]
+    def test_resource_name_converts_unicode_characters(self):
+        self.resource_dict.update(
+            {
+                "name": u"万事开头难",
+            }
+        )
+        expected_name = "mo-shi-kai-tou-nan"
+        result = converter.dataset(self.dataset_dict)
+        resource = result.get("resources")[0]
+        assert resource.get("name") == expected_name
 
 
 class TestDataPackageToDatasetDict(unittest.TestCase, object):
