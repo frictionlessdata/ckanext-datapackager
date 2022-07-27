@@ -136,26 +136,22 @@ class TestConvertToDict(unittest.TestCase, object):
     #    result = converter.dataset(self.dataset_dict)
     #    assert result.get("homepage") == self.dataset_dict["ckan_url"]
 
-    # TODO: uncoment the test below if the PR https://github.com/frictionlessdata/frictionless-ckan-mapper/pull/49
-    # is accepted
-    #def test_dataset_extras(self):
-    #    self.dataset_dict.update(
-    #        {
-    #            "extras": [
-    #                {"key": "title_cn", "value": u"國內生產總值"},
-    #                {"key": "years", "value": "[2015, 2016]"},
-    #                {"key": "last_year", "value": 2016},
-    #                {"key": "location", "value": '{"country": "China"}'},
-    #            ]
-    #        }
-    #    )
-    #    result = converter.dataset(self.dataset_dict)
-    #    assert result.get("extras") == {
-    #        "title_cn": u"國內生產總值",
-    #        "years": [2015, 2016],
-    #        "last_year": 2016,
-    #        "location": {"country": "China"},
-    #    }
+    def test_dataset_extras(self):
+        self.dataset_dict.update(
+            {
+                "extras": [
+                    {"key": "title_cn", "value": u"國內生產總值"},
+                    {"key": "years", "value": "[2015, 2016]"},
+                    {"key": "last_year", "value": 2016},
+                    {"key": "location", "value": '{"country": "China"}'},
+                ]
+            }
+        )
+        result = converter.dataset(self.dataset_dict)
+        assert result.get("title_cn") == "國內生產總值"
+        assert result.get("years") == [2015, 2016]
+        assert result.get("last_year") == 2016
+        assert result.get("location") == {"country": "China"}
 
     def test_resource_url(self):
         self.resource_dict.update(
