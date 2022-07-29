@@ -35,7 +35,13 @@ class TestDataPackageController():
 
         '''
         user = factories.Sysadmin()
-        dataset = factories.Dataset()
+        dataset = factories.Dataset(
+            maintainer = "John Smith",
+            maintainer_email = "jsmith@email.com",
+            license_id = "cc-zero",
+            license_title = "Creative Commons CC Zero License (cc-zero)",
+            license_url = "http://opendefinition.org/licenses/cc-zero/"
+        )
 
         # Add a resource with a linked-to, not uploaded, data file.
         linked_resource = factories.Resource(
@@ -61,8 +67,7 @@ class TestDataPackageController():
 
         # Open and validate the response as a JSON.
         dp = datapackage.DataPackage(json.loads(response.body))
-        # TODO: Check why the datapackage is not valid according to datapackage module
-        #dp.validate()
+        dp.validate()
 
         # Check the contents of the datapackage.json file.
         assert dataset['name'] == dp.descriptor['name']
