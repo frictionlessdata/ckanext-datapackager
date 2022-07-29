@@ -148,7 +148,7 @@ class TestConvertToDict(unittest.TestCase, object):
             }
         )
         result = converter.dataset(self.dataset_dict)
-        assert result.get("title_cn") == "國內生產總值"
+        assert result.get("title_cn") == u"國內生產總值"
         assert result.get("years") == [2015, 2016]
         assert result.get("last_year") == 2016
         assert result.get("location") == {"country": "China"}
@@ -219,7 +219,7 @@ class TestConvertToDict(unittest.TestCase, object):
     def test_resource_name_slugifies_the_name(self):
         self.resource_dict.update(
             {
-                "name": "Lista de PIBs dos países!   51",
+                "name": u"Lista de PIBs dos países!   51",
             }
         )
         expected_name = "lista-de-pibs-dos-paises-51"
