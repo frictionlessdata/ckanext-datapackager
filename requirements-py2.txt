@@ -1,4 +1,7 @@
+cython
+cchardet
 datapackage==1.1.3
+git+https://github.com/frictionlessdata/frictionless-ckan-mapper
 jsonschema==2.6.0
 chardet==4.0.0
 python-slugify==1.2.4
