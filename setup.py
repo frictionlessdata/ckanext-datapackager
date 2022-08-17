@@ -37,8 +37,6 @@ setup(
     include_package_data=True,
     zip_safe=False,
     install_requires=[
-        'python-slugify',
-        'datapackage>=1.0.0'
     ],
     entry_points={
         'ckan.plugins': [

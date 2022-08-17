@@ -6,7 +6,7 @@ import tempfile
 import six
 
 import ckan.plugins.toolkit as toolkit
-from ckan_datapackage_tools import converter
+from frictionless_ckan_mapper import frictionless_to_ckan as converter
 from werkzeug.datastructures import FileStorage
 
 import datapackage
@@ -31,7 +31,7 @@ def package_create_from_datapackage(context, data_dict):
         :py:func:`~ckan.logic.action.get.organization_list` or
         :py:func:`~ckan.logic.action.get.organization_list_for_user` for
         available values (optional)
-    :type owner_org: string
+   :type owner_org: string
     '''
     url = data_dict.get('url')
     upload = data_dict.get('upload')
@@ -41,8 +41,7 @@ def package_create_from_datapackage(context, data_dict):
         raise toolkit.ValidationError(msg)
 
     dp = _load_and_validate_datapackage(url=url, upload=upload)
-
-    dataset_dict = converter.datapackage_to_dataset(dp)
+    dataset_dict = converter.package(dp.to_dict())
 
     owner_org = data_dict.get('owner_org')
     if owner_org:
@@ -138,6 +137,9 @@ def _create_resources(dataset_id, context, resources):
         elif resource.get('path'):
             _create_and_upload_local_resource(context, resource)
         else:
+            # TODO: Investigate why in test_controller the resource['url'] is a list
+            if type(resource['url']) is list:
+                resource['url'] = resource['url'][0]
             toolkit.get_action('resource_create')(context, resource)
 
 
