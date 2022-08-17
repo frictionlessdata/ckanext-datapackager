@@ -4,7 +4,7 @@ from setuptools import setup, find_packages
 from codecs import open  # To use a consistent encoding
 from os import path
 
-version = '1.0.3'
+version = '1.1.0'
 
 here = path.abspath(path.dirname(__file__))
 
@@ -20,15 +20,16 @@ setup(
 
     # see http://pypi.python.org/pypi?%3Aaction=list_classifiers
     classifiers=[
-        'Development Status :: 4 - Beta',
+        'Development Status :: 5 - Production',
         'License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)',
 
         # Specify the Python versions you support here. In particular, ensure
         # that you indicate whether you support Python 2, Python 3 or both.
         'Programming Language :: Python :: 2.7',
+        "Programming Language :: Python :: 3",
     ],
-    keywords='CKAN datapackages',
-    author='Open Knowledge International',
+    keywords='CKAN datapackages FrictionlessData',
+    author='Open Knowledge Foundation',
     author_email='info@okfn.org',
     url='https://github.com/ckan/ckanext-datapackager',
     license='AGPL',

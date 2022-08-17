@@ -7,8 +7,7 @@ This extension adds importing and exporting of [Data Packages][data-packages] to
 
 ## Requirements
 
-* CKAN >= 2.4
-* Python 2.7
+* CKAN >= 2.8
 
 ## Installing
 
@@ -18,11 +17,7 @@ To install `ckanext-datapackager` into a CKAN instance, do:
 
         source /usr/lib/ckan/default/bin/activate
 
-2. Install the `ckanext-datapackager` extension using pip:
-
-        pip install ckanext-datapackager
-
-   Alternatively do a development install (with your virtualenv activated):
+2. Install the extension:
 
         git clone https://github.com/frictionlessdata/ckanext-datapackager.git
         cd ckanext-datapackager
