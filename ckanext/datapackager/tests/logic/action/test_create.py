@@ -1,6 +1,6 @@
 import json
 import tempfile
-from six import StringIO
+from six import StringIO, BytesIO
 import six
 try:
     from unittest import mock
@@ -48,8 +48,7 @@ class TestPackageCreateFromDataPackage():
             ]
         }
 
-        upload = mock.MagicMock()
-        upload.file = StringIO(json.dumps(datapackage))
+        upload = StringIO(json.dumps(datapackage))
 
 
         with pytest.raises(toolkit.ValidationError):
@@ -299,7 +298,7 @@ class TestPackageCreateFromDataPackage():
             tmpfile.flush()
 
             dataset = helpers.call_action('package_create_from_datapackage',
-                                          upload=_UploadFile(tmpfile))
+                                          upload=tmpfile)
             assert dataset['name'] == 'foo'
 
 
