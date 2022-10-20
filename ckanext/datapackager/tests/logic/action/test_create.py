@@ -48,8 +48,11 @@ class TestPackageCreateFromDataPackage():
             ]
         }
 
-        upload = StringIO(json.dumps(datapackage))
-
+        if toolkit.check_ckan_version(min_version="2.9"):
+            upload = StringIO(json.dumps(datapackage))
+        else:
+            upload = mock.MagicMock()
+            upload.file = StringIO(json.dumps(datapackage))
 
         with pytest.raises(toolkit.ValidationError):
             helpers.call_action('package_create_from_datapackage', upload=upload)
