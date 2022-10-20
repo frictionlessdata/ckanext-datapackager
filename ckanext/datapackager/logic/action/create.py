@@ -183,7 +183,11 @@ def _create_and_upload_local_resource(context, resource):
 def _create_and_upload_resource(context, resource, the_file):
     resource['url'] = 'url'
     resource['url_type'] = 'upload'
-    resource['upload'] = FileStorage(the_file, the_file.name, the_file.name)
+
+    if toolkit.check_ckan_version(min_version="2.9"):
+        resource['upload'] = FileStorage(the_file, the_file.name, the_file.name)
+    else:
+        resource['upload'] = _UploadLocalFileStorage(the_file)
 
     toolkit.get_action('resource_create')(context, resource)
 
@@ -191,8 +195,8 @@ def _create_and_upload_resource(context, resource, the_file):
 def _upload_attribute_is_valid(upload):
     return hasattr(upload, 'read') or hasattr(upload, 'file') and hasattr(upload.file, 'read')
 
-
-class _UploadLocalFileStorage(FileStorage):
+# Used only in CKAN < 2.9
+class _UploadLocalFileStorage(cgi.FileStorage):
     def __init__(self, fp, *args, **kwargs):
         self.name = fp.name
         self.filename = fp.name
