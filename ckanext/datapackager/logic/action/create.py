@@ -196,7 +196,7 @@ def _upload_attribute_is_valid(upload):
     return hasattr(upload, 'read') or hasattr(upload, 'file') and hasattr(upload.file, 'read')
 
 # Used only in CKAN < 2.9
-class _UploadLocalFileStorage(cgi.FileStorage):
+class _UploadLocalFileStorage(cgi.FieldStorage):
     def __init__(self, fp, *args, **kwargs):
         self.name = fp.name
         self.filename = fp.name
