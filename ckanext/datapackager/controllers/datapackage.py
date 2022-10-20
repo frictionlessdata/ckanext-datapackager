@@ -46,9 +46,13 @@ def import_datapackage():
 
     try:
         if hasattr(toolkit.request, "form") and len(list(toolkit.request.form.keys())) > 0:
-            params = toolkit.request.form
+            params = toolkit.request.form.to_dict()
         else:
             params = toolkit.request.params
+
+        if toolkit.check_ckan_version(min_version="2.9"):
+            if 'upload' in toolkit.request.files:
+                params['upload'] = toolkit.request.files['upload']
 
         dataset = toolkit.get_action('package_create_from_datapackage')(
             context,
