@@ -5,7 +5,6 @@ import responses
 from bs4 import BeautifulSoup
 import re
 
-import ckanapi
 import datapackage
 import ckan.tests.factories as factories
 import ckan.tests.helpers as helpers
@@ -14,27 +13,42 @@ import ckanext.datapackager.tests.helpers as custom_helpers
 
 responses.add_passthru(toolkit.config['solr_url'])
 
-def _url_for(*args, **kwargs):
 
-    if toolkit.check_ckan_version(max_version="2.9"):
-        if args[0] == "datapackager.export_datapackage":
-            args = ("export_datapackage", )
-        elif args[0] == "datapackager.import_datapackage":
-            args = ("import_datapackage", )
+@pytest.fixture
+def sysadmin_env():
+    try:
+        from ckan.tests.factories import SysadminWithToken
+        user = SysadminWithToken()
+        return {"Authorization": user["token"]}
+    except ImportError:
+        # ckan <= 2.9
+        from ckan.tests.factories import Sysadmin
+        user = Sysadmin()
+        return {"REMOTE_USER": user["name"].encode("ascii")}
 
-    return toolkit.url_for(*args, **kwargs)
+
+@pytest.fixture
+def user_env():
+    try:
+        from ckan.tests.factories import UserWithToken
+        user = UserWithToken()
+        return {"Authorization": user["token"]}
+    except ImportError:
+        # ckan <= 2.9
+        from ckan.tests.factories import User
+        user = User()
+        return {"REMOTE_USER": user["name"].encode("ascii")}
 
 
 @pytest.mark.ckan_config('ckan.plugins', 'datapackager')
-@pytest.mark.usefixtures('clean_db', 'with_plugins', 'with_request_context')
+@pytest.mark.usefixtures('with_plugins', 'clean_db')
 class TestDataPackageController():
     '''Functional tests for the DataPackageController class.'''
 
-    def test_download_datapackage(self, app):
+    def test_download_datapackage(self, app, sysadmin_env):
         '''Test downloading a DataPackage file of a package.
 
         '''
-        user = factories.Sysadmin()
         dataset = factories.Dataset(
             maintainer = "John Smith",
             maintainer_email = "jsmith@email.com",
@@ -61,7 +75,7 @@ class TestDataPackageController():
         )
 
         # Download the package's JSON file.
-        url = _url_for('datapackager.export_datapackage',
+        url = toolkit.url_for('datapackager.export_datapackage',
                               package_id=dataset['name'])
         response = app.get(url)
 
@@ -91,58 +105,54 @@ class TestDataPackageController():
         soup = BeautifulSoup(response.body)
         download_button = soup.find(id='export_datapackage_button')
         download_url = download_button['href']
-        assert download_url == _url_for('datapackager.export_datapackage',
+        assert download_url == toolkit.url_for('datapackager.export_datapackage',
                                                package_id=dataset['id'])
 
-    def test_new_renders(self, app):
-        user = factories.User()
-        env = {'REMOTE_USER': user['name'].encode('ascii')}
-        url = _url_for('datapackager.import_datapackage')
-        response = app.get(url, extra_environ=env)
-        if toolkit.check_ckan_version(min_version="2.9"):
-            assert 200 == response.status_code
+    def test_new_renders(self, app, user_env):
+        url = toolkit.url_for('datapackager.import_datapackage')
+        if toolkit.check_ckan_version(min_version="2.10.0"):
+            response = app.get(url, headers=user_env)
         else:
-            assert 200 == response.status_int
+            response = app.get(url, environ_overrides=user_env)
+        assert 200 == response.status_code
 
     @pytest.mark.ckan_config('ckan.auth.create_unowned_dataset', False)
-    def test_new_requires_user_to_be_able_to_create_packages(self, app):
-        user = factories.User()
-        env = {'REMOTE_USER': user['name'].encode('ascii')}
-        url = _url_for('datapackager.import_datapackage')
-        response = app.get(url, extra_environ=env, status=401)
+    def test_new_requires_user_to_be_able_to_create_packages(self, app, user_env):
+        url = toolkit.url_for('datapackager.import_datapackage')
+        if toolkit.check_ckan_version(min_version="2.10.0"):
+            response = app.get(url, headers=user_env, status=401)
+        else:
+            response = app.get(url, environ_overrides=user_env, status=401)
         assert 'Unauthorized to create a dataset' in response.body
 
     @responses.activate
-    def test_import_datapackage(self, app):
+    def test_import_datapackage(self, app, user_env):
         datapackage_url = 'http://www.foo.com/datapackage.json'
         datapackage = {
             'name': 'foo',
             'resources': [
                 {
                     'name': 'the-resource',
-                    'url': 'http://www.somewhere.com/data.csv',
+                    'path': 'http://www.somewhere.com/data.csv',
                 }
             ]
         }
         responses.add('GET', datapackage_url, json=datapackage)
 
-        user = factories.User()
-        env = {'REMOTE_USER': user['name'].encode('ascii')}
-        url = _url_for('datapackager.import_datapackage', url=datapackage_url)
-        if toolkit.check_ckan_version(min_version="2.9"):
+        url = toolkit.url_for('datapackager.import_datapackage', url=datapackage_url)
+        if toolkit.check_ckan_version(min_version="2.10.0"):
             response = app.post(
                 url,
-                extra_environ=env,
+                headers=user_env,
                 follow_redirects=False
             )
-
-            assert response.status_code == 302
         else:
             response = app.post(
                 url,
-                extra_environ=env,
+                environ_overrides=user_env,
+                follow_redirects=False
             )
-            assert response.status_int == 302
+        assert response.status_code == 302
 
         # Should redirect to dataset's page
         assert re.match('.*/dataset/foo$', response.headers['Location'])
@@ -152,4 +162,4 @@ class TestDataPackageController():
         assert dataset['name'] == 'foo'
         assert len(dataset.get('resources', [])) == 1
         assert dataset['resources'][0].get('name') == 'the-resource'
-        assert (dataset['resources'][0].get('url') == datapackage['resources'][0]['url'])
+        assert (dataset['resources'][0].get('url') == datapackage['resources'][0]['path'])

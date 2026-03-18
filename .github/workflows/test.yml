@@ -4,10 +4,10 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-python@v2
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
-          python-version: '3.6'
+          python-version: '3.9'
       - name: Install requirements
         run: pip install flake8 pycodestyle
       - name: Check syntax
@@ -17,16 +17,26 @@ jobs:
     needs: lint
     strategy:
       matrix:
-        ckan-version: [2.8, 2.9, 2.9-py2]
+        include:
+          - ckan-version: "2.11"
+            ckan-image: "ckan/ckan-dev:2.11-py3.10"
+            solr-version: "9"
+          - ckan-version: "2.10"
+            ckan-image: "ckan/ckan-dev:2.10-py3.10"
+            solr-version: "9"
+          - ckan-version: "2.9"
+            ckan-image: "ckan/ckan-dev:2.9-py3.9"
+            solr-version: "8"
       fail-fast: false
 
     name: CKAN ${{ matrix.ckan-version }}
     runs-on: ubuntu-latest
     container:
-      image: openknowledge/ckan-dev:${{ matrix.ckan-version }}
+      image: ${{ matrix.ckan-image }}
+      options: --user root
     services:
       solr:
-        image: ckan/ckan-solr:${{ matrix.ckan-version }}
+        image: ckan/ckan-solr:${{ matrix.ckan-version }}-solr${{ matrix.solr-version }}
       postgres:
         image: ckan/ckan-postgres-dev:${{ matrix.ckan-version }}
         env:
@@ -44,34 +54,16 @@ jobs:
       CKAN_REDIS_URL: redis://redis:6379/1
 
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-python@v3
-    - name: Install requirements (Python 3)
-      if: ${{ matrix.ckan-version != '2.7' && matrix.ckan-version != '2.8' && matrix.ckan-version != '2.9-py2'}}
-      run: |
-        pip install cython
-        pip install cchardet
-        pip install -r requirements.txt
-        pip install -r dev-requirements.txt
-    - name: Install requirements (Python 2)
-      if: ${{ matrix.ckan-version == '2.7' || matrix.ckan-version == '2.8' || matrix.ckan-version == '2.9-py2'}}
-      run: |
-        pip install cython
-        pip install cchardet
-        pip install -r requirements-py2.txt
-        pip install -r dev-requirements-py2.txt
+    - uses: actions/checkout@v4
     - name: Install requirements (common)
       run: |
+        pip install -r requirements.txt
+        pip install -r dev-requirements.txt
         pip install -e .
         # Replace default path to CKAN core config file with the one on the container
         sed -i -e 's/use = config:.*/use = config:\/srv\/app\/src\/ckan\/test-core.ini/' test.ini
-    - name: Setup extension (CKAN >= 2.9)
-      if: ${{ matrix.ckan-version != '2.7' && matrix.ckan-version != '2.8' }}
+    - name: Setup extension
       run: |
         ckan -c test.ini db init
-    - name: Setup extension (CKAN < 2.9)
-      if: ${{ matrix.ckan-version == '2.7' || matrix.ckan-version == '2.8' }}
-      run: |
-        paster --plugin=ckan db init -c test.ini
     - name: Run tests
-      run: pytest --ckan-ini=test.ini --cov=ckanext.datapackager --cov-report=xml --cov-append --disable-warnings ckanext/datapackager/tests
+      run: pytest --ckan-ini=test.ini --cov=ckanext.datapackager --cov-report=term-missing --cov-append --disable-warnings ckanext/datapackager/tests

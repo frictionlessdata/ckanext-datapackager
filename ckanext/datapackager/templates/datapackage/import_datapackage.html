@@ -3,18 +3,13 @@
 {% block subtitle %}{{ _('Import Data Package') }}{% endblock %}
 
 {% block breadcrumb_content %}
-      {% if h.ckan_version().split('.')|map('int')|list >= [2, 9, 0] %}
-        <li>{% link_for _('Datasets'), named_route='dataset.search' %}</li>
-      {% else %}
-        <li>{% link_for _('Datasets'), controller='package', action='search' %}</li>
-      {% endif %}
-
+  <li>{% link_for _('Datasets'), named_route='dataset.search' %}</li>
   <li class="active"><a href="">{{ _('Import Data Package') }}</a></li></a></li>
 {% endblock %}
 
 {% block info_module %}
   <section class="module module-narrow module-shallow">
-    <h2 class="module-heading"><i class="icon-info-sign"></i> {{ _('What are Data Packages?') }}</h2>
+    <h2 class="module-heading"><i class="fa fa-info-circle"></i> {{ _('What are Data Packages?') }}</h2>
     <div class="module-content">
       <p>
         {% trans %}

@@ -1,6 +1,5 @@
 responses
 requests
-pytest==6.0.0
 pytest-ckan
 pytest-cov
 pytest-mock

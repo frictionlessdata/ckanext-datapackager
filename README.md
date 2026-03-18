@@ -7,7 +7,7 @@ This extension adds importing and exporting of [Data Packages][data-packages] to
 
 ## Requirements
 
-* CKAN >= 2.8
+* CKAN >= 2.9
 
 ## Installing
 
@@ -128,13 +128,9 @@ For instance
 
 You'll need to install the dev requirements to run the tests:
 
-To run the tests on CKAN >= 2.9, do:
+To run the tests, do:
 
     pytest --ckan-ini=test.ini ckanext/dcat/tests
-
-To run the tests on CKAN <= 2.8, do:
-
-    nosetests --nologcapture --ckan --with-pylons=test-nose.ini ckanext/dcat/tests/nose
 
 Note that ckanext-datapackager's `test.ini` file assumes that the relative path from it
 to CKAN's `test-core.ini` file is `../ckan/test-core.ini`, i.e. that you have

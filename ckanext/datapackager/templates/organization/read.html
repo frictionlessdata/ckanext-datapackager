@@ -3,7 +3,7 @@
 {% block page_primary_action %}
   {{ super() }}
   {% if h.check_access('package_create', {'owner_org': c.group_dict.id}) %}
-  <a class="btn btn-primary" href="{{ h.url_for('datapackager.import_datapackage', group=c.group_dict.id) if h.ckan_version().split('.')|map('int')|list >= [2, 9, 0] else h.url_for('import_datapackage', group=c.group_dict.id) }}">
+  <a class="btn btn-primary" href="{{ h.url_for('datapackager.import_datapackage', group=c.group_dict.id) }}">
     <i class="fa fa-upload"></i>
     {{ _('Import Data Package') }}
   </a>

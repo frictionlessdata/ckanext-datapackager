@@ -22,7 +22,7 @@ def new(data=None, errors=None, error_summary=None):
     errors = errors or {}
     error_summary = error_summary or {}
     default_data = {
-        'owner_org': toolkit.request.params.get('group'),
+        'owner_org': toolkit.request.args.get('group'),
     }
     data = data or default_data
 
@@ -50,8 +50,8 @@ def import_datapackage():
         else:
             params = toolkit.request.params
 
-        if toolkit.check_ckan_version(min_version="2.9"):
-            if 'upload' in toolkit.request.files:
+        if 'upload' in toolkit.request.files:
+            if toolkit.request.files['upload'].filename:
                 params['upload'] = toolkit.request.files['upload']
 
         dataset = toolkit.get_action('package_create_from_datapackage')(
@@ -59,10 +59,7 @@ def import_datapackage():
             params,
         )
 
-        if toolkit.check_ckan_version(min_version="2.9"):
-            return toolkit.redirect_to('dataset.read', id=dataset['name'])
-        else:
-            return toolkit.redirect_to('dataset_read', id=dataset['name'])
+        return toolkit.redirect_to('dataset.read', id=dataset['name'])
 
     except toolkit.ValidationError as e:
         errors = e.error_dict
@@ -81,7 +78,7 @@ def export_datapackage(package_id):
         'user': toolkit.c.user,
     }
 
-    r = make_response() if toolkit.check_ckan_version(min_version="2.9") else toolkit.response
+    r = make_response()
     r.content_disposition = 'attachment; filename=datapackage.json'.format(
         package_id)
     r.content_type = 'application/json'
@@ -94,20 +91,5 @@ def export_datapackage(package_id):
     except toolkit.ObjectNotFound:
         return toolkit.abort(404, 'Dataset not found')
 
-    if toolkit.check_ckan_version(min_version="2.9"):
-        r.data = json.dumps(datapackage_dict, indent=2)
-        return r
-    else:
-        return json.dumps(datapackage_dict, indent=2)
-
-
-if not toolkit.check_ckan_version(u'2.9'):
-    class DataPackageController(toolkit.BaseController):
-        def new(self, data=None, errors=None, error_summary=None):
-            return new(data, errors, error_summary)
-        def import_datapackage(self):
-            return import_datapackage()
-        def export_datapackage(self, package_id):
-            return export_datapackage(package_id)
-
-
+    r.data = json.dumps(datapackage_dict, indent=2)
+    return r
